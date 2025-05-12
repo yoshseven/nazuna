@@ -1,0 +1,48 @@
+{
+  "name": "nazuninha-bot",
+  "version": "0.1.1",
+  "description": "O bot de WhatsApp mais leve e funcional que você já viu",
+  "main": "app.js",
+  "scripts": {
+    "start": "npm run start:silent --silent",
+    "start:silent": "bash dados/src/.scripts/.start.sh",
+    "start:add": "npm run start:add:silent --silent",
+    "start:add:silent": "bash dados/src/.scripts/.addnumber.sh",
+    "config": "npm run config:silent --silent",
+    "config:silent": "bash dados/src/.scripts/.config.sh",
+    "config:install": "npm run config:install:silent --silent",
+    "config:install:silent": "bash dados/src/.scripts/.config.sh --install",
+    "update": "npm run update:silent --silent",
+    "update:silent": "bash dados/src/.scripts/.update.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hiudyy/nazuninha-bot.git"
+  },
+  "homepage": "https://github.com/hiudyy/nazuninha-bot#readme",
+  "author": "Hiudy",
+  "license": "ISC",
+  "keywords": [
+    "whatsapp-bot",
+    "nazuninha",
+    "lightweight",
+    "functional"
+  ],
+  "dependencies": {
+    "@bochilteam/scraper": "latest",
+    "baileys": "npm:@cognima/walib@latest",
+    "fluent-ffmpeg": "latest",
+    "hercai": "latest",
+    "linkedom": "latest",
+    "node-webpmux": "latest",
+    "qrcode-terminal": "latest",
+    "ruhend-scraper": "latest",
+    "yt-search": "latest",
+    "crypto-js": "latest",
+    "swiftly": "latest"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  }
+}
