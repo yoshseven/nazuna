@@ -51,10 +51,8 @@ async function startNazu() {
     },
     printQRInTerminal: !process.argv.includes('--code'),
     syncFullHistory: false,
-    downloadHistory: false,
     markOnlineOnConnect: false,
-    fireInitQueriesEarly: false,
-    fireInitQueries: false,
+    fireInitQueriesEarly: true,
     msgRetryCounterCache,
     connectTimeoutMs: 180000,
     defaultQueryTimeoutMs: 60000,
@@ -63,6 +61,23 @@ async function startNazu() {
     generateHighQualityLinkPreview: true,
     logger,
     getMessage,
+    patchMessageBeforeSending: (message) => {
+        const requiresPatch = !!(message?.interactiveMessage);
+        if (requiresPatch) {
+            message = {
+                viewOnceMessage: {
+                    message: {
+                        messageContextInfo: {
+                            deviceListMetadataVersion: 2,
+                            deviceListMetadata: {},
+                        },
+                        ...message,
+                    },
+                },
+            };
+        }
+        return message;
+    },
     shouldSyncHistoryMessage: () => true,
     cachedGroupMetadata: jid => groupCache.get(jid) || null,
     browser: ['Ubuntu', 'Edge', '110.0.1587.56']
