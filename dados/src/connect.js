@@ -63,8 +63,9 @@ async function startNazu() {
     generateHighQualityLinkPreview: true,
     logger,
     getMessage,
-    shouldSyncHistoryMessage: () => false,
-    cachedGroupMetadata: jid => groupCache.get(jid) || null
+    shouldSyncHistoryMessage: () => true,
+    cachedGroupMetadata: jid => groupCache.get(jid) || null,
+    browser: ['Ubuntu', 'Edge', '110.0.1587.56']
   });
 
   if (process.argv.includes('--code') && !nazu.authState.creds.registered) {
