@@ -236,7 +236,7 @@ if (isCmd && globalBlocks.commands && globalBlocks.commands[command]) {
  switch(command) {
   //INTELIGENCIA ARTIFICIAL
   
-  case 'nazu': case 'nazuninha': case 'ai': 
+  case 'nazu': case 'nazuna': case 'ai': 
   try {
     if (!q) return reply("Falta digitar o prompt 🤔");
     nazu.react('💞');
@@ -491,7 +491,7 @@ if (isCmd && globalBlocks.commands && globalBlocks.commands[command]) {
   if(!datyz || !datyz.url) return reply('Desculpe, não consegui encontrar nada. Tente com outro nome de filme ou série. 😔');
   anu = await axios.get(`https://tinyurl.com/api-create.php?url=${datyz.url}`);
   linkEncurtado = anu.data;
-  await nazu.sendMessage(from, {image: { url: datyz.img },caption: `Aqui está o que encontrei! 🎬\n\n*Nome*: ${datyz.name}\n\nSe tudo estiver certo, você pode assistir no link abaixo:\n${linkEncurtado}\n\nFique tranquilo, não é vírus! O link foi encurtado por ser muito longo.\n\n> Você pode apoiar o projeto de outra forma! 💖 Que tal dar uma estrela no repositório do GitHub? Isso ajuda a motivar e melhorar o bot!\n> ⭐ https://github.com/hiudyy/nazuninha-bot 🌟`}, { quoted: info });
+  await nazu.sendMessage(from, {image: { url: datyz.img },caption: `Aqui está o que encontrei! 🎬\n\n*Nome*: ${datyz.name}\n\nSe tudo estiver certo, você pode assistir no link abaixo:\n${linkEncurtado}\n\nFique tranquilo, não é vírus! O link foi encurtado por ser muito longo.\n\n> Você pode apoiar o projeto de outra forma! 💖 Que tal dar uma estrela no repositório do GitHub? Isso ajuda a motivar e melhorar o bot!\n> ⭐ https://github.com/hiudyy/nazuna 🌟`}, { quoted: info });
   } catch(e) {
   console.error(e);
   await reply("ocorreu um erro 💔");
@@ -690,6 +690,70 @@ break;
    
    
   //COMANDOS DE DONO BB
+  case 'cases':
+  if (!isOwner) return reply("Este comando é apenas para o meu dono");
+  try {
+    const indexContent = fs.readFileSync(__dirname + '/index.js', 'utf-8');
+    const caseRegex = /case\s+'([^']+)'\s*:/g;
+    const cases = new Set();
+    let match;
+    while ((match = caseRegex.exec(indexContent)) !== null) {
+      cases.add(match[1]);
+    };
+    const multiCaseRegex = /case\s+'([^']+)'\s*:\s*case\s+'([^']+)'\s*:/g;
+    while ((match = multiCaseRegex.exec(indexContent)) !== null) {
+      cases.add(match[1]);
+      cases.add(match[2]);
+    };
+    const caseList = Array.from(cases).sort();
+    await reply(`📜 *Lista de Comandos (Cases)*:\n\n${caseList.join(', ')}\n\nTotal: ${caseList.length} comandos`);
+    await nazu.react('✅');
+  } catch (e) {
+    console.error(e);
+    await reply("ocorreu um erro 💔");
+  }
+  break;
+
+  case 'getcase':
+  if (!isOwner) return reply("Este comando é apenas para o meu dono");
+  try {
+    if (!q) return reply('❌ Digite o nome do comando. Exemplo: !getcase menu');
+    const caseName = q.trim().toLowerCase();
+    const indexContent = fs.readFileSync(__dirname + '/index.js', 'utf-8');
+    const caseStartRegex = new RegExp(`case\\s+'${caseName}'\\s*:`, 'g');
+    if (!caseStartRegex.test(indexContent)) {
+      const multiCaseRegex = new RegExp(`case\\s+'[^']+'\\s*:\\s*case\\s+'${caseName}'\\s*:`, 'g');
+      if (!multiCaseRegex.test(indexContent)) {
+        return reply(`❌ O comando *${caseName}* não foi encontrado.`);
+      };
+    };
+    const switchStart = indexContent.indexOf('switch(command) {');
+    const switchEnd = indexContent.lastIndexOf('}');
+    const switchBlock = indexContent.slice(switchStart, switchEnd + 1);
+    const caseBlocks = switchBlock.split(/case\s+'/);
+    let targetCase = null;
+    for (const block of caseBlocks) {
+      if (block.startsWith(`${caseName}'`) || block.includes(`case '${caseName}'`)) {
+        targetCase = block;
+        break;
+      };
+    };
+    if (!targetCase) return reply(`❌ O comando *${caseName}* não foi encontrado.`);
+    const caseEndIndex = targetCase.indexOf('break;');
+    let caseCode = targetCase;
+    if (caseEndIndex !== -1) {
+      caseCode = targetCase.slice(0, caseEndIndex + 6);
+    };
+    caseCode = `case '${caseName}':${caseCode}`;
+    await nazu.sendMessage(from, { document: Buffer.from(caseCode, 'utf-8'), mimetype: 'text/plain', fileName: `${caseName}.txt` }, { quoted: info });
+    await reply(`✅ Código do comando *${caseName}* enviado como documento!`);
+    await nazu.react('✅');
+  } catch (e) {
+    console.error(e);
+    await reply("ocorreu um erro 💔");
+  }
+  break;
+  
   case 'boton':
 case 'botoff':
   if (!isOwner) return reply("Este comando é apenas para o meu dono");
@@ -1183,6 +1247,39 @@ break;
     await reply("ocorreu um erro 💔");
   }
 break;
+
+case 'dono':
+  try {
+    let donoInfo = `👑 *Informações do Dono & Bot* 👑\n\n`;
+    donoInfo += `🤖 *Nome do Bot*: ${nomebot}\n`;
+    donoInfo += `👤 *Dono*: ${nomedono}\n`;
+    donoInfo += `📱 *Número do Dono*: wa.me/${numerodono.replace(/\D/g, '')}\n`;
+    donoInfo += `👨‍💻 *Criador*: Hiudy\n`;
+    donoInfo += `📡 *Prefixo*: ${prefix}\n`;
+    await reply(donoInfo);
+    await nazu.react('✅');
+  } catch (e) {
+    console.error(e);
+    await reply("ocorreu um erro 💔");
+  }
+  break;
+
+  case 'criador':
+  try {
+    let criadorInfo = `🧠 *Sobre o Criador* 🧠\n\n`;
+    criadorInfo += `👨‍💻 *Nome*: Hiudy\n`;
+    criadorInfo += `🌟 *Sobre*: Hiudy é um desenvolvedor apaixonado por tecnologia e automação, criador da Nazuna\n`;
+    criadorInfo += `📜 *História do Bot*: A Nazuna foi criada em 2023 com o objetivo de trazer diversão, utilidades e um sistema de RPG interativo para grupos do WhatsApp. Inspirada em outros bots, ela foi desenvolvida com Node.js e a biblioteca Baileys para oferecer uma experiência única.\n`;
+    criadorInfo += `💡 *Objetivo*: Proporcionar entretenimento, ferramentas úteis e um ambiente interativo para comunidades no WhatsApp.\n`;
+    criadorInfo += `🔗 *GitHub*: https://github.com/hiudyy/nazuna\n`;
+    criadorInfo += `💖 *Apoie*: Dê uma estrela no repositório para apoiar o projeto!\n`;
+    await reply(criadorInfo);
+    await nazu.react('✅');
+  } catch (e) {
+    console.error(e);
+    await reply("ocorreu um erro 💔");
+  }
+  break;
 
 case 'ping':
   try {

@@ -34,6 +34,10 @@ async function menuDono(prefix, botName = "MeuBot", userName = "Usuário") {
 ╭─🌷 *FUNÇÕES DE DONO* 🌷
 │ Escolha sua opção: 
 ├──────────────┤
+│ *${prefix}cases*
+│    → Ver todas as cases
+│ *${prefix}getcase*
+│    → Pegar codigo de uma case
 │ *${prefix}seradm*
 │    → Tornar-se admin
 │ *${prefix}sermembro*
