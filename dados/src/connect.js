@@ -24,8 +24,8 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const logger = pino({ level: 'silent' });
-const AUTH_DIR = path.join(__dirname, 'dados', 'database', 'qr-code');
-const DATABASE_DIR = path.join(__dirname, 'database', 'grupos');
+const AUTH_DIR = path.join(__dirname, '..', 'dados', 'database', 'qr-code');
+const DATABASE_DIR = path.join(__dirname, '..', 'database', 'grupos');
 const msgRetryCounterCache = new Map();
 const { prefixo, nomebot, nomedono, numerodono, aviso } = require('./config.json');
 
