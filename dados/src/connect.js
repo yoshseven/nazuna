@@ -114,6 +114,40 @@ async function startNazu() {
       console.error(`Erro ao carregar JSON do grupo ${from}:`, e);
       return;
     }
+    
+    if (inf.action === 'add') {
+  const sender = inf.participants[0];
+  let groupData = groupCache.get(from);
+  if (!groupData) {
+    groupData = await nazu.groupMetadata(from).catch(() => null);
+    if (!groupData) return;
+    groupCache.set(from, groupData);
+  }
+
+  const groupFilePath = `${__dirname}/database/grupos/${from}.json`;
+  let jsonGp = {};
+  if (fs.existsSync(groupFilePath)) {
+    try {
+      jsonGp = JSON.parse(fs.readFileSync(groupFilePath));
+    } catch (e) {
+      console.error(`Erro ao carregar JSON do grupo ${from}:`, e);
+    }
+  }
+
+  // Verificar blacklist
+  if (jsonGp.blacklist && jsonGp.blacklist[sender]) {
+    try {
+      await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+      await nazu.sendMessage(from, {
+        text: `🚫 @${sender.split('@')[0]} foi removido automaticamente por estar na blacklist.\nMotivo: ${jsonGp.blacklist[sender].reason}`,
+        mentions: [sender]
+      });
+    } catch (e) {
+      console.error(`Erro ao remover usuário da blacklist no grupo ${from}:`, e);
+    }
+    return;
+  }
+  }
 
     if (inf.action === 'add' && jsonGp.bemvindo) {
       const sender = inf.participants[0];

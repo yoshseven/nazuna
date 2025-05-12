@@ -30,9 +30,9 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 │ *${prefix}rebaixar*
 │    → Rebaixar admin
 │ *${prefix}mute*
-│    → Silenciar grupo
+│    → Silenciar usuário
 │ *${prefix}desmute*
-│    → Desativar silêncio
+│    → Desmutar usuário
 │ *${prefix}blockcmd*
 │    → Bloquear comando
 │ *${prefix}unblockcmd*
@@ -46,13 +46,25 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 │ *${prefix}setdesc*
 │    → Mudar descrição
 │ *${prefix}tttend* ou *${prefix}rv*
-│    → Encerrar votação
+│    → Encerrar jogo da velha
 │ *${prefix}blockuser [usuário] [motivo?]*
-│    → Bloquear usuário no grupo
+│    → Bloquear usuário no bot
 │ *${prefix}unblockuser [usuário]*
-│    → Desbloquear usuário no grupo
+│    → Desbloquear usuário no bot
 │ *${prefix}listblocksgp*
 │    → Listar bloqueios do grupo
+│ *${prefix}addblacklist [usuário] [motivo?]*
+│    → Adicionar usuário na blacklist
+│ *${prefix}delblacklist [usuário]*
+│    → Remover usuário da blacklist
+│ *${prefix}listblacklist*
+│    → Listar usuários na blacklist
+│ *${prefix}adv [usuário] [motivo?]*
+│    → Adicionar advertência a usuário
+│ *${prefix}rmadv [usuário]*
+│    → Remover advertência de usuário
+│ *${prefix}listadv*
+│    → Listar Advertências
 ╰──────────────╯
 
 ╭──🌷 *ATIVAÇÕES* 🌷──
@@ -70,8 +82,10 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 │    → Ativar boas-vindas
 │ *${prefix}saida*
 │    → Ativar mensagem de saída
+│ *${prefix}autosticker*
+│    → Ativar auto figurinhas
 │ *${prefix}soadm*
-│    → Restringir a admins
+│    → Restringir bot a admins
 ╰──────────────╯
 
 ╭🌷 *CONFIGURAÇÕES* 🌷─
@@ -83,8 +97,12 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 │    → Legenda de boas-vindas
 │ *${prefix}fotobv*
 │    → Foto de boas-vindas
+│ *${prefix}rmfotobv*
+│    → Remover Foto
 │ *${prefix}fotosaiu*
 │    → Foto de saída
+│ *${prefix}rmfotosaiu*
+│    → Remover Foto
 ╰──────────────╯
 `;
 }

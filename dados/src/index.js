@@ -114,6 +114,22 @@ try {
  //SISTEMA ANTI PORNOGRAFIA 🤫
  if (isGroup && isAntiPorn && (isImage || isVisuU || isVisuU2)) { const midiaz = info.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || info.message?.videoMessage || info.message?.stickerMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage; if (midiaz) { try { const stream = await getFileBuffer(midiaz, "image"); const mediaURL = await upload(stream, true); if (mediaURL) { const apiResponse = await axios.get(`https://nsfw-demo.sashido.io/api/image/classify?url=${mediaURL}`); const { Porn, Hentai } = apiResponse.data.reduce((acc, item) => ({...acc,[item.className]: item.probability}), {}); let userMessage = ''; let actionTaken = false; if (Porn > 0.80 || Hentai > 0.80) { if(!isGroupAdmin) { await nazu.sendMessage(from, { delete: info.key }); userMessage = `🚫 @${sender.split('@')[0]} foi removido por compartilhar conteúdo impróprio.\n\n🚫 Esta mídia contém conteúdo adulto (${apiResponse.data[0].className}) com uma probabilidade de ${apiResponse.data[0].probability.toFixed(2)} e foi removida!`; await nazu.groupParticipantsUpdate(from, [sender], "remove"); actionTaken = true; } else { await nazu.sendMessage(from, { delete: info.key }); await reply('Conteudo adulto detectado, porem como você é um administrador não irei banir.'); } } if (actionTaken) { await nazu.sendMessage(from, { text: userMessage, mentions: [sender] }, { quoted: info }); }; } } catch (error) { } } };
  //FIM 🤫
+ 
+ // SISTEMA DE AUTO FIGURINHAS
+if (isGroup && groupData.autoSticker && (isImage || isVideo || isVisuU || isVisuU2)) {
+  try {
+    const midiaz = info.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || info.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage;
+    if (midiaz) {
+      const stream = await getFileBuffer(midiaz, isImage ? "image" : "video");
+      const sticker = await sendSticker(stream, isImage ? "image" : "video");
+      if (sticker) {
+        await nazu.sendMessage(from, { sticker }, { quoted: info });
+      }
+    }
+  } catch (e) {
+    console.error("Erro ao converter mídia em figurinha automática:", e);
+  }
+};
 
  //DEFINIÇÕES DE ISQUOTED
  const content = JSON.stringify(info.message);
@@ -1691,6 +1707,38 @@ break;
    };
    break;
 
+case 'removerfotobv': case 'rmfotobv': case 'delfotobv':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
+    const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
+    let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : { welcome: {} };
+    if (!groupData.welcome?.image) return reply("❌ Não há imagem de boas-vindas configurada.");
+    delete groupData.welcome.image;
+    fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+    reply("✅ A imagem de boas-vindas foi removida com sucesso!");
+  } catch (e) {
+    console.error(e);
+    reply("Ocorreu um erro 💔");
+  }
+  break;
+
+case 'removerfotosaiu': case 'rmfotosaiu': case 'delfotosaiu':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
+    const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
+    let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : { exit: {} };
+    if (!groupData.exit?.image) return reply("❌ Não há imagem de saída configurada.");
+    delete groupData.exit.image;
+    fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+    reply("✅ A imagem de saída foi removida com sucesso!");
+  } catch (e) {
+    console.error(e);
+    reply("Ocorreu um erro 💔");
+  }
+  break;
+  
    case 'configsaida': case 'textsaiu': case 'legendasaiu': case 'exitmsg': {
      if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
      if (!isGroupAdmin) return reply("você precisa ser adm 💔");
@@ -1723,6 +1771,139 @@ break;
    };
    break;
 
+  case 'addblacklist':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
+    if (!menc_os2) return reply("Marque um usuário 🙄");
+    const reason = q.includes(' ') ? q.split(' ').slice(1).join(' ') : "Motivo não informado";
+    const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
+    let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : { blacklist: {} };
+    groupData.blacklist = groupData.blacklist || {};
+    if (groupData.blacklist[menc_os2]) return reply("❌ Este usuário já está na blacklist.");
+    groupData.blacklist[menc_os2] = { reason, timestamp: Date.now() };
+    fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+    reply(`✅ @${menc_os2.split('@')[0]} foi adicionado à blacklist.\nMotivo: ${reason}`, { mentions: [menc_os2] });
+  } catch (e) {
+    console.error(e);
+    reply("Ocorreu um erro 💔");
+  }
+  break;
+
+case 'delblacklist':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
+    if (!menc_os2) return reply("Marque um usuário 🙄");
+    const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
+    let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : { blacklist: {} };
+    groupData.blacklist = groupData.blacklist || {};
+    if (!groupData.blacklist[menc_os2]) return reply("❌ Este usuário não está na blacklist.");
+    delete groupData.blacklist[menc_os2];
+    fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+    reply(`✅ @${menc_os2.split('@')[0]} foi removido da blacklist.`, { mentions: [menc_os2] });
+  } catch (e) {
+    console.error(e);
+    reply("Ocorreu um erro 💔");
+  }
+  break;
+
+case 'listblacklist':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
+    const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
+    let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : { blacklist: {} };
+    groupData.blacklist = groupData.blacklist || {};
+    if (Object.keys(groupData.blacklist).length === 0) return reply("📋 A blacklist está vazia.");
+    let text = "📋 *Lista de Usuários na Blacklist*\n\n";
+    for (const [user, data] of Object.entries(groupData.blacklist)) {
+      text += `👤 @${user.split('@')[0]}\n📝 Motivo: ${data.reason}\n🕒 Adicionado em: ${new Date(data.timestamp).toLocaleString()}\n\n`;
+    }
+    reply(text, { mentions: Object.keys(groupData.blacklist) });
+  } catch (e) {
+    console.error(e);
+    reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'adv':
+case 'advertir':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
+    if (!menc_os2) return reply("Marque um usuário 🙄");
+    if (menc_os2 === botNumber) return reply("❌ Não posso advertir a mim mesma!");
+    const reason = q.includes(' ') ? q.split(' ').slice(1).join(' ') : "Motivo não informado";
+    const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
+    let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : { warnings: {} };
+    groupData.warnings = groupData.warnings || {};
+    groupData.warnings[menc_os2] = groupData.warnings[menc_os2] || [];
+    groupData.warnings[menc_os2].push({
+      reason,
+      timestamp: Date.now(),
+      issuer: sender
+    });
+    const warningCount = groupData.warnings[menc_os2].length;
+    fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+    if (warningCount >= 3) {
+      await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
+      delete groupData.warnings[menc_os2];
+      fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+      reply(`🚫 @${menc_os2.split('@')[0]} recebeu 3 advertências e foi banido!\nÚltima advertência: ${reason}`, { mentions: [menc_os2] });
+    } else {
+      reply(`⚠️ @${menc_os2.split('@')[0]} recebeu uma advertência (${warningCount}/3).\nMotivo: ${reason}`, { mentions: [menc_os2] });
+    }
+  } catch (e) {
+    console.error(e);
+    reply("Ocorreu um erro 💔");
+  }
+  break;
+
+case 'removeradv': case 'rmadv':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
+    if (!menc_os2) return reply("Marque um usuário 🙄");
+    const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
+    let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : { warnings: {} };
+    groupData.warnings = groupData.warnings || {};
+    if (!groupData.warnings[menc_os2] || groupData.warnings[menc_os2].length === 0) return reply("❌ Este usuário não tem advertências.");
+    groupData.warnings[menc_os2].pop();
+    if (groupData.warnings[menc_os2].length === 0) delete groupData.warnings[menc_os2];
+    fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+    reply(`✅ Uma advertência foi removida de @${menc_os2.split('@')[0]}. Advertências restantes: ${groupData.warnings[menc_os2]?.length || 0}/3`, { mentions: [menc_os2] });
+  } catch (e) {
+    console.error(e);
+    reply("Ocorreu um erro 💔");
+  }
+  break;
+
+case 'listadv':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
+    const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
+    let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : { warnings: {} };
+    groupData.warnings = groupData.warnings || {};
+    if (Object.keys(groupData.warnings).length === 0) return reply("📋 Não há advertências ativas no grupo.");
+    let text = "📋 *Lista de Advertências*\n\n";
+    for (const [user, warnings] of Object.entries(groupData.warnings)) {
+      text += `👤 @${user.split('@')[0]} (${warnings.length}/3)\n`;
+      warnings.forEach((warn, index) => {
+        text += `  ${index + 1}. Motivo: ${warn.reason}\n`;
+        text += `     Por: @${warn.issuer.split('@')[0]}\n`;
+        text += `     Em: ${new Date(warn.timestamp).toLocaleString()}\n`;
+      });
+      text += "\n";
+    }
+    reply(text, { mentions: [...Object.keys(groupData.warnings), ...Object.values(groupData.warnings).flatMap(w => w.map(warn => warn.issuer))] });
+  } catch (e) {
+    console.error(e);
+    reply("Ocorreu um erro 💔");
+  }
+  break;
+  
    case 'modorpg': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("você precisa ser adm 💔");
@@ -1783,13 +1964,11 @@ break;
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("você precisa ser adm 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
-
     const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
     let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : { antiporn: false };
     groupData.antiporn = !groupData.antiporn;
     fs.writeFileSync(groupFilePath, JSON.stringify(groupData));
     const message = groupData.antiporn ? `✅ *Antiporn foi ativado com sucesso!*\n\nAgora, se alguém enviar conteúdo adulto (NSFW), será banido automaticamente. Mantenha o grupo seguro e adequado! 🛡️` : `✅ *Antiporn foi desativado.*\n\nConteúdo adulto não será mais bloqueado. Use com responsabilidade! ⚠️`;
-
     reply(`${message}`);
     } catch (e) {
      console.error(e);
@@ -1797,6 +1976,21 @@ break;
     }
     break;
     
+    case 'autosticker':
+    try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
+    const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
+    let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {};
+    groupData.autoSticker = !groupData.autoSticker;
+    fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+    reply(`✅ Auto figurinhas ${groupData.autoSticker ? 'ativadas' : 'desativadas'}! ${groupData.autoSticker ? 'Todas as imagens e vídeos serão convertidos em figurinhas.' : ''}`);
+   } catch (e) {
+    console.error(e);
+    reply("Ocorreu um erro 💔");
+   }
+   break;
+  
     case 'antigore':
     try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
