@@ -2,19 +2,19 @@
 
 # Função para exibir mensagens formatadas
 mensagem() {
-    echo "\033[1;32m$1\033[0m"
+    printf "\033[1;32m$1\033[0m"
 }
 
 aviso() {
-    echo "\033[1;31m$1\033[0m"
+    printf "\033[1;31m$1\033[0m"
 }
 
 separador() {
-    echo "\033[1;34m============================================\033[0m"
+    printf "\033[1;34m============================================\033[0m"
 }
 
 # Obtém a versão do package.json
-versao=$(jq -r .version package.json 2>/dev/null || echo "Desconhecida")
+versao=$(jq -r .version package.json 2>/dev/null || printf "Desconhecida")
 
 # Caminho dos arquivos necessários
 config="./dados/src/config.json"
@@ -27,7 +27,7 @@ separador
 mensagem "   🚀 Inicializador da Nazuna 🚀        "
 mensagem "   🔧 Criado por Hiudy - Versão: $versao 🔧"
 separador
-echo ""
+printf ""
 
 # Verifica se a configuração já foi feita
 if [ ! -f "$config" ]; then
@@ -56,10 +56,10 @@ if [ -d "$qr_code_dir" ] && [ "$(ls -1 "$qr_code_dir" 2>/dev/null | wc -l)" -gt 
 fi
 
 # Pergunta sobre o método de conexão
-echo "🔗 Como deseja conectar o bot?"
-echo "\033[1;33m1.\033[0m Conexão por QR Code"
-echo "\033[1;33m2.\033[0m Conexão por Código"
-echo "Escolha uma opção (1/2):"
+printf "🔗 Como deseja conectar o bot?"
+printf "\033[1;33m1.\033[0m Conexão por QR Code"
+printf "\033[1;33m2.\033[0m Conexão por Código"
+printf "Escolha uma opção (1/2):"
 read conexao
 
 # Inicia conforme a escolha

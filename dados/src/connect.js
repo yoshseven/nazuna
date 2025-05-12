@@ -70,7 +70,7 @@ async function startNazu() {
 
   if (process.argv.includes('--code') && !nazu.authState.creds.registered) {
     try {
-      let phoneNumber = await ask('📞 Digite seu número (com DDD e DDI, ex: +5511999999999): ');
+      let phoneNumber = await ask('📞 Digite seu número (com DDD e DDI, ex: +5511999999999): \n\n');
       phoneNumber = phoneNumber.replace(/\D/g, '');
       if (!/^\d{10,15}$/.test(phoneNumber)) {
         console.log('❌ Número inválido! Deve ter entre 10 e 15 dígitos.');
