@@ -64,8 +64,7 @@ async function startNazu() {
     logger,
     getMessage,
     shouldSyncHistoryMessage: () => false,
-    cachedGroupMetadata: jid => groupCache.get(jid) || null,
-    browser: ['Nazuna', 'Edge', '2.0']
+    cachedGroupMetadata: jid => groupCache.get(jid) || null
   });
 
   if (process.argv.includes('--code') && !nazu.authState.creds.registered) {

@@ -21,7 +21,7 @@
   "author": "Hiudy",
   "license": "ISC",
   "dependencies": {
-    "baileys": "latest",
+    "baileys": "npm:@cognima/walib@latest",
     "fluent-ffmpeg": "latest",
     "linkedom": "latest",
     "node-webpmux": "latest",
