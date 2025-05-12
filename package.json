@@ -1,6 +1,6 @@
 {
-  "name": "nazuninha-bot",
-  "version": "0.1.1",
+  "name": "nazuna",
+  "version": "2.0",
   "description": "O bot de WhatsApp mais leve e funcional que você já viu",
   "main": "app.js",
   "scripts": {
@@ -15,17 +15,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hiudyy/nazuninha-bot.git"
+    "url": "git+https://github.com/hiudyy/nazuna.git"
   },
-  "homepage": "https://github.com/hiudyy/nazuninha-bot#readme",
+  "homepage": "https://cognima.com.br",
   "author": "Hiudy",
   "license": "ISC",
-  "keywords": [
-    "whatsapp-bot",
-    "nazuninha",
-    "lightweight",
-    "functional"
-  ],
   "dependencies": {
     "baileys": "npm:@cognima/walib@latest",
     "fluent-ffmpeg": "latest",

@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# Nazuninha Bot - Script de Atualização
+# nazuna Bot - Script de Atualização
 # Criado por Hiudy
 # Mantenha os créditos, por favor! <3
 
 # Configurações iniciais
 set -e
 BACKUP_DIR="./backup_$(date +%Y%m%d_%H%M%S)"
-TEMP_DIR="./temp_nazuninha"
-REPO_URL="https://github.com/hiudyy/nazuninha-bot.git"
+TEMP_DIR="./temp_nazuna"
+REPO_URL="https://github.com/hiudyy/nazuna.git"
 
 # Funções utilitárias
 print_message() {
@@ -113,7 +113,7 @@ cleanup() {
 # Main
 main() {
     print_separator
-    print_message "🔄 Atualização do Nazuninha Bot"
+    print_message "🔄 Atualização do nazuna Bot"
     print_message "🚀 Criado por Hiudy"
     print_separator
     echo

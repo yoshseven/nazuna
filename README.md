@@ -26,17 +26,17 @@ Métricas em tempo real do **nazuna Bot**, com o que cada uma significa:
 
 | Ícone | Badge | Descrição |
 |-------|-------|-----------|
-| 🕒 | ![Última Atualização](https://img.shields.io/github/last-commit/hiudyy/nazuna-bot?color=blue&style=flat-square) | **Última Atualização**: Quando o projeto foi atualizado pela última vez. |
-| ⭐ | ![Estrelas](https://img.shields.io/github/stars/hiudyy/nazuna-bot?color=yellow&label=Favoritos&style=flat-square) | **Favoritos**: Quantas pessoas deram estrela no GitHub. |
-| 🍴 | ![Forks](https://img.shields.io/github/forks/hiudyy/nazuna-bot?color=green&style=flat-square) | **Forks**: Cópias do projeto feitas por outros devs. |
-| 🐞 | ![Issues](https://img.shields.io/github/issues/hiudyy/nazuna-bot?color=red&style=flat-square) | **Issues**: Bugs ou sugestões reportados pela comunidade. |
-| 📝 | ![Commits](https://img.shields.io/github/commit-activity/m/hiudyy/nazuna-bot?color=purple&style=flat-square) | **Commits**: Frequência de updates no código. |
-| 💾 | ![Tamanho do Repo](https://img.shields.io/github/repo-size/hiudyy/nazuna-bot?color=orange&style=flat-square) | **Tamanho do Repo**: Espaço ocupado no GitHub. |
-| 👥 | ![Contribuidores](https://img.shields.io/github/contributors/hiudyy/nazuna-bot?color=cyan&style=flat-square) | **Contribuidores**: Pessoas que ajudaram no bot. |
-| 📥 | ![Downloads](https://img.shields.io/github/downloads/hiudyy/nazuna-bot/total?color=pink&style=flat-square) | **Downloads**: Total de downloads do projeto. |
-| 🌐 | ![Linguagens](https://img.shields.io/github/languages/top/hiudyy/nazuna-bot?color=teal&style=flat-square) | **Linguagens**: Principais linguagens do projeto. |
-| 🔄 | ![PRs](https://img.shields.io/github/issues-pr/hiudyy/nazuna-bot?color=brightgreen&style=flat-square) | **Pull Requests**: Propostas de melhorias enviadas. |
-| ⏱️ | ![Tempo de Resposta](https://img.shields.io/github/issues-closed-raw/hiudyy/nazuna-bot?color=blueviolet&style=flat-square) | **Tempo de Resposta**: Média pra resolver issues. |
+| 🕒 | ![Última Atualização](https://img.shields.io/github/last-commit/hiudyy/nazuna?color=blue&style=flat-square) | **Última Atualização**: Quando o projeto foi atualizado pela última vez. |
+| ⭐ | ![Estrelas](https://img.shields.io/github/stars/hiudyy/nazuna?color=yellow&label=Favoritos&style=flat-square) | **Favoritos**: Quantas pessoas deram estrela no GitHub. |
+| 🍴 | ![Forks](https://img.shields.io/github/forks/hiudyy/nazuna?color=green&style=flat-square) | **Forks**: Cópias do projeto feitas por outros devs. |
+| 🐞 | ![Issues](https://img.shields.io/github/issues/hiudyy/nazuna?color=red&style=flat-square) | **Issues**: Bugs ou sugestões reportados pela comunidade. |
+| 📝 | ![Commits](https://img.shields.io/github/commit-activity/m/hiudyy/nazuna?color=purple&style=flat-square) | **Commits**: Frequência de updates no código. |
+| 💾 | ![Tamanho do Repo](https://img.shields.io/github/repo-size/hiudyy/nazuna?color=orange&style=flat-square) | **Tamanho do Repo**: Espaço ocupado no GitHub. |
+| 👥 | ![Contribuidores](https://img.shields.io/github/contributors/hiudyy/nazuna?color=cyan&style=flat-square) | **Contribuidores**: Pessoas que ajudaram no bot. |
+| 📥 | ![Downloads](https://img.shields.io/github/downloads/hiudyy/nazuna/total?color=pink&style=flat-square) | **Downloads**: Total de downloads do projeto. |
+| 🌐 | ![Linguagens](https://img.shields.io/github/languages/top/hiudyy/nazuna?color=teal&style=flat-square) | **Linguagens**: Principais linguagens do projeto. |
+| 🔄 | ![PRs](https://img.shields.io/github/issues-pr/hiudyy/nazuna?color=brightgreen&style=flat-square) | **Pull Requests**: Propostas de melhorias enviadas. |
+| ⏱️ | ![Tempo de Resposta](https://img.shields.io/github/issues-closed-raw/hiudyy/nazuna?color=blueviolet&style=flat-square) | **Tempo de Resposta**: Média pra resolver issues. |
 | 📜 | ![Licença](https://img.shields.io/badge/licença-Copyright-red?style=flat-square) | **Licença**: Projeto protegido por copyright. |
 | ✅ | ![Status](https://img.shields.io/badge/STATUS-ATIVO-success?style=flat-square) | **Status**: Projeto ativo e em desenvolvimento. |
 
@@ -130,8 +130,8 @@ Bora botar o **nazuna Bot** pra rodar:
 1. **Clonar o Repositório**  
    Abra o terminal (Prompt de Comando, PowerShell ou Termux) e execute:  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    ```
 
 2. **Instalar Dependências**  
@@ -219,8 +219,8 @@ Atualiza sem mexer nas configs ou chats.
 2. **Clonar e Instalar**  
    Abra o Prompt de Comando ou PowerShell:  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -233,7 +233,7 @@ Atualiza sem mexer nas configs ou chats.
 4. **Manter Online**  
    - Use o [NSSM](https://nssm.cc/) pra rodar 24/7:  
      ```bash
-     nssm install nazuna-bot "C:\caminho\para\node.exe" "C:\caminho\para\nazuna-bot\app.js"
+     nssm install nazuna "C:\caminho\para\node.exe" "C:\caminho\para\nazuna\app.js"
      ```
    - Ou deixe o Prompt aberto (não feche!).
 
@@ -254,8 +254,8 @@ Atualiza sem mexer nas configs ou chats.
 
 2. **Clonar e Instalar**  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -269,12 +269,12 @@ Atualiza sem mexer nas configs ou chats.
    Use o `pm2`:  
    ```bash
    npm install -g pm2
-   pm2 start npm --name "nazuna-bot" -- start
+   pm2 start npm --name "nazuna" -- start
    pm2 save
    ```  
-   Monitore com `pm2 logs nazuna-bot`.
+   Monitore com `pm2 logs nazuna`.
 
-> 💡 **Dica**: Desconectou? Reinicie com `pm2 restart nazuna-bot`.
+> 💡 **Dica**: Desconectou? Reinicie com `pm2 restart nazuna`.
 
 ##### 📱 **Termux (Android)**
 
@@ -294,8 +294,8 @@ Atualiza sem mexer nas configs ou chats.
 3. **Clonar e Instalar**  
    ```bash
    cd /sdcard
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -309,7 +309,7 @@ Atualiza sem mexer nas configs ou chats.
    - Evite fechar o Termux; mantenha o celular ligado ou use app de “manter acordado”.  
    - Se parar, reinicie:  
      ```bash
-     cd /sdcard/nazuna-bot
+     cd /sdcard/nazuna
      npm start
      ```
 
@@ -337,7 +337,7 @@ Configure o **nazuna Bot** no Pterodactyl de duas formas:
 
 3. **Iniciar o Servidor**  
    - Clique em **Iniciar** no painel.  
-   - O egg clona o repo (`https://github.com/hiudyy/nazuna-bot.git`) e instala tudo.  
+   - O egg clona o repo (`https://github.com/hiudyy/nazuna.git`) e instala tudo.  
    - Conecte ao WhatsApp via QR code ou código de pareamento (use console ou VNC).
 
 4. **Manter Online**  
@@ -357,8 +357,8 @@ Configure o **nazuna Bot** no Pterodactyl de duas formas:
 2. **Clonar o Repositório**  
    - No console do Pterodactyl:  
      ```bash
-     git clone https://github.com/hiudyy/nazuna-bot.git
-     cd nazuna-bot
+     git clone https://github.com/hiudyy/nazuna.git
+     cd nazuna
      ```
 
 3. **Instalar Dependências**  
@@ -392,7 +392,7 @@ Deu pau? Soluções pros problemas mais comuns:
 | **QR Code não funciona**         | Atualize o WhatsApp, gere outro QR com `npm start`, ou cheque a internet.   |
 | **Bot desconecta**               | Reinicie com `npm start`, apague a pasta `sessions`, ou troque o número.    |
 | **Erro na instalação**           | Rode `npm install`, verifique Node.js 18+ (`node -v`), ou atualize pacotes. |
-| **Termux para**                  | Mantenha o celular ligado e reinicie com `cd /sdcard/nazuna-bot && npm start`. |
+| **Termux para**                  | Mantenha o celular ligado e reinicie com `cd /sdcard/nazuna && npm start`. |
 
 > 😊 **Tá na Merda?** Cola no [Canal do WhatsApp](https://whatsapp.com/channel/0029Vb6Ezk6LI8YXPgZPUJ2b) pra suporte!
 
@@ -431,7 +431,7 @@ Feito com ❤️ por [**Hiudy**](https://github.com/hiudyy), um dev apaixonado p
 | Ícone | Badge | Descrição |
 |-------|-------|-----------|
 | 👥 | ![Seguidores](https://img.shields.io/github/followers/hiudyy?color=blue&style=flat-square) | **Seguidores**: Quantas pessoas acompanham o Hiudy no GitHub. |
-| 📝 | ![Contribuições](https://img.shields.io/github/commit-activity/y/hiudyy/nazuna-bot) | **Contribuições**: Atividade anual do Hiudy em todos os projetos. |
+| 📝 | ![Contribuições](https://img.shields.io/github/commit-activity/y/hiudyy/nazuna) | **Contribuições**: Atividade anual do Hiudy em todos os projetos. |
 | 💬 | ![Discord](https://img.shields.io/badge/Discord-hiudyyy-7289DA?style=flat-square&logo=discord) | **Discord**: Conecte-se com o Hiudy no Discord. |
 | 📷 | ![Instagram](https://img.shields.io/badge/Instagram-hiudyyy_-E4405F?style=flat-square&logo=instagram) | **Instagram**: Siga o Hiudy no Insta pra novidades. |
 
@@ -472,17 +472,17 @@ Real-time metrics for **nazuna Bot**, with what each one means:
 
 | Icon | Badge | Description |
 |------|-------|-------------|
-| 🕒 | ![Last Update](https://img.shields.io/github/last-commit/hiudyy/nazuna-bot?color=blue&style=flat-square) | **Last Update**: When the project was last updated. |
-| ⭐ | ![Stars](https://img.shields.io/github/stars/hiudyy/nazuna-bot?color=yellow&label=Stars&style=flat-square) | **Stars**: Number of people who starred it on GitHub. |
-| 🍴 | ![Forks](https://img.shields.io/github/forks/hiudyy/nazuna-bot?color=green&style=flat-square) | **Forks**: Copies of the project made by other devs. |
-| 🐞 | ![Issues](https://img.shields.io/github/issues/hiudyy/nazuna-bot?color=red&style=flat-square) | **Issues**: Bugs or suggestions reported by the community. |
-| 📝 | ![Commits](https://img.shields.io/github/commit-activity/m/hiudyy/nazuna-bot?color=purple&style=flat-square) | **Commits**: Frequency of code updates. |
-| 💾 | ![Repo Size](https://img.shields.io/github/repo-size/hiudyy/nazuna-bot?color=orange&style=flat-square) | **Repo Size**: Space used by the project on GitHub. |
-| 👥 | ![Contributors](https://img.shields.io/github/contributors/hiudyy/nazuna-bot?color=cyan&style=flat-square) | **Contributors**: People who helped build the bot. |
-| 📥 | ![Downloads](https://img.shields.io/github/downloads/hiudyy/nazuna-bot/total?color=pink&style=flat-square) | **Downloads**: Total downloads of the project. |
-| 🌐 | ![Languages](https://img.shields.io/github/languages/top/hiudyy/nazuna-bot?color=teal&style=flat-square) | **Languages**: Main languages used in the project. |
-| 🔄 | ![PRs](https://img.shields.io/github/issues-pr/hiudyy/nazuna-bot?color=brightgreen&style=flat-square) | **Pull Requests**: Improvement proposals from the community. |
-| ⏱️ | ![Response Time](https://img.shields.io/github/issues-closed-raw/hiudyy/nazuna-bot?color=blueviolet&style=flat-square) | **Response Time**: Average time to resolve issues. |
+| 🕒 | ![Last Update](https://img.shields.io/github/last-commit/hiudyy/nazuna?color=blue&style=flat-square) | **Last Update**: When the project was last updated. |
+| ⭐ | ![Stars](https://img.shields.io/github/stars/hiudyy/nazuna?color=yellow&label=Stars&style=flat-square) | **Stars**: Number of people who starred it on GitHub. |
+| 🍴 | ![Forks](https://img.shields.io/github/forks/hiudyy/nazuna?color=green&style=flat-square) | **Forks**: Copies of the project made by other devs. |
+| 🐞 | ![Issues](https://img.shields.io/github/issues/hiudyy/nazuna?color=red&style=flat-square) | **Issues**: Bugs or suggestions reported by the community. |
+| 📝 | ![Commits](https://img.shields.io/github/commit-activity/m/hiudyy/nazuna?color=purple&style=flat-square) | **Commits**: Frequency of code updates. |
+| 💾 | ![Repo Size](https://img.shields.io/github/repo-size/hiudyy/nazuna?color=orange&style=flat-square) | **Repo Size**: Space used by the project on GitHub. |
+| 👥 | ![Contributors](https://img.shields.io/github/contributors/hiudyy/nazuna?color=cyan&style=flat-square) | **Contributors**: People who helped build the bot. |
+| 📥 | ![Downloads](https://img.shields.io/github/downloads/hiudyy/nazuna/total?color=pink&style=flat-square) | **Downloads**: Total downloads of the project. |
+| 🌐 | ![Languages](https://img.shields.io/github/languages/top/hiudyy/nazuna?color=teal&style=flat-square) | **Languages**: Main languages used in the project. |
+| 🔄 | ![PRs](https://img.shields.io/github/issues-pr/hiudyy/nazuna?color=brightgreen&style=flat-square) | **Pull Requests**: Improvement proposals from the community. |
+| ⏱️ | ![Response Time](https://img.shields.io/github/issues-closed-raw/hiudyy/nazuna?color=blueviolet&style=flat-square) | **Response Time**: Average time to resolve issues. |
 | 📜 | ![License](https://img.shields.io/badge/license-Copyright-red?style=flat-square) | **License**: Project is copyright-protected. |
 | ✅ | ![Status](https://img.shields.io/badge/STATUS-ACTIVE-success?style=flat-square) | **Status**: Project is active and under development. |
 
@@ -576,8 +576,8 @@ Let’s get **nazuna Bot** running:
 1. **Clone the Repository**  
    Open your terminal (Command Prompt, PowerShell, or Termux) and run:  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    ```
 
 2. **Install Dependencies**  
@@ -665,8 +665,8 @@ Updates without messing with your settings or chats.
 2. **Clone and Install**  
    Open Command Prompt or PowerShell:  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -679,7 +679,7 @@ Updates without messing with your settings or chats.
 4. **Keep It Online**  
    - Use [NSSM](https://nssm.cc/) to run 24/7:  
      ```bash
-     nssm install nazuna-bot "C:\path\to\node.exe" "C:\path\to\nazuna-bot\app.js"
+     nssm install nazuna "C:\path\to\node.exe" "C:\path\to\nazuna\app.js"
      ```
    - Or keep the Command Prompt open (don’t close!).
 
@@ -700,8 +700,8 @@ Updates without messing with your settings or chats.
 
 2. **Clone and Install**  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -715,12 +715,12 @@ Updates without messing with your settings or chats.
    Use `pm2`:  
    ```bash
    npm install -g pm2
-   pm2 start npm --name "nazuna-bot" -- start
+   pm2 start npm --name "nazuna" -- start
    pm2 save
    ```  
-   Monitor with `pm2 logs nazuna-bot`.
+   Monitor with `pm2 logs nazuna`.
 
-> 💡 **Tip**: Disconnected? Restart with `pm2 restart nazuna-bot`.
+> 💡 **Tip**: Disconnected? Restart with `pm2 restart nazuna`.
 
 ##### 📱 **Termux (Android)**
 
@@ -740,8 +740,8 @@ Updates without messing with your settings or chats.
 3. **Clone and Install**  
    ```bash
    cd /sdcard
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -755,7 +755,7 @@ Updates without messing with your settings or chats.
    - Prevent Termux from closing; keep phone awake (use charger or “stay awake” app).  
    - If it stops, restart:  
      ```bash
-     cd /sdcard/nazuna-bot
+     cd /sdcard/nazuna
      npm start
      ```
 
@@ -783,7 +783,7 @@ Set up **nazuna Bot** on Pterodactyl in two ways:
 
 3. **Start the Server**  
    - Click **Start** in the panel.  
-   - The egg auto-clones the repo (`https://github.com/hiudyy/nazuna-bot.git`) and installs dependencies.  
+   - The egg auto-clones the repo (`https://github.com/hiudyy/nazuna.git`) and installs dependencies.  
    - Connect to WhatsApp via QR code or pairing code (use console or VNC).
 
 4. **Keep It Online**  
@@ -803,8 +803,8 @@ Set up **nazuna Bot** on Pterodactyl in two ways:
 2. **Clone the Repository**  
    - In Pterodactyl console:  
      ```bash
-     git clone https://github.com/hiudyy/nazuna-bot.git
-     cd nazuna-bot
+     git clone https://github.com/hiudyy/nazuna.git
+     cd nazuna
      ```
 
 3. **Install Dependencies**  
@@ -838,7 +838,7 @@ Got issues? Fixes for common problems:
 | **QR Code doesn’t work**         | Update WhatsApp, generate new QR with `npm start`, or check internet.     |
 | **Bot disconnects**              | Restart with `npm start`, delete `sessions` folder, or switch numbers.    |
 | **Installation errors**          | Run `npm install`, verify Node.js 18+ (`node -v`), or update packages.    |
-| **Termux stops**                 | Keep phone awake and restart with `cd /sdcard/nazuna-bot && npm start`.|
+| **Termux stops**                 | Keep phone awake and restart with `cd /sdcard/nazuna && npm start`.|
 
 > 😊 **Still Stuck?** Hit up our [WhatsApp Channel](https://whatsapp.com/channel/0029Vb6Ezk6LI8YXPgZPUJ2b) for help!
 
@@ -877,7 +877,7 @@ Built with ❤️ by [**Hiudy**](https://github.com/hiudyy), a dev passionate ab
 | Icon | Badge | Description |
 |------|-------|-------------|
 | 👥 | ![Followers](https://img.shields.io/github/followers/hiudyy?color=blue&style=flat-square) | **Followers**: Number of people following Hiudy on GitHub. |
-| 📝 | ![Contributions](https://img.shields.io/github/commit-activity/y/hiudyy/nazuna-bot) | **Contributions**: Hiudy’s yearly activity across projects. |
+| 📝 | ![Contributions](https://img.shields.io/github/commit-activity/y/hiudyy/nazuna) | **Contributions**: Hiudy’s yearly activity across projects. |
 | 💬 | ![Discord](https://img.shields.io/badge/Discord-hiudyyy-7289DA?style=flat-square&logo=discord) | **Discord**: Connect with Hiudy on Discord. |
 | 📷 | ![Instagram](https://img.shields.io/badge/Instagram-hiudyyy_-E4405F?style=flat-square&logo=instagram) | **Instagram**: Follow Hiudy on Insta for updates. |
 
@@ -918,17 +918,17 @@ Métricas en tiempo real del **nazuna Bot**, con lo que significa cada una:
 
 | Icono | Insignia | Descripción |
 |-------|----------|-------------|
-| 🕒 | ![Última Actualización](https://img.shields.io/github/last-commit/hiudyy/nazuna-bot?color=blue&style=flat-square) | **Última Actualización**: Cuándo se actualizó el proyecto por última vez. |
-| ⭐ | ![Estrellas](https://img.shields.io/github/stars/hiudyy/nazuna-bot?color=yellow&label=Estrellas&style=flat-square) | **Estrellas**: Personas que dieron estrella en GitHub. |
-| 🍴 | ![Forks](https://img.shields.io/github/forks/hiudyy/nazuna-bot?color=green&style=flat-square) | **Forks**: Copias del proyecto hechas por otros devs. |
-| 🐞 | ![Issues](https://img.shields.io/github/issues/hiudyy/nazuna-bot?color=red&style=flat-square) | **Issues**: Errores o sugerencias reportados por la comunidad. |
-| 📝 | ![Commits](https://img.shields.io/github/commit-activity/m/hiudyy/nazuna-bot?color=purple&style=flat-square) | **Commits**: Frecuencia de actualizaciones del código. |
-| 💾 | ![Tamaño del Repo](https://img.shields.io/github/repo-size/hiudyy/nazuna-bot?color=orange&style=flat-square) | **Tamaño del Repo**: Espacio ocupado en GitHub. |
-| 👥 | ![Contribuidores](https://img.shields.io/github/contributors/hiudyy/nazuna-bot?color=cyan&style=flat-square) | **Contribuidores**: Personas que ayudaron a desarrollar el bot. |
-| 📥 | ![Descargas](https://img.shields.io/github/downloads/hiudyy/nazuna-bot/total?color=pink&style=flat-square) | **Descargas**: Total de descargas del proyecto. |
-| 🌐 | ![Lenguajes](https://img.shields.io/github/languages/top/hiudyy/nazuna-bot?color=teal&style=flat-square) | **Lenguajes**: Principales lenguajes del proyecto. |
-| 🔄 | ![PRs](https://img.shields.io/github/issues-pr/hiudyy/nazuna-bot?color=brightgreen&style=flat-square) | **Pull Requests**: Propuestas de mejoras enviadas. |
-| ⏱️ | ![Tiempo de Respuesta](https://img.shields.io/github/issues-closed-raw/hiudyy/nazuna-bot?color=blueviolet&style=flat-square) | **Tiempo de Respuesta**: Promedio para resolver issues. |
+| 🕒 | ![Última Actualización](https://img.shields.io/github/last-commit/hiudyy/nazuna?color=blue&style=flat-square) | **Última Actualización**: Cuándo se actualizó el proyecto por última vez. |
+| ⭐ | ![Estrellas](https://img.shields.io/github/stars/hiudyy/nazuna?color=yellow&label=Estrellas&style=flat-square) | **Estrellas**: Personas que dieron estrella en GitHub. |
+| 🍴 | ![Forks](https://img.shields.io/github/forks/hiudyy/nazuna?color=green&style=flat-square) | **Forks**: Copias del proyecto hechas por otros devs. |
+| 🐞 | ![Issues](https://img.shields.io/github/issues/hiudyy/nazuna?color=red&style=flat-square) | **Issues**: Errores o sugerencias reportados por la comunidad. |
+| 📝 | ![Commits](https://img.shields.io/github/commit-activity/m/hiudyy/nazuna?color=purple&style=flat-square) | **Commits**: Frecuencia de actualizaciones del código. |
+| 💾 | ![Tamaño del Repo](https://img.shields.io/github/repo-size/hiudyy/nazuna?color=orange&style=flat-square) | **Tamaño del Repo**: Espacio ocupado en GitHub. |
+| 👥 | ![Contribuidores](https://img.shields.io/github/contributors/hiudyy/nazuna?color=cyan&style=flat-square) | **Contribuidores**: Personas que ayudaron a desarrollar el bot. |
+| 📥 | ![Descargas](https://img.shields.io/github/downloads/hiudyy/nazuna/total?color=pink&style=flat-square) | **Descargas**: Total de descargas del proyecto. |
+| 🌐 | ![Lenguajes](https://img.shields.io/github/languages/top/hiudyy/nazuna?color=teal&style=flat-square) | **Lenguajes**: Principales lenguajes del proyecto. |
+| 🔄 | ![PRs](https://img.shields.io/github/issues-pr/hiudyy/nazuna?color=brightgreen&style=flat-square) | **Pull Requests**: Propuestas de mejoras enviadas. |
+| ⏱️ | ![Tiempo de Respuesta](https://img.shields.io/github/issues-closed-raw/hiudyy/nazuna?color=blueviolet&style=flat-square) | **Tiempo de Respuesta**: Promedio para resolver issues. |
 | 📜 | ![Licencia](https://img.shields.io/badge/licencia-Copyright-red?style=flat-square) | **Licencia**: Proyecto protegido por derechos de autor. |
 | ✅ | ![Estado](https://img.shields.io/badge/ESTADO-ACTIVO-success?style=flat-square) | **Estado**: Proyecto activo y en desarrollo. |
 
@@ -1022,8 +1022,8 @@ Vamos a poner **nazuna Bot** en marcha:
 1. **Clonar el Repositorio**  
    Abre tu terminal (Símbolo del sistema, PowerShell o Termux) y ejecuta:  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    ```
 
 2. **Instalar Dependencias**  
@@ -1111,8 +1111,8 @@ Actualiza sin tocar configs ni chats.
 2. **Clonar e Instalar**  
    Abre Símbolo del sistema o PowerShell:  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -1125,7 +1125,7 @@ Actualiza sin tocar configs ni chats.
 4. **Mantenerlo Activo**  
    - Usa [NSSM](https://nssm.cc/) para 24/7:  
      ```bash
-     nssm install nazuna-bot "C:\ruta\a\node.exe" "C:\ruta\a\nazuna-bot\app.js"
+     nssm install nazuna "C:\ruta\a\node.exe" "C:\ruta\a\nazuna\app.js"
      ```
    - O deja abierta la ventana del Símbolo del sistema.
 
@@ -1146,8 +1146,8 @@ Actualiza sin tocar configs ni chats.
 
 2. **Clonar e Instalar**  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -1161,12 +1161,12 @@ Actualiza sin tocar configs ni chats.
    Usa `pm2`:  
    ```bash
    npm install -g pm2
-   pm2 start npm --name "nazuna-bot" -- start
+   pm2 start npm --name "nazuna" -- start
    pm2 save
    ```  
-   Monitorea con `pm2 logs nazuna-bot`.
+   Monitorea con `pm2 logs nazuna`.
 
-> 💡 **Consejo**: ¿Desconectado? Reinicia con `pm2 restart nazuna-bot`.
+> 💡 **Consejo**: ¿Desconectado? Reinicia con `pm2 restart nazuna`.
 
 ##### 📱 **Termux (Android)**
 
@@ -1186,8 +1186,8 @@ Actualiza sin tocar configs ni chats.
 3. **Clonar e Instalar**  
    ```bash
    cd /sdcard
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -1201,7 +1201,7 @@ Actualiza sin tocar configs ni chats.
    - Evita que Termux se cierre; mantén el teléfono encendido (usa cargador o app de “mantener despierto”).  
    - Si para, reinicia:  
      ```bash
-     cd /sdcard/nazuna-bot
+     cd /sdcard/nazuna
      npm start
      ```
 
@@ -1229,7 +1229,7 @@ Configura **nazuna Bot** en Pterodactyl de dos formas:
 
 3. **Iniciar el Servidor**  
    - Haz clic en **Iniciar** en el panel.  
-   - El egg clona el repo (`https://github.com/hiudyy/nazuna-bot.git`) e instala dependencias.  
+   - El egg clona el repo (`https://github.com/hiudyy/nazuna.git`) e instala dependencias.  
    - Conecta a WhatsApp con código QR o de vinculación (usa consola o VNC).
 
 4. **Mantenerlo Activo**  
@@ -1249,8 +1249,8 @@ Configura **nazuna Bot** en Pterodactyl de dos formas:
 2. **Clonar el Repositorio**  
    - En la consola de Pterodactyl:  
      ```bash
-     git clone https://github.com/hiudyy/nazuna-bot.git
-     cd nazuna-bot
+     git clone https://github.com/hiudyy/nazuna.git
+     cd nazuna
      ```
 
 3. **Instalar Dependencias**  
@@ -1284,7 +1284,7 @@ Configura **nazuna Bot** en Pterodactyl de dos formas:
 | **Código QR no funciona**        | Actualiza WhatsApp, genera otro QR con `npm start`, o revisa internet.    |
 | **Bot se desconecta**            | Reinicia con `npm start`, elimina carpeta `sessions`, o cambia número.    |
 | **Errores de instalación**       | Ejecuta `npm install`, verifica Node.js 18+ (`node -v`), o actualiza paquetes. |
-| **Termux se detiene**            | Mantén teléfono encendido y reinicia con `cd /sdcard/nazuna-bot && npm start`. |
+| **Termux se detiene**            | Mantén teléfono encendido y reinicia con `cd /sdcard/nazuna && npm start`. |
 
 > 😊 **¿Aún con Problemas?** Únete a nuestro [Canal de WhatsApp](https://whatsapp.com/channel/0029Vb6Ezk6LI8YXPgZPUJ2b) para soporte.
 
@@ -1323,7 +1323,7 @@ Creado con ❤️ por [**Hiudy**](https://github.com/hiudyy), un dev apasionado 
 | Icono | Insignia | Descripción |
 |-------|----------|-------------|
 | 👥 | ![Seguidores](https://img.shields.io/github/followers/hiudyy?color=blue&style=flat-square) | **Seguidores**: Personas que siguen a Hiudy en GitHub. |
-| 📝 | ![Contribuciones](https://img.shields.io/github/commit-activity/y/hiudyy/nazuna-bot) | **Contribuciones**: Actividad anual de Hiudy en proyectos. |
+| 📝 | ![Contribuciones](https://img.shields.io/github/commit-activity/y/hiudyy/nazuna) | **Contribuciones**: Actividad anual de Hiudy en proyectos. |
 | 💬 | ![Discord](https://img.shields.io/badge/Discord-hiudyyy-7289DA?style=flat-square&logo=discord) | **Discord**: Conecta con Hiudy en Discord. |
 | 📷 | ![Instagram](https://img.shields.io/badge/Instagram-hiudyyy_-E4405F?style=flat-square&logo=instagram) | **Instagram**: Sigue a Hiudy en Insta para novedades. |
 
@@ -1364,17 +1364,17 @@ Metrik real-time untuk **nazuna Bot**, dengan arti masing-masing:
 
 | Ikon | Lencana | Deskripsi |
 |------|---------|-----------|
-| 🕒 | ![Pembaruan Terakhir](https://img.shields.io/github/last-commit/hiudyy/nazuna-bot?color=blue&style=flat-square) | **Pembaruan Terakhir**: Kapan proyek terakhir diperbarui. |
-| ⭐ | ![Bintang](https://img.shields.io/github/stars/hiudyy/nazuna-bot?color=yellow&label=Bintang&style=flat-square) | **Bintang**: Jumlah orang yang memberikan bintang di GitHub. |
-| 🍴 | ![Fork](https://img.shields.io/github/forks/hiudyy/nazuna-bot?color=green&style=flat-square) | **Fork**: Salinan proyek yang dibuat oleh pengembang lain. |
-| 🐞 | ![Isu](https://img.shields.io/github/issues/hiudyy/nazuna-bot?color=red&style=flat-square) | **Isu**: Bug atau saran yang dilaporkan komunitas. |
-| 📝 | ![Komit](https://img.shields.io/github/commit-activity/m/hiudyy/nazuna-bot?color=purple&style=flat-square) | **Komit**: Frekuensi pembaruan kode. |
-| 💾 | ![Ukuran Repo](https://img.shields.io/github/repo-size/hiudyy/nazuna-bot?color=orange&style=flat-square) | **Ukuran Repo**: Ruang yang digunakan proyek di GitHub. |
-| 👥 | ![Kontributor](https://img.shields.io/github/contributors/hiudyy/nazuna-bot?color=cyan&style=flat-square) | **Kontributor**: Orang yang membantu mengembangkan bot. |
-| 📥 | ![Unduhan](https://img.shields.io/github/downloads/hiudyy/nazuna-bot/total?color=pink&style=flat-square) | **Unduhan**: Total unduhan proyek. |
-| 🌐 | ![Bahasa](https://img.shields.io/github/languages/top/hiudyy/nazuna-bot?color=teal&style=flat-square) | **Bahasa**: Bahasa utama proyek. |
-| 🔄 | ![PR](https://img.shields.io/github/issues-pr/hiudyy/nazuna-bot?color=brightgreen&style=flat-square) | **Pull Request**: Usulan perbaikan dari komunitas. |
-| ⏱️ | ![Waktu Respon](https://img.shields.io/github/issues-closed-raw/hiudyy/nazuna-bot?color=blueviolet&style=flat-square) | **Waktu Respon**: Rata-rata waktu untuk menyelesaikan isu. |
+| 🕒 | ![Pembaruan Terakhir](https://img.shields.io/github/last-commit/hiudyy/nazuna?color=blue&style=flat-square) | **Pembaruan Terakhir**: Kapan proyek terakhir diperbarui. |
+| ⭐ | ![Bintang](https://img.shields.io/github/stars/hiudyy/nazuna?color=yellow&label=Bintang&style=flat-square) | **Bintang**: Jumlah orang yang memberikan bintang di GitHub. |
+| 🍴 | ![Fork](https://img.shields.io/github/forks/hiudyy/nazuna?color=green&style=flat-square) | **Fork**: Salinan proyek yang dibuat oleh pengembang lain. |
+| 🐞 | ![Isu](https://img.shields.io/github/issues/hiudyy/nazuna?color=red&style=flat-square) | **Isu**: Bug atau saran yang dilaporkan komunitas. |
+| 📝 | ![Komit](https://img.shields.io/github/commit-activity/m/hiudyy/nazuna?color=purple&style=flat-square) | **Komit**: Frekuensi pembaruan kode. |
+| 💾 | ![Ukuran Repo](https://img.shields.io/github/repo-size/hiudyy/nazuna?color=orange&style=flat-square) | **Ukuran Repo**: Ruang yang digunakan proyek di GitHub. |
+| 👥 | ![Kontributor](https://img.shields.io/github/contributors/hiudyy/nazuna?color=cyan&style=flat-square) | **Kontributor**: Orang yang membantu mengembangkan bot. |
+| 📥 | ![Unduhan](https://img.shields.io/github/downloads/hiudyy/nazuna/total?color=pink&style=flat-square) | **Unduhan**: Total unduhan proyek. |
+| 🌐 | ![Bahasa](https://img.shields.io/github/languages/top/hiudyy/nazuna?color=teal&style=flat-square) | **Bahasa**: Bahasa utama proyek. |
+| 🔄 | ![PR](https://img.shields.io/github/issues-pr/hiudyy/nazuna?color=brightgreen&style=flat-square) | **Pull Request**: Usulan perbaikan dari komunitas. |
+| ⏱️ | ![Waktu Respon](https://img.shields.io/github/issues-closed-raw/hiudyy/nazuna?color=blueviolet&style=flat-square) | **Waktu Respon**: Rata-rata waktu untuk menyelesaikan isu. |
 | 📜 | ![Lisensi](https://img.shields.io/badge/lisensi-Copyright-red?style=flat-square) | **Lisensi**: Proyek dilindungi hak cipta. |
 | ✅ | ![Status](https://img.shields.io/badge/STATUS-AKTIF-success?style=flat-square) | **Status**: Proyek aktif dan dalam pengembangan. |
 
@@ -1468,8 +1468,8 @@ Mari kita jalankan **nazuna Bot**:
 1. **Klon Repositori**  
    Buka terminal (Command Prompt, PowerShell, atau Termux) dan jalankan:  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    ```
 
 2. **Instal Dependensi**  
@@ -1557,8 +1557,8 @@ Memperbarui tanpa mengganggu pengaturan atau obrolan.
 2. **Klon dan Instal**  
    Buka Command Prompt atau PowerShell:  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -1571,7 +1571,7 @@ Memperbarui tanpa mengganggu pengaturan atau obrolan.
 4. **Jaga Online**  
    - Gunakan [NSSM](https://nssm.cc/) untuk 24/7:  
      ```bash
-     nssm install nazuna-bot "C:\jalur\ke\node.exe" "C:\jalur\ke\nazuna-bot\app.js"
+     nssm install nazuna "C:\jalur\ke\node.exe" "C:\jalur\ke\nazuna\app.js"
      ```
    - Atau biarkan Command Prompt terbuka.
 
@@ -1592,8 +1592,8 @@ Memperbarui tanpa mengganggu pengaturan atau obrolan.
 
 2. **Klon dan Instal**  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -1607,12 +1607,12 @@ Memperbarui tanpa mengganggu pengaturan atau obrolan.
    Gunakan `pm2`:  
    ```bash
    npm install -g pm2
-   pm2 start npm --name "nazuna-bot" -- start
+   pm2 start npm --name "nazuna" -- start
    pm2 save
    ```  
-   Pantau dengan `pm2 logs nazuna-bot`.
+   Pantau dengan `pm2 logs nazuna`.
 
-> 💡 **Tips**: Terputus? Mulai ulang dengan `pm2 restart nazuna-bot`.
+> 💡 **Tips**: Terputus? Mulai ulang dengan `pm2 restart nazuna`.
 
 ##### 📱 **Termux (Android)**
 
@@ -1632,8 +1632,8 @@ Memperbarui tanpa mengganggu pengaturan atau obrolan.
 3. **Klon dan Instal**  
    ```bash
    cd /sdcard
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -1647,7 +1647,7 @@ Memperbarui tanpa mengganggu pengaturan atau obrolan.
    - Jangan tutup Termux; pastikan ponsel tetap menyala (gunakan charger atau aplikasi “tetap aktif”).  
    - Jika berhenti, mulai ulang:  
      ```bash
-     cd /sdcard/nazuna-bot
+     cd /sdcard/nazuna
      npm start
      ```
 
@@ -1675,7 +1675,7 @@ Siapkan **nazuna Bot** di Pterodactyl dengan dua cara:
 
 3. **Mulai Server**  
    - Klik **Start** di panel.  
-   - Egg otomatis mengklon repo (`https://github.com/hiudyy/nazuna-bot.git`) dan menginstal dependensi.  
+   - Egg otomatis mengklon repo (`https://github.com/hiudyy/nazuna.git`) dan menginstal dependensi.  
    - Hubungkan ke WhatsApp dengan kode QR atau kode pasangan (gunakan konsol atau VNC).
 
 4. **Jaga Online**  
@@ -1695,8 +1695,8 @@ Siapkan **nazuna Bot** di Pterodactyl dengan dua cara:
 2. **Klon Repositori**  
    - Di konsol Pterodactyl:  
      ```bash
-     git clone https://github.com/hiudyy/nazuna-bot.git
-     cd nazuna-bot
+     git clone https://github.com/hiudyy/nazuna.git
+     cd nazuna
      ```
 
 3. **Inst尸体 Dependensi**  
@@ -1730,7 +1730,7 @@ Ada masalah? Solusi untuk masalah umum:
 | **Kode QR tidak berfungsi**      | Perbarui WhatsApp, buat QR baru dengan `npm start`, atau cek internet.  |
 | **Bot terputus**                 | Mulai ulang dengan `npm start`, hapus folder `sessions`, atau ganti nomor. |
 | **Error instalasi**              | Jalankan `npm install`, pastikan Node.js 18+ (`node -v`), atau perbarui paket. |
-| **Termux berhenti**              | Jaga ponsel aktif dan mulai ulang dengan `cd /sdcard/nazuna-bot && npm start`. |
+| **Termux berhenti**              | Jaga ponsel aktif dan mulai ulang dengan `cd /sdcard/nazuna && npm start`. |
 
 > 😊 **Masih Bingung?** Gabung ke [Kanal WhatsApp](https://whatsapp.com/channel/0029Vb6Ezk6LI8YXPgZPUJ2b) untuk bantuan!
 
@@ -1769,7 +1769,7 @@ Dibuat dengan ❤️ oleh [**Hiudy**](https://github.com/hiudyy), seorang pengem
 | Ikon | Lencana | Deskripsi |
 |------|---------|-----------|
 | 👥 | ![Pengikut](https://img.shields.io/github/followers/hiudyy?color=blue&style=flat-square) | **Pengikut**: Jumlah orang yang mengikuti Hiudy di GitHub. |
-| 📝 | ![Kontribusi](https://img.shields.io/github/commit-activity/y/hiudyy/nazuna-bot) | **Kontribusi**: Aktivitas tahunan Hiudy di semua proyek. |
+| 📝 | ![Kontribusi](https://img.shields.io/github/commit-activity/y/hiudyy/nazuna) | **Kontribusi**: Aktivitas tahunan Hiudy di semua proyek. |
 | 💬 | ![Discord](https://img.shields.io/badge/Discord-hiudyyy-7289DA?style=flat-square&logo=discord) | **Discord**: Terhubung dengan Hiudy di Discord. |
 | 📷 | ![Instagram](https://img.shields.io/badge/Instagram-hiudyyy_-E4405F?style=flat-square&logo=instagram) | **Instagram**: Ikuti Hiudy di Instagram untuk update. |
 
@@ -1810,17 +1810,17 @@ Métriques en temps réel pour **nazuna Bot**, avec leur signification :
 
 | Icône | Badge | Description |
 |-------|-------|-------------|
-| 🕒 | ![Dernière Mise à Jour](https://img.shields.io/github/last-commit/hiudyy/nazuna-bot?color=blue&style=flat-square) | **Dernière Mise à Jour** : Date de la dernière mise à jour du projet. |
-| ⭐ | ![Étoiles](https://img.shields.io/github/stars/hiudyy/nazuna-bot?color=yellow&label=Étoiles&style=flat-square) | **Étoiles** : Nombre de personnes ayant mis une étoile sur GitHub. |
-| 🍴 | ![Forks](https://img.shields.io/github/forks/hiudyy/nazuna-bot?color=green&style=flat-square) | **Forks** : Copies du projet réalisées par d'autres développeurs. |
-| 🐞 | ![Issues](https://img.shields.io/github/issues/hiudyy/nazuna-bot?color=red&style=flat-square) | **Issues** : Bugs ou suggestions signalés par la communauté. |
-| 📝 | ![Commits](https://img.shields.io/github/commit-activity/m/hiudyy/nazuna-bot?color=purple&style=flat-square) | **Commits** : Fréquence des mises à jour du code. |
-| 💾 | ![Taille du Repo](https://img.shields.io/github/repo-size/hiudyy/nazuna-bot?color=orange&style=flat-square) | **Taille du Repo** : Espace occupé par le projet sur GitHub. |
-| 👥 | ![Contributeurs](https://img.shields.io/github/contributors/hiudyy/nazuna-bot?color=cyan&style=flat-square) | **Contributeurs** : Personnes ayant aidé à développer le bot. |
-| 📥 | ![Téléchargements](https://img.shields.io/github/downloads/hiudyy/nazuna-bot/total?color=pink&style=flat-square) | **Téléchargements** : Nombre total de téléchargements du projet. |
-| 🌐 | ![Langages](https://img.shields.io/github/languages/top/hiudyy/nazuna-bot?color=teal&style=flat-square) | **Langages** : Principaux langages utilisés dans le projet. |
-| 🔄 | ![PRs](https://img.shields.io/github/issues-pr/hiudyy/nazuna-bot?color=brightgreen&style=flat-square) | **Pull Requests** : Propositions d'améliorations soumises. |
-| ⏱️ | ![Temps de Réponse](https://img.shields.io/github/issues-closed-raw/hiudyy/nazuna-bot?color=blueviolet&style=flat-square) | **Temps de Réponse** : Temps moyen pour résoudre les issues. |
+| 🕒 | ![Dernière Mise à Jour](https://img.shields.io/github/last-commit/hiudyy/nazuna?color=blue&style=flat-square) | **Dernière Mise à Jour** : Date de la dernière mise à jour du projet. |
+| ⭐ | ![Étoiles](https://img.shields.io/github/stars/hiudyy/nazuna?color=yellow&label=Étoiles&style=flat-square) | **Étoiles** : Nombre de personnes ayant mis une étoile sur GitHub. |
+| 🍴 | ![Forks](https://img.shields.io/github/forks/hiudyy/nazuna?color=green&style=flat-square) | **Forks** : Copies du projet réalisées par d'autres développeurs. |
+| 🐞 | ![Issues](https://img.shields.io/github/issues/hiudyy/nazuna?color=red&style=flat-square) | **Issues** : Bugs ou suggestions signalés par la communauté. |
+| 📝 | ![Commits](https://img.shields.io/github/commit-activity/m/hiudyy/nazuna?color=purple&style=flat-square) | **Commits** : Fréquence des mises à jour du code. |
+| 💾 | ![Taille du Repo](https://img.shields.io/github/repo-size/hiudyy/nazuna?color=orange&style=flat-square) | **Taille du Repo** : Espace occupé par le projet sur GitHub. |
+| 👥 | ![Contributeurs](https://img.shields.io/github/contributors/hiudyy/nazuna?color=cyan&style=flat-square) | **Contributeurs** : Personnes ayant aidé à développer le bot. |
+| 📥 | ![Téléchargements](https://img.shields.io/github/downloads/hiudyy/nazuna/total?color=pink&style=flat-square) | **Téléchargements** : Nombre total de téléchargements du projet. |
+| 🌐 | ![Langages](https://img.shields.io/github/languages/top/hiudyy/nazuna?color=teal&style=flat-square) | **Langages** : Principaux langages utilisés dans le projet. |
+| 🔄 | ![PRs](https://img.shields.io/github/issues-pr/hiudyy/nazuna?color=brightgreen&style=flat-square) | **Pull Requests** : Propositions d'améliorations soumises. |
+| ⏱️ | ![Temps de Réponse](https://img.shields.io/github/issues-closed-raw/hiudyy/nazuna?color=blueviolet&style=flat-square) | **Temps de Réponse** : Temps moyen pour résoudre les issues. |
 | 📜 | ![Licence](https://img.shields.io/badge/licence-Copyright-red?style=flat-square) | **Licence** : Projet protégé par des droits d'auteur. |
 | ✅ | ![Statut](https://img.shields.io/badge/STATUT-ACTIF-success?style=flat-square) | **Statut** : Projet actif et en développement. |
 
@@ -1914,8 +1914,8 @@ Mettons **nazuna Bot** en route :
 1. **Cloner le Dépôt**  
    Ouvrez votre terminal (Invite de commandes, PowerShell ou Termux) et exécutez :  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    ```
 
 2. **Installer les Dépendances**  
@@ -2003,8 +2003,8 @@ Met à jour sans toucher aux paramètres ni aux discussions.
 2. **Cloner et Installer**  
    Ouvrez l’Invite de commandes ou PowerShell :  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -2017,7 +2017,7 @@ Met à jour sans toucher aux paramètres ni aux discussions.
 4. **Maintenir en Ligne**  
    - Utilisez [NSSM](https://nssm.cc/) pour 24/7 :  
      ```bash
-     nssm install nazuna-bot "C:\chemin\vers\node.exe" "C:\chemin\vers\nazuna-bot\app.js"
+     nssm install nazuna "C:\chemin\vers\node.exe" "C:\chemin\vers\nazuna\app.js"
      ```
    - Ou gardez l’Invite de commandes ouverte.
 
@@ -2038,8 +2038,8 @@ Met à jour sans toucher aux paramètres ni aux discussions.
 
 2. **Cloner et Installer**  
    ```bash
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -2053,12 +2053,12 @@ Met à jour sans toucher aux paramètres ni aux discussions.
    Utilisez `pm2` :  
    ```bash
    npm install -g pm2
-   pm2 start npm --name "nazuna-bot" -- start
+   pm2 start npm --name "nazuna" -- start
    pm2 save
    ```  
-   Surveillez avec `pm2 logs nazuna-bot`.
+   Surveillez avec `pm2 logs nazuna`.
 
-> 💡 **Astuce** : Déconnecté ? Redémarrez avec `pm2 restart nazuna-bot`.
+> 💡 **Astuce** : Déconnecté ? Redémarrez avec `pm2 restart nazuna`.
 
 ##### 📱 **Termux (Android)**
 
@@ -2078,8 +2078,8 @@ Met à jour sans toucher aux paramètres ni aux discussions.
 3. **Cloner et Installer**  
    ```bash
    cd /sdcard
-   git clone https://github.com/hiudyy/nazuna-bot.git
-   cd nazuna-bot
+   git clone https://github.com/hiudyy/nazuna.git
+   cd nazuna
    npm run config
    npm run config:install
    ```
@@ -2093,7 +2093,7 @@ Met à jour sans toucher aux paramètres ni aux discussions.
    - Évitez de fermer Termux ; gardez le téléphone allumé (utilisez un chargeur ou une app “rester éveillé”).  
    - En cas d’arrêt, redémarrez :  
      ```bash
-     cd /sdcard/nazuna-bot
+     cd /sdcard/nazuna
      npm start
      ```
 
@@ -2121,7 +2121,7 @@ Configurez **nazuna Bot** sur Pterodactyl de deux manières :
 
 3. **Démarrer le Serveur**  
    - Cliquez sur **Démarrer** dans le panneau.  
-   - L’egg clone automatiquement le dépôt (`https://github.com/hiudyy/nazuna-bot.git`) et installe les dépendances.  
+   - L’egg clone automatiquement le dépôt (`https://github.com/hiudyy/nazuna.git`) et installe les dépendances.  
    - Connectez-vous à WhatsApp avec un QR code ou un code de jumelage (via console ou VNC).
 
 4. **Maintenir en Ligne**  
@@ -2141,8 +2141,8 @@ Configurez **nazuna Bot** sur Pterodactyl de deux manières :
 2. **Cloner le Dépôt**  
    - Dans la console Pterodactyl :  
      ```bash
-     git clone https://github.com/hiudyy/nazuna-bot.git
-     cd nazuna-bot
+     git clone https://github.com/hiudyy/nazuna.git
+     cd nazuna
      ```
 
 3. **Installer les Dépendances**  
@@ -2176,7 +2176,7 @@ Des soucis ? Solutions pour les problèmes courants :
 | **QR Code ne fonctionne pas**    | Mettez à jour WhatsApp, générez un nouveau QR avec `npm start`, ou vérifiez internet. |
 | **Bot se déconnecte**            | Relancez avec `npm start`, supprimez le dossier `sessions`, ou changez de numéro. |
 | **Erreurs d’installation**       | Exécutez `npm install`, vérifiez Node.js 18+ (`node -v`), ou mettez à jour les paquets. |
-| **Termux s’arrête**              | Gardez le téléphone allumé et relancez avec `cd /sdcard/nazuna-bot && npm start`. |
+| **Termux s’arrête**              | Gardez le téléphone allumé et relancez avec `cd /sdcard/nazuna && npm start`. |
 
 > 😊 **Toujours Bloqué ?** Rejoignez notre [Canal WhatsApp](https://whatsapp.com/channel/0029Vb6Ezk6LI8YXPgZPUJ2b) pour de l’aide !
 
@@ -2215,7 +2215,7 @@ Créé avec ❤️ par [**Hiudy**](https://github.com/hiudyy), un développeur p
 | Icône | Badge | Description |
 |-------|-------|-------------|
 | 👥 | ![Abonnés](https://img.shields.io/github/followers/hiudyy?color=blue&style=flat-square) | **Abonnés** : Nombre de personnes suivant Hiudy sur GitHub. |
-| 📝 | ![Contributions](https://img.shields.io/github/commit-activity/y/hiudyy/nazuna-bot) | **Contributions** : Activité annuelle de Hiudy sur tous les projets. |
+| 📝 | ![Contributions](https://img.shields.io/github/commit-activity/y/hiudyy/nazuna) | **Contributions** : Activité annuelle de Hiudy sur tous les projets. |
 | 💬 | ![Discord](https://img.shields.io/badge/Discord-hiudyyy-7289DA?style=flat-square&logo=discord) | **Discord** : Connectez-vous avec Hiudy sur Discord. |
 | 📷 | ![Instagram](https://img.shields.io/badge/Instagram-hiudyyy_-E4405F?style=flat-square&logo=instagram) | **Instagram** : Suivez Hiudy sur Insta pour les nouveautés. |
 
