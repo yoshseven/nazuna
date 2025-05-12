@@ -2641,7 +2641,7 @@ case 'listadv':
     let data = fs.existsSync(path) ? JSON.parse(fs.readFileSync(path)) : { mark: {} };
     let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
     const membro1 = membros[Math.floor(Math.random() * membros.length)];
-    let membro2 = membros[Math.floor(Math.random() * membroslength)];
+    let membro2 = membros[Math.floor(Math.random() * membros.length)];
     while (membro2 === membro1) {
       membro2 = membros[Math.floor(Math.random() * membros.length)];
     };
