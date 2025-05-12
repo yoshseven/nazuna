@@ -116,16 +116,17 @@ try {
  //FIM 🤫
  
  // SISTEMA DE AUTO FIGURINHAS
-if (isGroup && groupData.autoSticker && (isImage || isVideo || isVisuU || isVisuU2)) {
+if (isGroup && groupData.autoSticker && !info.key.fromMe) {
   try {
-    const midiaz = info.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || info.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage;
-    if (midiaz) {
-      const stream = await getFileBuffer(midiaz, JSON.stringify(midiaz).includes('image') ? "image" : "video");
-      const sticker = await sendSticker(stream, JSON.stringify(midiaz).includes('image') ? "image" : "video");
-      if (sticker) {
-        await nazu.sendMessage(from, { sticker }, { quoted: info });
-      }
-    }
+    var boij2 = info.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage;
+   var boij = info.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage;
+    if (boij || boij2) {
+    var isVideo2 = !!boij;
+    if (isVideo2 && boij.seconds > 9.9) {} else {
+    var buffer = await getFileBuffer(isVideo2 ? boij : boij2, isVideo2 ? 'video' : 'image');
+    await sendSticker(nazu, from, { sticker: buffer, author: 'Hiudy', packname: 'By:', type: isVideo2 ? 'video' : 'image'}, { quoted: info });
+    };
+    };
   } catch (e) {
     console.error("Erro ao converter mídia em figurinha automática:", e);
   }
