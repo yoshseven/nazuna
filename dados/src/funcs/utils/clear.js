@@ -15,8 +15,8 @@ const CONFIG = {
     TEMP_CLEANUP: 60 * 60 * 1000    // 1 hora
   },
   THRESHOLDS: {
-    MEMORY_USAGE: 0.85,  // 85% do total
-    HEAP_USAGE: 0.90     // 90% do heap máximo
+    MEMORY_USAGE: 0.99,  // 85% do total
+    HEAP_USAGE: 0.99     // 90% do heap máximo
   },
   PATHS: {
     TEMP: path.join(__dirname, '../../../database/tmp'),

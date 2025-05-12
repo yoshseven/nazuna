@@ -6,8 +6,6 @@
   "scripts": {
     "start": "npm run start:silent --silent",
     "start:silent": "bash dados/src/.scripts/.start.sh",
-    "start:add": "npm run start:add:silent --silent",
-    "start:add:silent": "bash dados/src/.scripts/.addnumber.sh",
     "config": "npm run config:silent --silent",
     "config:silent": "bash dados/src/.scripts/.config.sh",
     "config:install": "npm run config:install:silent --silent",
@@ -29,17 +27,14 @@
     "functional"
   ],
   "dependencies": {
-    "@bochilteam/scraper": "latest",
     "baileys": "npm:@cognima/walib@latest",
     "fluent-ffmpeg": "latest",
-    "hercai": "latest",
     "linkedom": "latest",
     "node-webpmux": "latest",
     "qrcode-terminal": "latest",
     "ruhend-scraper": "latest",
     "yt-search": "latest",
-    "crypto-js": "latest",
-    "swiftly": "latest"
+    "crypto-js": "latest"
   },
   "engines": {
     "node": ">=20.0.0",

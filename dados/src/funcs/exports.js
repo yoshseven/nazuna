@@ -52,7 +52,6 @@ const youtube = loadModule(path.join(downloadsDir, 'youtube.js'), 'youtube');
 const tiktok = loadModule(path.join(downloadsDir, 'tiktok.js'), 'tiktok');
 const pinterest = loadModule(path.join(downloadsDir, 'pinterest.js'), 'pinterest');
 const igdl = loadModule(path.join(downloadsDir, 'igdl.js'), 'igdl');
-const google = loadModule(path.join(downloadsDir, 'google.js'), 'google');
 const mcPlugin = loadModule(path.join(downloadsDir, 'mcplugins.js'), 'mcPlugin');
 const FilmesDL = loadModule(path.join(downloadsDir, 'filmes.js'), 'FilmesDL');
 const apkMod = loadModule(path.join(downloadsDir, 'apkmod.js'), 'apkMod');
@@ -93,6 +92,5 @@ module.exports = {
   rpg,
   toolsJson: () => toolsJson,
   vabJson: () => vabJson,
-  apkMod,
-  google
+  apkMod
 };
