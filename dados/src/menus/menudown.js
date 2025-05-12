@@ -40,6 +40,8 @@ async function menudown(prefix, botName = "MeuBot", userName = "Usuário") {
 │    → Baixar do Pinterest
 │ *${prefix}instagram* ou *${prefix}ig*
 │    → Baixar do Instagram
+│ **${prefix}igstory*
+│    → Baixar story do Instagram
 ╰──────────────╯
 `;
 }

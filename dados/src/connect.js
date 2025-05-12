@@ -195,7 +195,7 @@ async function startNazu() {
         delete require.cache[require.resolve(indexModulePath)];
         const indexModule = require(indexModulePath);
         if (typeof indexModule === 'function') {
-          await indexModule(nazu, info);
+          await indexModule(nazu, info, store);
         } else {
           console.error('O módulo index.js não exporta uma função válida.');
         }

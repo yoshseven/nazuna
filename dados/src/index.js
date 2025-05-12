@@ -12,7 +12,7 @@ const pathz = require('path');
 const fs = require('fs');
 const os = require('os');
 
-async function NazuninhaBotExec(nazu, info) {
+async function NazuninhaBotExec(nazu, info, store) {
 const { numerodono, nomedono, nomebot, prefixo, prefixo: prefix, debug } = JSON.parse(fs.readFileSync(__dirname+'/config.json'));
 
 try {
@@ -618,7 +618,7 @@ break;
    }
    break;
    
-   case 'instagram': case 'igdl': case 'ig': case 'instavideo':
+   case 'instagram': case 'igdl': case 'ig': case 'instavideo': case 'igstory':
   try {
     if (!q) return reply(`Digite um link do Instagram.\n> Ex: ${prefix}${command} https://www.instagram.com/reel/DFaq_X7uoiT/?igsh=M3Q3N2ZyMWU1M3Bo`);
     nazu.react(['📌']);
@@ -1719,6 +1719,41 @@ case 'ping':
     };
     break;
     
+    case 'onlines':
+  if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
+  if (!isGroupAdmin) return reply("você precisa ser adm 💔");
+
+  try {
+    const groupId = from;
+    let onlineMembers = [];
+    if (store.presences?.[groupId]) {
+      onlineMembers = Object.keys(store.presences[groupId]).filter(memberId => {
+        const presence = store.presences[groupId][memberId];
+        return presence?.lastKnownPresence === 'available' || presence?.lastKnownPresence === 'composing';
+      });
+    };
+    const mentions = onlineMembers.map(memberId => {
+        const member = groupMetadata.participants.find(p => p.id === memberId);
+        if (member) {
+          return {
+            id: memberId.replace('@c.us', '@s.whatsapp.net'),
+            name: memberId.split('@')[0]
+          };
+        }
+        return null;
+      }).filter(Boolean);
+    if (mentions.length > 0) {
+      const message = ['✨ **Pessoas Online no Grupo:** ✨\n', mentions.map(v => `👤 • @${v.name}`).join('\n')].join('');
+      await nazu.sendMessage(from, { text: message, mentions: mentions.map(v => v.id)}, {quoted: info});
+    } else {
+      reply('Nenhum membro online no momento.');
+    };
+  } catch (err) {
+    console.error('Erro ao processar comando "onlines":', err);
+    reply('Ocorreu um erro ao obter a lista de membros online.');
+  };
+  break;
+  
     case 'modobrincadeira': case 'modobrincadeiras': case 'modobn': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("você precisa ser adm 💔");
