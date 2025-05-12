@@ -120,8 +120,8 @@ if (isGroup && groupData.autoSticker && (isImage || isVideo || isVisuU || isVisu
   try {
     const midiaz = info.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || info.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage;
     if (midiaz) {
-      const stream = await getFileBuffer(midiaz, isImage ? "image" : "video");
-      const sticker = await sendSticker(stream, isImage ? "image" : "video");
+      const stream = await getFileBuffer(midiaz, JSON.stringify(midiaz).includes('image') ? "image" : "video");
+      const sticker = await sendSticker(stream, JSON.stringify(midiaz).includes('image') ? "image" : "video");
       if (sticker) {
         await nazu.sendMessage(from, { sticker }, { quoted: info });
       }
