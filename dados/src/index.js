@@ -1720,10 +1720,10 @@ case 'ping':
     break;
     
     case 'onlines':
-  if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-  if (!isGroupAdmin) return reply("você precisa ser adm 💔");
+    if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("você precisa ser adm 💔");
 
-  try {
+    try {
     const groupId = from;
     let onlineMembers = [];
     if (store.presences?.[groupId]) {
@@ -1739,11 +1739,11 @@ case 'ping':
             id: memberId.replace('@c.us', '@s.whatsapp.net'),
             name: memberId.split('@')[0]
           };
-        }
+        };
         return null;
       }).filter(Boolean);
     if (mentions.length > 0) {
-      const message = ['✨ **Pessoas Online no Grupo:** ✨\n', mentions.map(v => `👤 • @${v.name}`).join('\n')].join('');
+      const message = ['✨ *Pessoas Online no Grupo:* ✨\n', mentions.map(v => `👤 • @${v.name}`).join('\n')].join('');
       await nazu.sendMessage(from, { text: message, mentions: mentions.map(v => v.id)}, {quoted: info});
     } else {
       reply('Nenhum membro online no momento.');
