@@ -115,6 +115,39 @@ async function startNazu() {
       return;
     }
     
+    if ((inf.action === 'promote' || inf.action === 'demote') && jsonGp.x9) {
+    const action = inf.action === 'promote' ? 'promovido a administrador' : 'rebaixado de administrador';
+    const by = inf.author || 'alguém';
+    await nazu.sendMessage(from, {
+    text: `🕵️ *X9 Mode* 🕵️\n\n@${inf.participants[0].split('@')[0]} foi ${action} por @${by.split('@')[0]}!`,
+    mentions: [inf.participants[0], by]
+    });
+    }
+
+if (inf.action === 'add' && jsonGp.antifake) {
+  const participant = inf.participants[0];
+  const countryCode = participant.split('@')[0].substring(0, 2);
+  if (!['55', '35'].includes(countryCode)) {
+    await nazu.groupParticipantsUpdate(from, [participant], 'remove');
+    await nazu.sendMessage(from, {
+      text: `🚫 @${participant.split('@')[0]} foi removido por ser de um país não permitido (antifake ativado)!`,
+      mentions: [participant]
+    });
+  }
+}
+
+if (inf.action === 'add' && jsonGp.antipt) {
+  const participant = inf.participants[0];
+  const countryCode = participant.split('@')[0].substring(0, 3);
+  if (countryCode === '351') {
+    await nazu.groupParticipantsUpdate(from, [participant], 'remove');
+    await nazu.sendMessage(from, {
+      text: `🚫 @${participant.split('@')[0]} foi removido por ser de Portugal (antipt ativado)!`,
+      mentions: [participant]
+    });
+  }
+}
+  
     if (inf.action === 'add') {
   const sender = inf.participants[0];
   let groupData = groupCache.get(from);
@@ -123,17 +156,6 @@ async function startNazu() {
     if (!groupData) return;
     groupCache.set(from, groupData);
   }
-
-  const groupFilePath = `${__dirname}/database/grupos/${from}.json`;
-  let jsonGp = {};
-  if (fs.existsSync(groupFilePath)) {
-    try {
-      jsonGp = JSON.parse(fs.readFileSync(groupFilePath));
-    } catch (e) {
-      console.error(`Erro ao carregar JSON do grupo ${from}:`, e);
-    }
-  }
-
   // Verificar blacklist
   if (jsonGp.blacklist && jsonGp.blacklist[sender]) {
     try {

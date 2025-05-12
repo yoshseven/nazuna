@@ -53,7 +53,27 @@ try {
   if (!fs.existsSync(__dirname + `/../database/grupos`)) fs.mkdirSync(__dirname + `/../database/grupos`, { recursive: true });
   if (!fs.existsSync(__dirname + `/../database/users`)) fs.mkdirSync(__dirname + `/../database/users`, { recursive: true });
   if (!fs.existsSync(__dirname + `/../database/dono`)) fs.mkdirSync(__dirname + `/../database/dono`, { recursive: true });
-  
+   if (!fs.existsSync(__dirname + '/../database/antiflood.json')) {
+  fs.writeFileSync(__dirname + '/../database/antiflood.json', JSON.stringify({}, null, 2));
+  }
+  if (!fs.existsSync(__dirname + '/../database/cmdlimit.json')) {
+  fs.writeFileSync(__dirname + '/../database/cmdlimit.json', JSON.stringify({}, null, 2));
+  }
+  if (!fs.existsSync(__dirname + '/../database/antipv.json')) {
+  fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify({}, null, 2));
+}
+
+ //SISTEMAS DE ANTIPV
+ const antipvData = JSON.parse(fs.existsSync(__dirname + '/../database/antipv.json') ? fs.readFileSync(__dirname + '/../database/antipv.json') : '{}');
+ if (!isGroup && antipvData.mode === 'antipv' && !isOwner) return;
+ if (!isGroup && antipvData.mode === 'antipv2' && isCmd && !isOwner) {
+  return reply('🚫 Este comando só funciona em grupos!');
+ };
+ if (!isGroup && antipvData.mode === 'antipv3' && isCmd && !isOwner) {
+  await nazu.updateBlockStatus(sender, 'block');
+  return reply('🚫 Você foi bloqueado por usar comandos no privado!');
+ };
+
  //SISTEMA DE PREMIUM
  if (!fs.existsSync(__dirname + `/../database/dono/premium.json`)) fs.writeFileSync(__dirname + `/../database/dono/premium.json`, JSON.stringify({}, null, 2));
  const premiumListaZinha = JSON.parse(fs.readFileSync(__dirname + `/../database/dono/premium.json`, 'utf-8'));
@@ -114,7 +134,80 @@ try {
  //SISTEMA ANTI PORNOGRAFIA 🤫
  if (isGroup && isAntiPorn && (isImage || isVisuU || isVisuU2)) { const midiaz = info.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || info.message?.videoMessage || info.message?.stickerMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage; if (midiaz) { try { const stream = await getFileBuffer(midiaz, "image"); const mediaURL = await upload(stream, true); if (mediaURL) { const apiResponse = await axios.get(`https://nsfw-demo.sashido.io/api/image/classify?url=${mediaURL}`); const { Porn, Hentai } = apiResponse.data.reduce((acc, item) => ({...acc,[item.className]: item.probability}), {}); let userMessage = ''; let actionTaken = false; if (Porn > 0.80 || Hentai > 0.80) { if(!isGroupAdmin) { await nazu.sendMessage(from, { delete: info.key }); userMessage = `🚫 @${sender.split('@')[0]} foi removido por compartilhar conteúdo impróprio.\n\n🚫 Esta mídia contém conteúdo adulto (${apiResponse.data[0].className}) com uma probabilidade de ${apiResponse.data[0].probability.toFixed(2)} e foi removida!`; await nazu.groupParticipantsUpdate(from, [sender], "remove"); actionTaken = true; } else { await nazu.sendMessage(from, { delete: info.key }); await reply('Conteudo adulto detectado, porem como você é um administrador não irei banir.'); } } if (actionTaken) { await nazu.sendMessage(from, { text: userMessage, mentions: [sender] }, { quoted: info }); }; } } catch (error) { } } };
  //FIM 🤫
- 
+
+ //SISTEMA DE ANTILOC
+if (isGroup && groupData.antiloc && !isGroupAdmin && type === 'locationMessage') {
+  await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+  await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+  await reply(`🚫 @${sender.split('@')[0]} foi removido por enviar uma localização!`, { mentions: [sender] });
+};
+
+ //SISTEMA DE ANTIFLOOD
+const antifloodData = JSON.parse(fs.readFileSync(__dirname + '/../database/antiflood.json'));
+if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
+  antifloodData[from].users = antifloodData[from].users || {};
+  const now = Date.now();
+  const lastCmd = antifloodData[from].users[sender]?.lastCmd || 0;
+  const interval = antifloodData[from].interval * 1000;
+  if (now - lastCmd < interval) {
+    return reply(`⏳ Aguarde ${Math.ceil((interval - (now - lastCmd)) / 1000)} segundos antes de usar outro comando!`);
+  }
+  antifloodData[from].users[sender] = { lastCmd: now };
+  fs.writeFileSync(__dirname + '/../database/antiflood.json', JSON.stringify(antifloodData, null, 2));
+};
+
+ //SISTEMA DE ANTI DOCUMENTO
+if (isGroup && groupData.antidoc && !isGroupAdmin && (type === 'documentMessage' || type === 'documentWithCaptionMessage')) {
+  await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+  await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+  await reply(`🚫 @${sender.split('@')[0]} foi removido por enviar um documento!`, { mentions: [sender] });
+};
+
+ //SISTEMA DE LIMITAR COMANDOS
+const cmdLimitData = JSON.parse(fs.readFileSync(__dirname + '/../database/cmdlimit.json'));
+if (isGroup && cmdLimitData[from]?.enabled && isCmd && !isGroupAdmin) {
+  cmdLimitData[from].users = cmdLimitData[from].users || {};
+  const today = new Date().toISOString().split('T')[0];
+  cmdLimitData[from].users[sender] = cmdLimitData[from].users[sender] || { date: today, count: 0 };
+  if (cmdLimitData[from].users[sender].date !== today) {
+    cmdLimitData[from].users[sender] = { date: today, count: 0 };
+  }
+  if (cmdLimitData[from].users[sender].count >= cmdLimitData[from].limit) {
+    return reply(`🚫 Você atingiu o limite de ${cmdLimitData[from].limit} comandos por dia!`);
+  }
+  cmdLimitData[from].users[sender].count++;
+  fs.writeFileSync(__dirname + '/../database/cmdlimit.json', JSON.stringify(cmdLimitData, null, 2));
+}
+
+ //SISTEMA DE AUTO DOWNLOAD
+if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
+  const urlMatch = body.match(/(https?:\/\/[^\s]+)/g);
+  if (urlMatch) {
+    for (const url of urlMatch) {
+      try {
+        if (url.includes('tiktok.com')) {
+          const datinha = await tiktok.dl(url);
+          if (datinha.ok) {
+            await nazu.sendMessage(from, { [datinha.type]: { url: datinha.urls[0] }, caption: '🎵 Download automático do TikTok!' }, { quoted: info });
+          }
+        } else if (url.includes('instagram.com')) {
+          const datinha = await igdl.dl(url);
+          if (datinha.ok) {
+            await nazu.sendMessage(from, { [datinha.data[0].type]: datinha.data[0].buff, caption: '📸 Download automático do Instagram!' }, { quoted: info });
+          }
+        } else if (url.includes('pinterest.com') || url.includes('pin.it') ) {
+          const datinha = await pinterest.dl(url);
+          if (datinha.ok) {
+            await nazu.sendMessage(from, { [datinha.type]: { url: datinha.urls[0] }, caption: '📌 Download automático do Pinterest!' }, { quoted: info });
+          }
+        }
+      } catch (e) {
+        console.error('Erro no autodl:', e);
+      }
+    }
+  }
+}
+
  // SISTEMA DE AUTO FIGURINHAS
 if (isGroup && groupData.autoSticker && !info.key.fromMe) {
   try {
@@ -132,6 +225,14 @@ if (isGroup && groupData.autoSticker && !info.key.fromMe) {
   }
 };
 
+ // SISTEMA DE ANTILINK HARD
+ if (isGroup && groupData.antilinkhard && !isGroupAdmin && budy2.includes('http') && !isOwner) {
+  await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+  await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+  await reply(`🚫 @${sender.split('@')[0]} foi removido por enviar um link!`, { mentions: [sender] });
+ };
+
+  
  //DEFINIÇÕES DE ISQUOTED
  const content = JSON.stringify(info.message);
  const isQuotedMsg = type === 'extendedTextMessage' && content.includes('conversation')
@@ -690,6 +791,88 @@ break;
    
    
   //COMANDOS DE DONO BB
+  case 'antipv3':
+  try {
+    if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
+    antipvData.mode = antipvData.mode === 'antipv3' ? null : 'antipv3';
+    fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify(antipvData, null, 2));
+    await reply(`✅ Antipv3 ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'bloqueia usuários que usam comandos no privado' : 'responde normalmente no privado'}.`);
+    nazu.react('🔒');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'antipv2':
+  try {
+    if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
+    antipvData.mode = antipvData.mode === 'antipv2' ? null : 'antipv2';
+    fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify(antipvData, null, 2));
+    await reply(`✅ Antipv2 ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'avisa que comandos só funcionam em grupos no privado' : 'responde normalmente no privado'}.`);
+    nazu.react('🔒');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  case 'antipv':
+  try {
+    if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
+    antipvData.mode = antipvData.mode === 'antipv' ? null : 'antipv';
+    fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify(antipvData, null, 2));
+    await reply(`✅ Antipv ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'ignora mensagens no privado' : 'responde normalmente no privado'}.`);
+    nazu.react('🔒');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'entrar':
+  try {
+    if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
+    if (!q || !q.includes('chat.whatsapp.com')) return reply('Digite um link de convite válido! Exemplo: !entrar https://chat.whatsapp.com/...');
+    const code = q.split('https://chat.whatsapp.com/')[1];
+    await nazu.groupAcceptInvite(code).then((res) => {
+      reply(`✅ Entrei no grupo com sucesso! ID: ${res}`);
+      nazu.react('🎉');
+    }).catch((err) => {
+      reply('❌ Erro ao entrar no grupo. Link inválido ou permissão negada.');
+    });
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'tm':
+  try {
+    if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
+    if (!q && !isQuotedImage && !isQuotedVideo) return reply('Digite uma mensagem ou marque uma imagem/vídeo! Exemplo: !tm Olá a todos!');
+    let message = {};
+    if (isQuotedImage) {
+      const image = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage, 'image');
+      message = { image, caption: q || 'Transmissão do dono!' };
+    } else if (isQuotedVideo) {
+      const video = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage, 'video');
+      message = { video, caption: q || 'Transmissão do dono!' };
+    } else {
+      message = { text: q };
+    }
+    const groups = await nazu.groupFetchAllParticipating();
+    for (const group of Object.values(groups)) {
+      await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * (30000 - 10000) + 10000)));
+      await nazu.sendMessage(group.id, message);
+    }
+    await reply(`✅ Transmissão enviada para ${Object.keys(groups).length} grupos!`);
+    nazu.react('📢');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
   case 'cases':
   if (!isOwner) return reply("Este comando é apenas para o meu dono");
   try {
@@ -706,7 +889,7 @@ break;
       cases.add(match[2]);
     };
     const caseList = Array.from(cases).sort();
-    await reply(`📜 *Lista de Comandos (Cases)*:\n\n${caseList.join(', ')}\n\nTotal: ${caseList.length} comandos`);
+    await reply(`📜 *Lista de Comandos (Cases)*:\n\n${caseList.join('\n')}\n\nTotal: ${caseList.length} comandos`);
     await nazu.react('✅');
   } catch (e) {
     console.error(e);
@@ -1753,6 +1936,157 @@ case 'ping':
     reply('Ocorreu um erro ao obter a lista de membros online.');
   };
   break;
+   
+   case 'antilinkhard':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
+    if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
+    groupData.antilinkhard = !groupData.antilinkhard;
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    await reply(`✅ Antilinkhard ${groupData.antilinkhard ? 'ativado' : 'desativado'}! Qualquer link enviado resultará em banimento.`);
+    nazu.react('🔗');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+
+  case 'autodl':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
+    groupData.autodl = !groupData.autodl;
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    await reply(`✅ Autodl ${groupData.autodl ? 'ativado' : 'desativado'}! Links suportados serão baixados automaticamente.`);
+    nazu.react('📥');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'cmdlimit':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
+    if (!q) return reply(`Digite o limite de comandos por dia ou "off" para desativar.\nExemplo: !cmdlimit 10`);
+    cmdLimitData[from] = cmdLimitData[from] || { users: {} };
+    if (q.toLowerCase() === 'off') {
+      cmdLimitData[from].enabled = false;
+      delete cmdLimitData[from].limit;
+    } else {
+      const limit = parseInt(q);
+      if (isNaN(limit) || limit < 1) return reply('Limite inválido! Use um número maior que 0 ou "off".');
+      cmdLimitData[from].enabled = true;
+      cmdLimitData[from].limit = limit;
+    }
+    fs.writeFileSync(__dirname + '/../database/cmdlimit.json', JSON.stringify(cmdLimitData, null, 2));
+    await reply(`✅ Limite de comandos ${cmdLimitData[from].enabled ? `definido para ${cmdLimitData[from].limit} por dia` : 'desativado'}!`);
+    nazu.react('📊');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'antipt':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
+    if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
+    groupData.antipt = !groupData.antipt;
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    await reply(`✅ AntiPT ${groupData.antipt ? 'ativado' : 'desativado'}! Membros de Portugal serão banidos.`);
+    nazu.react('🇵🇹');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+ case 'antifake':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
+    if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
+    groupData.antifake = !groupData.antifake;
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    await reply(`✅ Antifake ${groupData.antifake ? 'ativado' : 'desativado'}! Membros de fora do Brasil/Portugal serão banidos.`);
+    nazu.react('🇧🇷');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+
+  case 'antidoc':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
+    if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
+    groupData.antidoc = !groupData.antiloc;
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    await reply(`✅ Antidoc ${groupData.antidoc ? 'ativado' : 'desativado'}! Documentos enviados resultarão em banimento.`);
+    nazu.react('📄');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'x9':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
+    groupData.x9 = !groupData.x9;
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    await reply(`✅ Modo X9 ${groupData.x9 ? 'ativado' : 'desativado'}! Agora eu aviso sobre promoções e rebaixamentos.`);
+    nazu.react('🕵️');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+
+  case 'antiflood':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
+    if (!q) return reply(`Digite o intervalo em segundos ou "off" para desativar.\nExemplo: !antiflood 5`);
+    antifloodData[from] = antifloodData[from] || { users: {} };
+    if (q.toLowerCase() === 'off') {
+      antifloodData[from].enabled = false;
+      delete antifloodData[from].interval;
+    } else {
+      const interval = parseInt(q);
+      if (isNaN(interval) || interval < 1) return reply('Intervalo inválido! Use um número maior que 0 ou "off".');
+      antifloodData[from].enabled = true;
+      antifloodData[from].interval = interval;
+    }
+    fs.writeFileSync(__dirname + '/../database/antiflood.json', JSON.stringify(antifloodData, null, 2));
+    await reply(`✅ Antiflood ${antifloodData[from].enabled ? `ativado com intervalo de ${antifloodData[from].interval} segundos` : 'desativado'}!`);
+    nazu.react('⏰');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+
+ case 'antiloc':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
+    if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
+    groupData.antiloc = !groupData.antiloc;
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    await reply(`✅ Antiloc ${groupData.antiloc ? 'ativado' : 'desativado'}! Localizações enviadas resultarão em banimento.`);
+    nazu.react('📍');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
   
     case 'modobrincadeira': case 'modobrincadeiras': case 'modobn': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
@@ -2269,6 +2603,178 @@ case 'listadv':
    
     //COMANDOS DE BRINCADEIRAS
    
+   case 'chance':
+    try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
+    if (!q) return reply('Digite algo para eu calcular a chance! Exemplo: !chance chover hoje');
+    const chance = Math.floor(Math.random() * 101);
+    await reply(`📊 A chance de "${q}" acontecer é: *${chance}%*!`);
+    nazu.react('🎲');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'quando':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
+    if (!q) return reply('Digite algo para eu prever quando vai acontecer! Exemplo: !quando vou ficar rico');
+    const tempos = ['hoje', 'amanhã', 'na próxima semana', 'no próximo mês', 'no próximo ano', 'nunca'];
+    const tempo = tempos[Math.floor(Math.random() * tempos.length)];
+    await reply(`🕒 "${q}" vai acontecer: *${tempo}*!`);
+    nazu.react('⏳');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'casal':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
+    if (AllgroupMembers.length < 2) return reply('❌ Preciso de pelo menos 2 membros no grupo!');
+    let path = __dirname + '/../database/grupos/' + from + '.json';
+    let data = fs.existsSync(path) ? JSON.parse(fs.readFileSync(path)) : { mark: {} };
+    let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
+    const membro1 = membros[Math.floor(Math.random() * membros.length)];
+    let membro2 = membros[Math.floor(Math.random() * membroslength)];
+    while (membro2 === membro1) {
+      membro2 = membros[Math.floor(Math.random() * membros.length)];
+    };
+    const shipLevel = Math.floor(Math.random() * 101);
+    const chance = Math.floor(Math.random() * 101);
+    await reply(`💕 *Casal do momento* 💕\n@${membro1.split('@')[0]} + @${membro2.split('@')[0]}\n\n🌟 Nível de ship: *${shipLevel}%*\n🎯 Chance de dar certo: *${chance}%*`, { mentions: [membro1, membro2] });
+    nazu.react('💖');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'shipo':
+   try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
+    if (!menc_os2) return reply('Marque alguém para eu encontrar um par! Exemplo: !shipo @fulano');
+    if (AllgroupMembers.length < 2) return reply('❌ Preciso de pelo menos 2 membros no grupo!');
+    let path = __dirname + '/../database/grupos/' + from + '.json';
+    let data = fs.existsSync(path) ? JSON.parse(fs.readFileSync(path)) : { mark: {} };
+    let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
+    let par = membros[Math.floor(Math.random() * membros.length)];
+    while (par === menc_os2) {
+      par = membros[Math.floor(Math.random() * membros.length)];
+    };
+    const shipLevel = Math.floor(Math.random() * 101);
+    const chance = Math.floor(Math.random() * 101);
+    await reply(`💞 *Ship perfeito* 💞\n@${menc_os2.split('@')[0]} + @${par.split('@')[0]}\n\n🌟 Nível de ship: *${shipLevel}%*\n🎯 Chance de dar certo: *${chance}%*`, { mentions: [menc_os2, par] });
+    nazu.react('💘');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'sn':
+  try {
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
+    if (!q) return reply('Faça uma pergunta! Exemplo: !sn Vou ganhar na loteria?');
+    const resposta = Math.random() > 0.5 ? 'Sim' : 'Não';
+    await reply(`🎯 ${resposta}!`);
+    nazu.react(resposta === 'Sim' ? '✅' : '❌');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'perfil':
+  try {
+    const target = menc_os2 || sender;
+
+    const targetId = target.split('@')[0];
+    const targetName = `@${targetId}`;
+
+    const levels = {
+      puta: Math.floor(Math.random() * 101),
+      gado: Math.floor(Math.random() * 101),
+      corno: Math.floor(Math.random() * 101),
+      sortudo: Math.floor(Math.random() * 101),
+      carisma: Math.floor(Math.random() * 101),
+      rico: Math.floor(Math.random() * 101),
+      gostosa: Math.floor(Math.random() * 101),
+      feio: Math.floor(Math.random() * 101)
+    };
+
+    const pacoteValue = `R$ ${(Math.random() * 10000 + 1).toFixed(2).replace('.', ',')}`;
+
+    const humors = ['😎 Tranquilão', '🔥 No fogo', '😴 Sonolento', '🤓 Nerd mode', '😜 Loucura total', '🧘 Zen'];
+    const randomHumor = humors[Math.floor(Math.random() * humors.length)];
+
+    let profilePic = 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1747053564257_bzswae.bin';
+    try {
+      profilePic = await nazu.profilePictureUrl(target, 'image');
+    } catch (error) {
+      console.warn(`Falha ao obter foto do perfil de ${targetName}:`, error.message);
+    }
+
+    let bio = 'Sem bio disponível';
+    let bioSetAt = '';
+    try {
+      const statusData = await nazu.fetchStatus(target);
+      const status = statusData?.[0]?.status;
+      if (status) {
+        bio = status.status || bio;
+        bioSetAt = new Date(status.setAt).toLocaleString('pt-BR', {
+          dateStyle: 'short',
+          timeStyle: 'short'
+        });
+      };
+    } catch (error) {
+      console.warn(`Falha ao obter status/bio de ${targetName}:`, error.message);
+    };
+
+    const perfilText = `📋 *Perfil de ${targetName}* 📋\n\n👤 *Nome*: ${pushname || 'Desconhecido'}\n📱 *Número*: ${targetId}\n📜 *Bio*: ${bio}${bioSetAt ? `\n🕒 *Bio atualizada em*: ${bioSetAt}` : ''}\n💰 *Valor do Pacote*: ${pacoteValue} 🫦\n😸 *Humor*: ${randomHumor}\n\n🎭 *Níveis*:\n  • Puta: ${levels.puta}%\n  • Gado: ${levels.gado}%\n  • Corno: ${levels.corno}%\n  • Sortudo: ${levels.sortudo}%\n  • Carisma: ${levels.carisma}%\n  • Rico: ${levels.rico}%\n  • Gostosa: ${levels.gostosa}%\n  • Feio: ${levels.feio}%`.trim();
+
+    await nazu.sendMessage(from, { image: { url: profilePic }, caption: perfilText, mentions: [target] }, { quoted: info });
+    await nazu.react('📸');
+  } catch (error) {
+    console.error('Erro ao processar comando perfil:', error);
+    await reply('Ocorreu um erro ao gerar o perfil 💔');
+  }
+  break;
+  
+  case 'ppt':
+  try {
+    if (!q) return reply('Escolha: pedra, papel ou tesoura! Exemplo: !ppt pedra');
+    const escolhas = ['pedra', 'papel', 'tesoura'];
+    if (!escolhas.includes(q.toLowerCase())) return reply('Escolha inválida! Use: pedra, papel ou tesoura.');
+    const botEscolha = escolhas[Math.floor(Math.random() * 3)];
+    const usuarioEscolha = q.toLowerCase();
+    let resultado;
+    if (usuarioEscolha === botEscolha) {
+      resultado = 'Empate! 🤝';
+    } else if (
+      (usuarioEscolha === 'pedra' && botEscolha === 'tesoura') ||
+      (usuarioEscolha === 'papel' && botEscolha === 'pedra') ||
+      (usuarioEscolha === 'tesoura' && botEscolha === 'papel')
+    ) {
+      resultado = 'Você ganhou! 🎉';
+    } else {
+      resultado = 'Eu ganhei! 😎';
+    }
+    await reply(`🖐️ *Pedra, Papel, Tesoura* 🖐️\n\nVocê: ${usuarioEscolha}\nEu: ${botEscolha}\n\n${resultado}`);
+    nazu.react('✂️');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro 💔");
+  }
+  break;
+  
    case 'eununca': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isModoBn) return reply('❌ O modo brincadeira não esta ativo nesse grupo');

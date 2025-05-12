@@ -34,6 +34,16 @@ async function menuDono(prefix, botName = "MeuBot", userName = "Usuário") {
 ╭─🌷 *FUNÇÕES DE DONO* 🌷
 │ Escolha sua opção: 
 ├──────────────┤
+│ *${prefix}antipv*
+│    → Anti pv (ignora mensagens)
+│ *${prefix}antipv2*
+│    → Anti pv (avisa usuarios)
+│ *${prefix}antipv3*
+│    → Anti pv (bloqueia usuários)
+│ *${prefix}tm*
+│    → Fazer transmissão em grupos
+│ *${prefix}entrar*
+│    → Entrar em um grupo
 │ *${prefix}cases*
 │    → Ver todas as cases
 │ *${prefix}getcase*

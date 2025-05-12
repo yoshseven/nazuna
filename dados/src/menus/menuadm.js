@@ -75,7 +75,9 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 │ *${prefix}modonsfw*
 │    → Ativar modo NSFW
 │ *${prefix}antilinkgp*
-│    → Bloquear links
+│    → Bloquear links de grupos
+│ *${prefix}antilinkhard*
+│    → Bloquear todo tipo de links
 │ *${prefix}antiporn*
 │    → Bloquear conteúdo adulto
 │ *${prefix}bemvindo* ou *${prefix}bv*
@@ -86,6 +88,22 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 │    → Ativar auto figurinhas
 │ *${prefix}soadm*
 │    → Restringir bot a admins
+│ *${prefix}x9*
+│    → x9 de admins
+│ *${prefix}antiflood*
+│    → Anti flood de comandos
+│ *${prefix}cmdlimit*
+│    → Limitar comandos diários
+│ *${prefix}antiloc*
+│    → Anti localização
+│ *${prefix}antidoc*
+│    → Anti documentos
+│ *${prefix}antifake*
+│    → Banir números fake
+│ *${prefix}antipt*
+│    → Banir números de Portugal
+│ *${prefix}autodl*
+│    → Sitema de Auto DL
 ╰──────────────╯
 
 ╭🌷 *CONFIGURAÇÕES* 🌷─

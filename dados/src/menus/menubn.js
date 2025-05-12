@@ -20,6 +20,12 @@ async function menubn(prefix, botName = "MeuBot", userName = "Usuário") {
 │ → *${prefix}jogodavelha* ou *${prefix}ttt*
 │ → *${prefix}eununca*
 │ → *${prefix}vab*
+│ → *${prefix}chance*
+│ → *${prefix}quando*
+│ → *${prefix}casal*
+│ → *${prefix}shipo*
+│ → *${prefix}sn*
+│ → *${prefix}ppt*
 ╰──────────────╯
 
 ╭─🌷 *INTERAÇÕES COMUNS*

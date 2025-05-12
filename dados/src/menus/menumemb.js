@@ -17,6 +17,8 @@ async function menuMembros(prefix, botName = "MeuBot", userName = "Usuário") {
 ╭🌷 *COMANDOS GERAIS* 🌷
 │ Escolha sua opção:
 ├──────────────┤
+│ *${prefix}perfil*
+│    → Ver seu perfil
 │ *${prefix}dono*
 │    → Ver informações do dono
 │ *${prefix}criador*
