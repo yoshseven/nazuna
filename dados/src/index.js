@@ -590,9 +590,7 @@ if (isCmd && globalBlocks.commands && globalBlocks.commands[command]) {
   await reply('Um momento, estou buscando as informações para você 🕵️‍♂️');
   datyz = await FilmesDL(q);
   if(!datyz || !datyz.url) return reply('Desculpe, não consegui encontrar nada. Tente com outro nome de filme ou série. 😔');
-  anu = await axios.get(`https://tinyurl.com/api-create.php?url=${datyz.url}`);
-  linkEncurtado = anu.data;
-  await nazu.sendMessage(from, {image: { url: datyz.img },caption: `Aqui está o que encontrei! 🎬\n\n*Nome*: ${datyz.name}\n\nSe tudo estiver certo, você pode assistir no link abaixo:\n${linkEncurtado}\n\nFique tranquilo, não é vírus! O link foi encurtado por ser muito longo.\n\n> Você pode apoiar o projeto de outra forma! 💖 Que tal dar uma estrela no repositório do GitHub? Isso ajuda a motivar e melhorar o bot!\n> ⭐ https://github.com/hiudyy/nazuna 🌟`}, { quoted: info });
+  await nazu.sendMessage(from, {image: { url: datyz.img },caption: `Aqui está o que encontrei! 🎬\n\n*Nome*: ${datyz.name}\n\nSe tudo estiver certo, você pode assistir no link abaixo:\n${datyz.url}`}, { quoted: info });
   } catch(e) {
   console.error(e);
   await reply("ocorreu um erro 💔");

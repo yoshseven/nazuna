@@ -76,12 +76,16 @@ async function Filmes(texto) {
         const src = videoElement.querySelector('source')?.getAttribute('src');
         const poster = videoElement.getAttribute('poster');
         const dataTitle = videoElement.getAttribute('data-title');
-
+        anu = await axios.get(`https://tinyurl.com/api-create.php?url=${src}`);
+        linkEncurtado = anu.data;
+        
+        Bah = await axios.get(`https://api.cognima.com.br/api/watch?key=CognimaTeamFreeKey&url=${linkEncurtado}&name=${dataTitle}&banner=${poster}&description=Buscado Por Nazuna Bot`);
+        
         if (poster && dataTitle && src) {
           return {
             img: poster,
             name: dataTitle,
-            url: src,
+            url: `https://api.cognima.com.br${Bah.data.roomUrl}`,
           };
         }
       } catch (error) {
