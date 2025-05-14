@@ -91,7 +91,6 @@ try {
   const AllgroupMembers = !isGroup ? [] : groupMetadata.participants.map(p => p.id);
   const groupAdmins = !isGroup ? [] : groupMetadata.participants.filter(p => p.admin).map(p => p.id);
   const botNumber = nazu.user.id.split(':')[0] + '@s.whatsapp.net';
-  const isGroupAdmin = !isGroup ? null : groupAdmins.includes(sender) || isOwner;
   const isBotAdmin = !isGroup ? null : groupAdmins.includes(botNumber);
   if(isGroup) {
   if (!fs.existsSync(__dirname + `/../database/grupos/${from}.json`)) fs.writeFileSync(__dirname + `/../database/grupos/${from}.json`, JSON.stringify({ mark: {} }, null, 2));
@@ -100,6 +99,7 @@ try {
   try {groupData = JSON.parse(fs.readFileSync(__dirname + `/../database/grupos/${from}.json`));} catch (error) {};
   groupData.moderators = groupData.moderators || [];
   groupData.allowedModCommands = groupData.allowedModCommands || [];
+  const isGroupAdmin = !isGroup ? null : groupAdmins.includes(sender) || isOwner || (groupData.moderators.includes(sender) && groupData.allowedModCommands.includes(command));
   const isModoBn = groupData.modobrincadeira ? true : false;
   const isOnlyAdmin = groupData.soadm ? true : false;
   const isAntiPorn = groupData.antiporn ? true : false;
@@ -1677,7 +1677,7 @@ case 'ping':
   
   //COMANDOS DE ADM
   case 'deletar': case 'delete': case 'del':  case 'd':
-  if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
+  if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
   if(!menc_prt) return reply("Marque uma mensagem.");
   let stanzaId, participant;
     if (info.message.extendedTextMessage) {
@@ -1747,7 +1747,7 @@ case 'ping':
   case 'kick':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
+    if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     if (!menc_os2) return reply("Marque alguém 🙄");
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
@@ -1761,7 +1761,7 @@ case 'ping':
     case 'linkgp':
     case 'linkgroup': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
+    if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     linkgc = await nazu.groupInviteCode(from)
     await reply('https://chat.whatsapp.com/'+linkgc)
@@ -1774,7 +1774,7 @@ case 'ping':
   case 'promover':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
+    if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     if (!menc_os2) return reply("Marque alguém 🙄");
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'promote');
@@ -1788,7 +1788,7 @@ case 'ping':
   case 'rebaixar':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
+    if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     if (!menc_os2) return reply("Marque alguém 🙄");
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'demote');
@@ -1802,7 +1802,7 @@ case 'ping':
   case 'setname':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
+    if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     const newName = q.trim();
     if (!newName) return reply('❌ Digite um novo nome para o grupo.');
@@ -1817,7 +1817,7 @@ case 'ping':
   case 'setdesc':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
+    if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     const newDesc = q.trim();
     if (!newDesc) return reply('❌ Digite uma nova descrição para o grupo.');
@@ -1831,7 +1831,7 @@ case 'ping':
   
   case 'marcar':
   if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-  if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
+  if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
   if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
   try {
     let path = __dirname + '/../database/grupos/' + from + '.json';
@@ -1849,7 +1849,7 @@ case 'ping':
   
   case 'grupo': try {
   if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-  if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
+  if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
   if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
   if(q.toLowerCase() === 'a' || q.toLowerCase() === 'abrir') {
   await nazu.groupSettingUpdate(from, 'not_announcement');
@@ -1867,7 +1867,7 @@ case 'ping':
   case 'cita':
   case 'hidetag': try {
   if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-  if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
+  if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
   if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     
     var DFC4 = "";
