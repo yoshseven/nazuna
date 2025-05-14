@@ -114,9 +114,7 @@ try {
     const afkReason = groupData.afkUsers[sender].reason;
     delete groupData.afkUsers[sender];
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
-    // Opcional: Notificar que não está mais AFK
-    // await reply(`👋 Bem-vindo de volta! Seu status AFK foi removido.`);
-    // Considerar se deve retornar aqui ou continuar processando a mensagem/comando
+    await reply(`👋 Bem-vindo de volta! Seu status AFK foi removido.`);
   }
 
  //BANIR USUÁRIOS MUTADOS 🤓☝🏻
