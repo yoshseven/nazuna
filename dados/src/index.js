@@ -3612,7 +3612,6 @@ ${groupData.rules.length}. ${q}`);
         return reply(`@${modToRemove.split('@')[0]} não é um moderador.`, { mentions: [modToRemove] });
       }
       groupData.moderators.splice(modIndex, 1);
-      // Opcional: remover permissões específicas se o sistema fosse mais granular
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       await reply(`✅ @${modToRemove.split('@')[0]} não é mais um moderador do grupo.`, { mentions: [modToRemove] });
       await nazu.react('🛡️');
@@ -3622,7 +3621,7 @@ ${groupData.rules.length}. ${q}`);
     }
     break;
 
-  case 'listmods':
+  case 'listmods': case 'modlist':
     try {
       if (!isGroup) return reply("Este comando só funciona em grupos.");
       if (groupData.moderators.length === 0) {
@@ -3644,20 +3643,12 @@ ${groupData.rules.length}. ${q}`);
     }
     break;
 
-  case 'grantmodcmd': // Renomeado de allowmodcmd para grantmodcmd para consistência
+  case 'grantmodcmd': case 'addmodcmd':
     try {
       if (!isGroup) return reply("Este comando só funciona em grupos.");
       if (!isGroupAdmin) return reply("Apenas administradores podem gerenciar permissões de moderador.");
       if (!q) return reply(`Por favor, especifique o comando para permitir aos moderadores. Ex: ${prefix}grantmodcmd ban`);
       const cmdToAllow = q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replaceAll(prefix, "");
-      
-      // Validação extra: Verificar se é um comando válido do bot? (Opcional, pode ser complexo)
-      // Por agora, permite qualquer string, mas avisa o admin.
-      // const allBotCommands = Object.keys(global.SWITCH_CASE_HANDLERS_OR_SIMILAR_STRUCTURE); // Hypothetical
-      // if (!allBotCommands.includes(cmdToAllow)) {
-      //   await reply(`⚠️ Aviso: "${cmdToAllow}" não parece ser um comando interno conhecido. Certifique-se de que digitou corretamente.`);
-      // }
-
       if (groupData.allowedModCommands.includes(cmdToAllow)) {
         return reply(`Comando "${cmdToAllow}" já está permitido para moderadores.`);
       }
@@ -3671,7 +3662,7 @@ ${groupData.rules.length}. ${q}`);
     }
     break;
 
-  case 'revokemodcmd': // Renomeado de denymodcmd para revokemodcmd
+  case 'revokemodcmd': case 'delmodcmd':
     try {
       if (!isGroup) return reply("Este comando só funciona em grupos.");
       if (!isGroupAdmin) return reply("Apenas administradores podem gerenciar permissões de moderador.");
