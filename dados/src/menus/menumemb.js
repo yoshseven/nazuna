@@ -10,40 +10,52 @@
  */
 async function menuMembros(prefix, botName = "MeuBot", userName = "Usuário") {
   return `
-╭─🌸 *${botName}*
-│ Oii, *${userName}*
-╰───────────────
+╭═══ 🌸 *${botName}* 🌸 ═══╮
+│ Olá, *${userName}*!
+╰══════════════════════╯
 
-╭🌷 *COMANDOS GERAIS* 🌷
-│ Escolha sua opção:
-├──────────────┤
-│ *${prefix}perfil*
-│    → Ver seu perfil
-│ *${prefix}dono*
-│    → Ver informações do dono
-│ *${prefix}criador*
-│    → Ver informações do criador
-│ *${prefix}mention*
-│    → Configurar menções
-│ *${prefix}ping*
-│    → Verificar status da bot
-│ *${prefix}rvisu*
-│    → Revelar visualização única
-│ *${prefix}totalcmd*
-│    → Total de comandos do bot
-│ *${prefix}rankativo*
-│    → Ver ranking de ativos do grupo
-│ *${prefix}rankinativo*
-│    → Ver ranking de inativos
-│ *${prefix}statusgp*
-│    → Ver estatísticas do grupo
-│ *${prefix}statusbot*
-│    → Ver estatísticas globais do bot
-│ *${prefix}meustatus*
-│    → Ver suas estatísticas pessoais
-│ *${prefix}rankativog*
-│    → Ver ranking global de ativos
-╰──────────────╯
+╭═══ 🌟 *COMANDOS PARA MEMBROS* 🌟 ═══╮
+│
+│  ╭─▸ *Informações e Status:*
+│  │
+│  │  \`${prefix}perfil\`
+│  │    ↳ Ver seu perfil
+│  │  \`${prefix}dono\`
+│  │    ↳ Ver informações do dono
+│  │  \`${prefix}criador\`
+│  │    ↳ Ver informações do criador
+│  │  \`${prefix}ping\`
+│  │    ↳ Verificar status do bot
+│  │  \`${prefix}rvisu\`
+│  │    ↳ Revelar visualização única
+│  │  \`${prefix}totalcmd\`
+│  │    ↳ Total de comandos do bot
+│  │  \`${prefix}statusgp\`
+│  │    ↳ Ver estatísticas do grupo
+│  │  \`${prefix}statusbot\`
+│  │    ↳ Ver estatísticas globais do bot
+│  │  \`${prefix}meustatus\`
+│  │    ↳ Ver suas estatísticas pessoais
+│
+│  ╭─▸ *Configurações Pessoais:*
+│  │
+│  │  \`${prefix}mention\`
+│  │    ↳ Configurar menções
+│  │  \`${prefix}afk [motivo?]\`
+│  │    ↳ Definir status AFK
+│  │  \`${prefix}voltei\`
+│  │    ↳ Remover status AFK
+│
+│  ╭─▸ *Rankings:*
+│  │
+│  │  \`${prefix}rankativo\`
+│  │    ↳ Ver ranking de ativos do grupo
+│  │  \`${prefix}rankinativo\`
+│  │    ↳ Ver ranking de inativos do grupo
+│  │  \`${prefix}rankativog\`
+│  │    ↳ Ver ranking global de ativos
+│
+╰═════════════════════════════════╯
 `;
 }
 

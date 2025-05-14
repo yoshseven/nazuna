@@ -98,6 +98,8 @@ try {
   };
   let groupData = {};
   try {groupData = JSON.parse(fs.readFileSync(__dirname + `/../database/grupos/${from}.json`));} catch (error) {};
+  groupData.moderators = groupData.moderators || [];
+  groupData.allowedModCommands = groupData.allowedModCommands || [];
   const isModoBn = groupData.modobrincadeira ? true : false;
   const isOnlyAdmin = groupData.soadm ? true : false;
   const isAntiPorn = groupData.antiporn ? true : false;
@@ -107,6 +109,16 @@ try {
   if(isGroup && !isGroupAdmin && isOnlyAdmin) return;
   if(isGroup && !isGroupAdmin && isCmd && groupData.blockedCommands && groupData.blockedCommands[command]) return reply('Este comando foi bloqueado pelos administradores do grupo.');
   
+  // SISTEMA AFK: LIMPAR STATUS AO ENVIAR MENSAGEM
+  if (isGroup && groupData.afkUsers && groupData.afkUsers[sender]) {
+    const afkReason = groupData.afkUsers[sender].reason;
+    delete groupData.afkUsers[sender];
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    // Opcional: Notificar que não está mais AFK
+    // await reply(`👋 Bem-vindo de volta! Seu status AFK foi removido.`);
+    // Considerar se deve retornar aqui ou continuar processando a mensagem/comando
+  }
+
  //BANIR USUÁRIOS MUTADOS 🤓☝🏻
  if(isGroup && isMuted) {
  await nazu.sendMessage(from, {text: `🤫 Hmm @${sender.split("@")[0]}, achou que ia passar despercebido? Achou errado lindo(a)! Você está sendo removido por enviar mensagem, sendo que você está mutado neste grupo.`, mentions: [sender]}, {quoted: info});
@@ -130,6 +142,25 @@ try {
 
  const normalizar = texto => texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
  //FIM FUNÇÕES BASICAS
+
+ // SISTEMA AFK: NOTIFICAR MENÇÕES
+ if (isGroup && info.message?.extendedTextMessage?.contextInfo?.mentionedJid) {
+    const mentioned = info.message.extendedTextMessage.contextInfo.mentionedJid;
+    if (groupData.afkUsers) {
+      for (const jid of mentioned) {
+        if (groupData.afkUsers[jid]) {
+          const afkData = groupData.afkUsers[jid];
+          const afkSince = new Date(afkData.since).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+          let afkMsg = `😴 @${jid.split('@')[0]} está AFK desde ${afkSince}.`;
+          if (afkData.reason) {
+            afkMsg += `
+Motivo: ${afkData.reason}`;
+          }
+          await reply(afkMsg, { mentions: [jid] });
+        }
+      }
+    }
+  }
 
  //SISTEMA ANTI PORNOGRAFIA 🤫
  if (isGroup && isAntiPorn && (isImage || isVisuU || isVisuU2)) { const midiaz = info.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || info.message?.videoMessage || info.message?.stickerMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage; if (midiaz) { try { const stream = await getFileBuffer(midiaz, "image"); const mediaURL = await upload(stream, true); if (mediaURL) { const apiResponse = await axios.get(`https://nsfw-demo.sashido.io/api/image/classify?url=${mediaURL}`); const { Porn, Hentai } = apiResponse.data.reduce((acc, item) => ({...acc,[item.className]: item.probability}), {}); let userMessage = ''; let actionTaken = false; if (Porn > 0.80 || Hentai > 0.80) { if(!isGroupAdmin) { await nazu.sendMessage(from, { delete: info.key }); userMessage = `🚫 @${sender.split('@')[0]} foi removido por compartilhar conteúdo impróprio.\n\n🚫 Esta mídia contém conteúdo adulto (${apiResponse.data[0].className}) com uma probabilidade de ${apiResponse.data[0].probability.toFixed(2)} e foi removida!`; await nazu.groupParticipantsUpdate(from, [sender], "remove"); actionTaken = true; } else { await nazu.sendMessage(from, { delete: info.key }); await reply('Conteudo adulto detectado, porem como você é um administrador não irei banir.'); } } if (actionTaken) { await nazu.sendMessage(from, { text: userMessage, mentions: [sender] }, { quoted: info }); }; } } catch (error) { } } };
@@ -1646,7 +1677,7 @@ case 'ping':
   
   //COMANDOS DE ADM
   case 'deletar': case 'delete': case 'del':  case 'd':
-  if(!isGroupAdmin) return reply("você precisa ser adm 💔");
+  if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
   if(!menc_prt) return reply("Marque uma mensagem.");
   let stanzaId, participant;
     if (info.message.extendedTextMessage) {
@@ -1716,7 +1747,7 @@ case 'ping':
   case 'kick':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!isGroupAdmin) return reply("você precisa ser adm 💔");
+    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     if (!menc_os2) return reply("Marque alguém 🙄");
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
@@ -1730,7 +1761,7 @@ case 'ping':
     case 'linkgp':
     case 'linkgroup': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!isGroupAdmin) return reply("você precisa ser adm 💔");
+    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     linkgc = await nazu.groupInviteCode(from)
     await reply('https://chat.whatsapp.com/'+linkgc)
@@ -1743,7 +1774,7 @@ case 'ping':
   case 'promover':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!isGroupAdmin) return reply("você precisa ser adm 💔");
+    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     if (!menc_os2) return reply("Marque alguém 🙄");
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'promote');
@@ -1757,7 +1788,7 @@ case 'ping':
   case 'rebaixar':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!isGroupAdmin) return reply("você precisa ser adm 💔");
+    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     if (!menc_os2) return reply("Marque alguém 🙄");
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'demote');
@@ -1771,7 +1802,7 @@ case 'ping':
   case 'setname':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!isGroupAdmin) return reply("você precisa ser adm 💔");
+    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     const newName = q.trim();
     if (!newName) return reply('❌ Digite um novo nome para o grupo.');
@@ -1786,7 +1817,7 @@ case 'ping':
   case 'setdesc':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!isGroupAdmin) return reply("você precisa ser adm 💔");
+    if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     const newDesc = q.trim();
     if (!newDesc) return reply('❌ Digite uma nova descrição para o grupo.');
@@ -1800,7 +1831,7 @@ case 'ping':
   
   case 'marcar':
   if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-  if (!isGroupAdmin) return reply("você precisa ser adm 💔");
+  if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
   if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
   try {
     let path = __dirname + '/../database/grupos/' + from + '.json';
@@ -1818,7 +1849,7 @@ case 'ping':
   
   case 'grupo': try {
   if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-  if (!isGroupAdmin) return reply("você precisa ser adm 💔");
+  if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
   if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
   if(q.toLowerCase() === 'a' || q.toLowerCase() === 'abrir') {
   await nazu.groupSettingUpdate(from, 'not_announcement');
@@ -1836,7 +1867,7 @@ case 'ping':
   case 'cita':
   case 'hidetag': try {
   if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-  if (!isGroupAdmin) return reply("você precisa ser adm 💔");
+  if (!(isGroupAdmin || (isModerator && groupData.allowedModCommands && groupData.allowedModCommands.includes(command)))) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
   if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     
     var DFC4 = "";
@@ -3455,6 +3486,231 @@ await reply("ocorreu um erro 💔");
         }
         break;
   
+  // NOVOS COMANDOS AFK E REGRAS
+  case 'afk':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos.");
+      const reason = q.trim();
+      groupData.afkUsers = groupData.afkUsers || {};
+      groupData.afkUsers[sender] = {
+        reason: reason || 'Não especificado',
+        since: Date.now()
+      };
+      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      let afkSetMessage = `😴 Você está AFK.`;
+      if (reason) afkSetMessage += `
+Motivo: ${reason}`;
+      await reply(afkSetMessage);
+      await nazu.react('💤');
+    } catch (e) {
+      console.error('Erro no comando afk:', e);
+      await reply("Ocorreu um erro ao definir AFK 💔");
+    }
+    break;
+
+  case 'voltei':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos.");
+      if (groupData.afkUsers && groupData.afkUsers[sender]) {
+        delete groupData.afkUsers[sender];
+        fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+        await reply(`👋 Bem-vindo(a) de volta! Seu status AFK foi removido.`);
+        await nazu.react('👋');
+      } else {
+        await reply("Você não estava AFK.");
+      }
+    } catch (e) {
+      console.error('Erro no comando voltei:', e);
+      await reply("Ocorreu um erro ao remover AFK 💔");
+    }
+    break;
+
+  case 'regras':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos.");
+      if (!groupData.rules || groupData.rules.length === 0) {
+        return reply("📜 Nenhuma regra definida para este grupo ainda.");
+      }
+      let rulesMessage = `📜 *Regras do Grupo ${groupName}* 📜
+
+`;
+      groupData.rules.forEach((rule, index) => {
+        rulesMessage += `${index + 1}. ${rule}
+`;
+      });
+      await reply(rulesMessage);
+    } catch (e) {
+      console.error('Erro no comando regras:', e);
+      await reply("Ocorreu um erro ao buscar as regras 💔");
+    }
+    break;
+
+  case 'addregra':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos.");
+      if (!isGroupAdmin) return reply("Apenas administradores podem adicionar regras.");
+      if (!q) return reply(`📝 Por favor, forneça o texto da regra. Ex: ${prefix}addregra Proibido spam.`);
+      groupData.rules = groupData.rules || [];
+      groupData.rules.push(q);
+      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      await reply(`✅ Regra adicionada com sucesso!
+${groupData.rules.length}. ${q}`);
+      await nazu.react('➕');
+    } catch (e) {
+      console.error('Erro no comando addregra:', e);
+      await reply("Ocorreu um erro ao adicionar a regra 💔");
+    }
+    break;
+
+  case 'delregra':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos.");
+      if (!isGroupAdmin) return reply("Apenas administradores podem remover regras.");
+      if (!q || isNaN(parseInt(q))) return reply(`🔢 Por favor, forneça o número da regra a ser removida. Ex: ${prefix}delregra 3`);
+      
+      groupData.rules = groupData.rules || [];
+      const ruleNumber = parseInt(q);
+      if (ruleNumber < 1 || ruleNumber > groupData.rules.length) {
+        return reply(`❌ Número de regra inválido. Use ${prefix}regras para ver a lista. Atualmente existem ${groupData.rules.length} regras.`);
+      }
+      const removedRule = groupData.rules.splice(ruleNumber - 1, 1);
+      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      await reply(`🗑️ Regra "${removedRule}" removida com sucesso!`);
+      await nazu.react('➖');
+    } catch (e) {
+      console.error('Erro no comando delregra:', e);
+      await reply("Ocorreu um erro ao remover a regra 💔");
+    }
+    break;
+
+  // SISTEMA DE MODERADORES
+  case 'addmod':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos.");
+      if (!isGroupAdmin) return reply("Apenas administradores podem adicionar moderadores.");
+      if (!menc_os2) return reply(`Marque o usuário que deseja promover a moderador. Ex: ${prefix}addmod @usuario`);
+      const modToAdd = menc_os2;
+      if (groupData.moderators.includes(modToAdd)) {
+        return reply(`@${modToAdd.split('@')[0]} já é um moderador.`, { mentions: [modToAdd] });
+      }
+      groupData.moderators.push(modToAdd);
+      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      await reply(`✅ @${modToAdd.split('@')[0]} foi promovido a moderador do grupo!`, { mentions: [modToAdd] });
+      await nazu.react('🛡️');
+    } catch (e) {
+      console.error('Erro no comando addmod:', e);
+      await reply("Ocorreu um erro ao adicionar moderador 💔");
+    }
+    break;
+
+  case 'delmod':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos.");
+      if (!isGroupAdmin) return reply("Apenas administradores podem remover moderadores.");
+      if (!menc_os2) return reply(`Marque o usuário que deseja remover de moderador. Ex: ${prefix}delmod @usuario`);
+      const modToRemove = menc_os2;
+      const modIndex = groupData.moderators.indexOf(modToRemove);
+      if (modIndex === -1) {
+        return reply(`@${modToRemove.split('@')[0]} não é um moderador.`, { mentions: [modToRemove] });
+      }
+      groupData.moderators.splice(modIndex, 1);
+      // Opcional: remover permissões específicas se o sistema fosse mais granular
+      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      await reply(`✅ @${modToRemove.split('@')[0]} não é mais um moderador do grupo.`, { mentions: [modToRemove] });
+      await nazu.react('🛡️');
+    } catch (e) {
+      console.error('Erro no comando delmod:', e);
+      await reply("Ocorreu um erro ao remover moderador 💔");
+    }
+    break;
+
+  case 'listmods':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos.");
+      if (groupData.moderators.length === 0) {
+        return reply("🛡️ Não há moderadores definidos para este grupo.");
+      }
+      let modsMessage = `🛡️ *Moderadores do Grupo ${groupName}* 🛡️
+
+`;
+      const mentionedUsers = [];
+      groupData.moderators.forEach((modJid) => {
+        modsMessage += `➥ @${modJid.split('@')[0]}
+`;
+        mentionedUsers.push(modJid);
+      });
+      await reply(modsMessage, { mentions: mentionedUsers });
+    } catch (e) {
+      console.error('Erro no comando listmods:', e);
+      await reply("Ocorreu um erro ao listar moderadores 💔");
+    }
+    break;
+
+  case 'grantmodcmd': // Renomeado de allowmodcmd para grantmodcmd para consistência
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos.");
+      if (!isGroupAdmin) return reply("Apenas administradores podem gerenciar permissões de moderador.");
+      if (!q) return reply(`Por favor, especifique o comando para permitir aos moderadores. Ex: ${prefix}grantmodcmd ban`);
+      const cmdToAllow = q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replaceAll(prefix, "");
+      
+      // Validação extra: Verificar se é um comando válido do bot? (Opcional, pode ser complexo)
+      // Por agora, permite qualquer string, mas avisa o admin.
+      // const allBotCommands = Object.keys(global.SWITCH_CASE_HANDLERS_OR_SIMILAR_STRUCTURE); // Hypothetical
+      // if (!allBotCommands.includes(cmdToAllow)) {
+      //   await reply(`⚠️ Aviso: "${cmdToAllow}" não parece ser um comando interno conhecido. Certifique-se de que digitou corretamente.`);
+      // }
+
+      if (groupData.allowedModCommands.includes(cmdToAllow)) {
+        return reply(`Comando "${cmdToAllow}" já está permitido para moderadores.`);
+      }
+      groupData.allowedModCommands.push(cmdToAllow);
+      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      await reply(`✅ Moderadores agora podem usar o comando: ${prefix}${cmdToAllow}`);
+      await nazu.react('🔧');
+    } catch (e) {
+      console.error('Erro no comando grantmodcmd:', e);
+      await reply("Ocorreu um erro ao permitir comando para moderadores 💔");
+    }
+    break;
+
+  case 'revokemodcmd': // Renomeado de denymodcmd para revokemodcmd
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos.");
+      if (!isGroupAdmin) return reply("Apenas administradores podem gerenciar permissões de moderador.");
+      if (!q) return reply(`Por favor, especifique o comando para proibir aos moderadores. Ex: ${prefix}revokemodcmd ban`);
+      const cmdToDeny = q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replaceAll(prefix, "");
+      const cmdIndex = groupData.allowedModCommands.indexOf(cmdToDeny);
+      if (cmdIndex === -1) {
+        return reply(`Comando "${cmdToDeny}" não estava permitido para moderadores.`);
+      }
+      groupData.allowedModCommands.splice(cmdIndex, 1);
+      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      await reply(`✅ Moderadores não podem mais usar o comando: ${prefix}${cmdToDeny}`);
+      await nazu.react('🔧');
+    } catch (e) {
+      console.error('Erro no comando revokemodcmd:', e);
+      await reply("Ocorreu um erro ao proibir comando para moderadores 💔");
+    }
+    break;
+
+  case 'listmodcmds':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos.");
+      if (groupData.allowedModCommands.length === 0) {
+        return reply("🔧 Nenhum comando específico permitido para moderadores neste grupo.");
+      }
+      let cmdsMessage = `🔧 *Comandos Permitidos para Moderadores em ${groupName}* 🔧\n\n`;
+      groupData.allowedModCommands.forEach((cmd) => {
+        cmdsMessage += `➥ ${prefix}${cmd}\n`;
+      });
+      await reply(cmdsMessage);
+    } catch (e) {
+      console.error('Erro no comando listmodcmds:', e);
+      await reply("Ocorreu um erro ao listar comandos de moderadores 💔");
+    }
+    break;
+  // FIM DO SISTEMA DE MODERADORES
+
  default:
  if(isCmd) await nazu.react('❌');
  };
