@@ -12,11 +12,53 @@ const pathz = require('path');
 const fs = require('fs');
 const os = require('os');
 
-async function NazuninhaBotExec(nazu, info, store) {
+const { version: botVersion } = JSON.parse(fs.readFileSync(pathz.join(__dirname, '..', '..', 'package.json'))); // Added botVersion
+
+const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuRpg } = require(`${__dirname}/menus/index.js`);
 const { numerodono, nomedono, nomebot, prefixo, prefixo: prefix, debug } = JSON.parse(fs.readFileSync(__dirname+'/config.json'));
 
+//CRIAR PASTAS E ARQUIVOS INICIAIS
+if (!fs.existsSync(__dirname + `/../database/grupos`)) fs.mkdirSync(__dirname + `/../database/grupos`, { recursive: true });
+if (!fs.existsSync(__dirname + `/../database/users`)) fs.mkdirSync(__dirname + `/../database/users`, { recursive: true });
+if (!fs.existsSync(__dirname + `/../database/dono`)) fs.mkdirSync(__dirname + `/../database/dono`, { recursive: true });
+if (!fs.existsSync(__dirname + '/../database/antiflood.json')) {
+  fs.writeFileSync(__dirname + '/../database/antiflood.json', JSON.stringify({}, null, 2));
+}
+if (!fs.existsSync(__dirname + '/../database/cmdlimit.json')) {
+  fs.writeFileSync(__dirname + '/../database/cmdlimit.json', JSON.stringify({}, null, 2));
+}
+if (!fs.existsSync(__dirname + '/../database/antipv.json')) {
+  fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify({}, null, 2));
+}
+if (!fs.existsSync(__dirname + `/../database/dono/premium.json`)) {
+  fs.writeFileSync(__dirname + `/../database/dono/premium.json`, JSON.stringify({}, null, 2));
+}
+if (!fs.existsSync(__dirname + `/../database/dono/bangp.json`)) {
+  fs.writeFileSync(__dirname + `/../database/dono/bangp.json`, JSON.stringify({}, null, 2));
+}
+if (!fs.existsSync(__dirname + '/../database/globalBlocks.json')) {
+  fs.writeFileSync(__dirname + '/../database/globalBlocks.json', JSON.stringify({ commands: {}, users: {} }, null, 2));
+}
+if (!fs.existsSync(__dirname + '/../database/botState.json')) {
+  fs.writeFileSync(__dirname + '/../database/botState.json', JSON.stringify({ status: 'on' }, null, 2));
+}
+
+async function NazuninhaBotExec(nazu, info, store) {
+  const antipvData = JSON.parse(fs.existsSync(__dirname + '/../database/antipv.json') ? fs.readFileSync(__dirname + '/../database/antipv.json') : '{}');
+  const premiumListaZinha = JSON.parse(fs.readFileSync(__dirname + `/../database/dono/premium.json`, 'utf-8'));
+  const banGpIds = JSON.parse(fs.readFileSync(__dirname + `/../database/dono/bangp.json`, 'utf-8'));
+  const antifloodData = JSON.parse(fs.readFileSync(__dirname + '/../database/antiflood.json'));
+  const cmdLimitData = JSON.parse(fs.readFileSync(__dirname + '/../database/cmdlimit.json'));
+  let globalBlocks = { commands: {}, users: {} };
+  if (fs.existsSync(__dirname + '/../database/globalBlocks.json')) {
+    globalBlocks = JSON.parse(fs.readFileSync(__dirname + '/../database/globalBlocks.json'));
+  }
+  let botState = { status: 'on' };
+  if (fs.existsSync(__dirname + '/../database/botState.json')) {
+    botState = JSON.parse(fs.readFileSync(__dirname + '/../database/botState.json'));
+  }
+
 try {
- const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuRpg } = require(`${__dirname}/menus/index.js`);
  const from = info.key.remoteJid;
  const isGroup = from.endsWith('@g.us');
  if(!info.key.participant && !info.key.remoteJid) return;
@@ -47,24 +89,9 @@ try {
  const sender_ou_n = q.includes("@") ? menc_jid : menc_prt ? menc_prt : sender;
 
  var isCmd = body.trim().startsWith(prefix);
- const command = isCmd ? budy2.trim().slice(1).split(/ +/).shift().toLocaleLowerCase().trim().replaceAll(' ', '') : null;
+ const command = isCmd ? budy2.trim().slice(1).split(/ +/).shift().trim().replaceAll(' ', '') : null;
  
- //CRIAR PASTAS
-  if (!fs.existsSync(__dirname + `/../database/grupos`)) fs.mkdirSync(__dirname + `/../database/grupos`, { recursive: true });
-  if (!fs.existsSync(__dirname + `/../database/users`)) fs.mkdirSync(__dirname + `/../database/users`, { recursive: true });
-  if (!fs.existsSync(__dirname + `/../database/dono`)) fs.mkdirSync(__dirname + `/../database/dono`, { recursive: true });
-   if (!fs.existsSync(__dirname + '/../database/antiflood.json')) {
-  fs.writeFileSync(__dirname + '/../database/antiflood.json', JSON.stringify({}, null, 2));
-  }
-  if (!fs.existsSync(__dirname + '/../database/cmdlimit.json')) {
-  fs.writeFileSync(__dirname + '/../database/cmdlimit.json', JSON.stringify({}, null, 2));
-  }
-  if (!fs.existsSync(__dirname + '/../database/antipv.json')) {
-  fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify({}, null, 2));
-}
-
  //SISTEMAS DE ANTIPV
- const antipvData = JSON.parse(fs.existsSync(__dirname + '/../database/antipv.json') ? fs.readFileSync(__dirname + '/../database/antipv.json') : '{}');
  if (!isGroup && antipvData.mode === 'antipv' && !isOwner) return;
  if (!isGroup && antipvData.mode === 'antipv2' && isCmd && !isOwner) {
   return reply('🚫 Este comando só funciona em grupos!');
@@ -76,12 +103,10 @@ try {
 
  //SISTEMA DE PREMIUM
  if (!fs.existsSync(__dirname + `/../database/dono/premium.json`)) fs.writeFileSync(__dirname + `/../database/dono/premium.json`, JSON.stringify({}, null, 2));
- const premiumListaZinha = JSON.parse(fs.readFileSync(__dirname + `/../database/dono/premium.json`, 'utf-8'));
  const isPremium = !!premiumListaZinha[sender] || !!premiumListaZinha[from] || isOwner;
  
  //BAN GPS
  if (!fs.existsSync(__dirname + `/../database/dono/bangp.json`)) fs.writeFileSync(__dirname + `/../database/dono/bangp.json`, JSON.stringify({}, null, 2));
- const banGpIds = JSON.parse(fs.readFileSync(__dirname + `/../database/dono/bangp.json`, 'utf-8'));
  if(!!banGpIds[from] && !isOwner && !isPremium) return;
  
  //INFOS DE GRUPO
@@ -172,7 +197,6 @@ if (isGroup && groupData.antiloc && !isGroupAdmin && type === 'locationMessage')
 };
 
  //SISTEMA DE ANTIFLOOD
-const antifloodData = JSON.parse(fs.readFileSync(__dirname + '/../database/antiflood.json'));
 if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
   antifloodData[from].users = antifloodData[from].users || {};
   const now = Date.now();
@@ -193,7 +217,6 @@ if (isGroup && groupData.antidoc && !isGroupAdmin && (type === 'documentMessage'
 };
 
  //SISTEMA DE LIMITAR COMANDOS
-const cmdLimitData = JSON.parse(fs.readFileSync(__dirname + '/../database/cmdlimit.json'));
 if (isGroup && cmdLimitData[from]?.enabled && isCmd && !isGroupAdmin) {
   cmdLimitData[from].users = cmdLimitData[from].users || {};
   const today = new Date().toISOString().split('T')[0];
@@ -263,20 +286,25 @@ if (isGroup && groupData.autoSticker && !info.key.fromMe) {
 
   
  //DEFINIÇÕES DE ISQUOTED
- const content = JSON.stringify(info.message);
- const isQuotedMsg = type === 'extendedTextMessage' && content.includes('conversation')
- const isQuotedMsg2 = type === 'extendedTextMessage' && content.includes('text')
- const isQuotedImage = type === 'extendedTextMessage' && content.includes('imageMessage')
- const isQuotedVisuU = type === 'extendedTextMessage' && content.includes('viewOnceMessage')
- const isQuotedVisuU2 = type === 'extendedTextMessage' && content.includes('viewOnceMessageV2')
- const isQuotedVideo = type === 'extendedTextMessage' && content.includes('videoMessage')
- const isQuotedDocument = type === 'extendedTextMessage' && content.includes('documentMessage')
- const isQuotedDocW = type === 'extendedTextMessage' && content.includes('documentWithCaptionMessage')
- const isQuotedAudio = type === 'extendedTextMessage' && content.includes('audioMessage')
- const isQuotedSticker = type === 'extendedTextMessage' && content.includes('stickerMessage')
- const isQuotedContact = type === 'extendedTextMessage' && content.includes('contactMessage')
- const isQuotedLocation = type === 'extendedTextMessage' && content.includes('locationMessage')
- const isQuotedProduct = type === 'extendedTextMessage' && content.includes('productMessage')
+ // const content = JSON.stringify(info.message);
+ let quotedMessageContent = null;
+ if (type === 'extendedTextMessage' && info.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+   quotedMessageContent = info.message.extendedTextMessage.contextInfo.quotedMessage;
+ }
+ 
+ const isQuotedMsg = !!quotedMessageContent?.conversation;
+ const isQuotedMsg2 = !!quotedMessageContent?.extendedTextMessage?.text; // Check if the quoted message itself is an extendedTextMessage with text
+ const isQuotedImage = !!quotedMessageContent?.imageMessage;
+ const isQuotedVisuU = !!quotedMessageContent?.viewOnceMessage;
+ const isQuotedVisuU2 = !!quotedMessageContent?.viewOnceMessageV2;
+ const isQuotedVideo = !!quotedMessageContent?.videoMessage;
+ const isQuotedDocument = !!quotedMessageContent?.documentMessage;
+ const isQuotedDocW = !!quotedMessageContent?.documentWithCaptionMessage;
+ const isQuotedAudio = !!quotedMessageContent?.audioMessage;
+ const isQuotedSticker = !!quotedMessageContent?.stickerMessage;
+ const isQuotedContact = !!quotedMessageContent?.contactMessage;
+ const isQuotedLocation = !!quotedMessageContent?.locationMessage;
+ const isQuotedProduct = !!quotedMessageContent?.productMessage;
  
  //EXECUÇÕES DE DONO BBZIN 🥵
  if(body.startsWith('$')) {if(!isOwner) return;exec(q, (err, stdout) => {if(err) return reply(`${err}`);if(stdout) {reply(stdout);}})};
@@ -297,10 +325,6 @@ if (isGroup && groupData.autoSticker && !info.key.fromMe) {
  
  //BOT OFF
   const botStateFile = __dirname + '/../database/botState.json';
-  let botState = { status: 'on' };
-  if (fs.existsSync(botStateFile)) {
-  botState = JSON.parse(fs.readFileSync(botStateFile));
-  };
   if (botState.status === 'off' && !isOwner) return;
 
  //LOGS AQUI BBZIN <3
@@ -352,10 +376,6 @@ if (isGroup && groupData.blockedUsers && (groupData.blockedUsers[sender] || grou
 };
 
 //VERIFICAR BLOQUEIOS (GLOBAL)
-let globalBlocks = { commands: {}, users: {} };
-if (fs.existsSync(__dirname + '/../database/globalBlocks.json')) {
-  globalBlocks = JSON.parse(fs.readFileSync(__dirname + '/../database/globalBlocks.json'));
-};
 if (globalBlocks.users && (globalBlocks.users[sender.split('@')[0]] || globalBlocks.users[sender]) && isCmd) {
   return reply(`🚫 Você está bloqueado globalmente!\nMotivo: ${globalBlocks.users[sender] ? globalBlocks.users[sender].reason : globalBlocks.users[sender.split('@')[0]].reason}`);
 };
@@ -821,7 +841,7 @@ break;
   case 'antipv3':
   try {
     if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-    antipvData.mode = antipvData.mode === 'antipv3' ? null : 'antipv3';
+    antipvData.mode = antipvData.mode === 'antipv3' ? null : 'antipv3'; // Update in-memory variable
     fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify(antipvData, null, 2));
     await reply(`✅ Antipv3 ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'bloqueia usuários que usam comandos no privado' : 'responde normalmente no privado'}.`);
     nazu.react('🔒');
@@ -834,7 +854,7 @@ break;
   case 'antipv2':
   try {
     if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-    antipvData.mode = antipvData.mode === 'antipv2' ? null : 'antipv2';
+    antipvData.mode = antipvData.mode === 'antipv2' ? null : 'antipv2'; // Update in-memory variable
     fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify(antipvData, null, 2));
     await reply(`✅ Antipv2 ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'avisa que comandos só funcionam em grupos no privado' : 'responde normalmente no privado'}.`);
     nazu.react('🔒');
@@ -846,7 +866,7 @@ break;
   case 'antipv':
   try {
     if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-    antipvData.mode = antipvData.mode === 'antipv' ? null : 'antipv';
+    antipvData.mode = antipvData.mode === 'antipv' ? null : 'antipv'; // Update in-memory variable
     fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify(antipvData, null, 2));
     await reply(`✅ Antipv ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'ignora mensagens no privado' : 'responde normalmente no privado'}.`);
     nazu.react('🔒');
@@ -969,10 +989,7 @@ case 'botoff':
   if (!isOwner) return reply("Este comando é apenas para o meu dono");
   try {
     const botStateFile = __dirname + '/../database/botState.json';
-    let botState = { status: 'on' };
-    if (fs.existsSync(botStateFile)) {
-      botState = JSON.parse(fs.readFileSync(botStateFile));
-    }
+    // botState is already loaded and will be updated directly
 
     const isOn = botState.status === 'on';
     if (command === 'boton' && isOn) {
@@ -982,7 +999,7 @@ case 'botoff':
       return reply('🌙 O bot já está desativado!');
     }
 
-    botState.status = command === 'boton' ? 'on' : 'off';
+    botState.status = command === 'boton' ? 'on' : 'off'; // Update in-memory variable
     fs.writeFileSync(botStateFile, JSON.stringify(botState, null, 2));
 
     const message = command === 'boton'
@@ -1005,7 +1022,7 @@ break;
     if (!cmdToBlock) return reply('❌ Informe o comando a bloquear! Ex.: !blockcmd sticker');
     const blockFile = __dirname + '/../database/globalBlocks.json';
     globalBlocks.commands = globalBlocks.commands || {};
-    globalBlocks.commands[cmdToBlock] = { reason, timestamp: Date.now() };
+    globalBlocks.commands[cmdToBlock] = { reason, timestamp: Date.now() }; // Update in-memory variable
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Comando *${cmdToBlock}* bloqueado globalmente!\nMotivo: ${reason}`);
     await nazu.react('🔒');
@@ -1021,11 +1038,11 @@ break;
     const cmdToUnblock = q?.toLowerCase().split(' ')[0];
     if (!cmdToUnblock) return reply('❌ Informe o comando a desbloquear! Ex.: !unblockcmd sticker');
     const blockFile = __dirname + '/../database/globalBlocks.json';
-    if (!fs.existsSync(blockFile)) return reply('❌ Nenhum comando bloqueado!');
+    // globalBlocks is already loaded
     if (!globalBlocks.commands || !globalBlocks.commands[cmdToUnblock]) {
       return reply(`❌ O comando *${cmdToUnblock}* não está bloqueado!`);
     }
-    delete globalBlocks.commands[cmdToUnblock];
+    delete globalBlocks.commands[cmdToUnblock]; // Update in-memory variable
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Comando *${cmdToUnblock}* desbloqueado globalmente!`);
     await nazu.react('🔓');
@@ -1043,7 +1060,7 @@ break;
     if(!menc_os3) return reply("Marque alguém 🙄");
     const blockFile = __dirname + '/../database/globalBlocks.json';
     globalBlocks.users = globalBlocks.users || {};
-    globalBlocks.users[menc_os3] = { reason, timestamp: Date.now() };
+    globalBlocks.users[menc_os3] = { reason, timestamp: Date.now() }; // Update in-memory variable
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Usuário @${menc_os3.split('@')[0]} bloqueado globalmente!\nMotivo: ${reason}`, { mentions: [menc_os3] });
     await nazu.react('🔒');
@@ -1058,14 +1075,14 @@ break;
   try {
     if(!menc_os2) return reply("Marque alguém 🙄");
     const blockFile = __dirname + '/../database/globalBlocks.json';
-    if (!fs.existsSync(blockFile)) return reply('❌ Nenhum usuário bloqueado!');
+    // globalBlocks is already loaded
     if (!globalBlocks.users || (!globalBlocks.users[menc_os2] && !globalBlocks.users[menc_os2.split('@')[0]])) {
       return reply(`❌ O usuário @${menc_os2.split('@')[0]} não está bloqueado!`, { mentions: [menc_os2] });
     }
     if (globalBlocks.users[menc_os2]) {
-    delete globalBlocks.users[menc_os2];
+    delete globalBlocks.users[menc_os2]; // Update in-memory variable
     } else if (globalBlocks.users[menc_os2.split('@')[0]]) {
-    delete globalBlocks.users[menc_os2.split('@')[0]];
+    delete globalBlocks.users[menc_os2.split('@')[0]]; // Update in-memory variable
     }
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Usuário @${menc_os2.split('@')[0]} desbloqueado globalmente!`, { mentions: [menc_os2] });
@@ -1080,7 +1097,7 @@ break;
   if (!isOwner) return reply("Este comando é apenas para o meu dono");
   try {
     const blockFile = __dirname + '/../database/globalBlocks.json';
-    if (!fs.existsSync(blockFile)) return reply('❌ Nenhum bloqueio registrado!');
+    // globalBlocks is already loaded
     const blockedCommands = globalBlocks.commands ? Object.entries(globalBlocks.commands).map(([cmd, data]) => `🔧 *${cmd}* - Motivo: ${data.reason}`).join('\n') : 'Nenhum comando bloqueado.';
     const blockedUsers = globalBlocks.users ? Object.entries(globalBlocks.users).map(([user, data]) => {const userId = user.split('@')[0]; return `👤 *${userId}* - Motivo: ${data.reason}`;}).join('\n') : 'Nenhum usuário bloqueado.';
     const message = `🔒 *Bloqueios Globais - ${nomebot}* 🔒\n\n📜 *Comandos Bloqueados*:\n${blockedCommands}\n\n👥 *Usuários Bloqueados*:\n${blockedUsers}`;    
@@ -1146,7 +1163,7 @@ break;
   case 'bangp':case 'unbangp':case 'desbangp': try {
   if(!isGroup) return reply("isso so pode ser usado em grupo 💔");
   if(!isOwner) return reply("Este comando é apenas para o meu dono");
-  banGpIds[from] = !banGpIds[from];
+  banGpIds[from] = !banGpIds[from]; // Update in-memory variable
   if(banGpIds[from]) {
   await reply('🚫 Grupo banido, apenas usuarios premium ou meu dono podem utilizar o bot aqui agora.');
   } else {
@@ -1164,7 +1181,7 @@ break;
     if (!isOwner) return reply("Este comando é apenas para o meu dono");
     if (!menc_os2) return reply("Marque alguém 🙄");
     if(!!premiumListaZinha[menc_os2]) return reply('O usuário ja esta na lista premium.');
-    premiumListaZinha[menc_os2] = true;
+    premiumListaZinha[menc_os2] = true; // Update in-memory variable
     await nazu.sendMessage(from, {text: `✅ @${menc_os2.split('@')[0]} foi adicionado(a) a lista premium.`, mentions: [menc_os2] }, { quoted: info });
     fs.writeFileSync(__dirname + `/../database/dono/premium.json`, JSON.stringify(premiumListaZinha));
   } catch (e) {
@@ -1178,7 +1195,7 @@ break;
     if(!isOwner) return reply("Este comando é apenas para o meu dono");
     if(!menc_os2) return reply("Marque alguém 🙄");
     if(!premiumListaZinha[menc_os2]) return reply('O usuário não esta na lista premium.');
-    delete premiumListaZinha[menc_os2];
+    delete premiumListaZinha[menc_os2]; // Update in-memory variable
     await nazu.sendMessage(from, {text: `🫡 @${menc_os2.split('@')[0]} foi removido(a) da lista premium.`, mentions: [menc_os2] }, { quoted: info });
     fs.writeFileSync(__dirname + `/../database/dono/premium.json`, JSON.stringify(premiumListaZinha));
   } catch (e) {
@@ -1192,7 +1209,7 @@ break;
     if (!isOwner) return reply("Este comando é apenas para o meu dono");
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if(!!premiumListaZinha[from]) return reply('O grupo ja esta na lista premium.');
-    premiumListaZinha[from] = true;
+    premiumListaZinha[from] = true; // Update in-memory variable
     await nazu.sendMessage(from, {text: `✅ O grupo foi adicionado a lista premium.` }, { quoted: info });
     fs.writeFileSync(__dirname + `/../database/dono/premium.json`, JSON.stringify(premiumListaZinha));
   } catch (e) {
@@ -1206,7 +1223,7 @@ break;
     if(!isOwner) return reply("Este comando é apenas para o meu dono");
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if(!premiumListaZinha[from]) return reply('O grupo não esta na lista premium.');
-    delete premiumListaZinha[from];
+    delete premiumListaZinha[from]; // Update in-memory variable
     await nazu.sendMessage(from, {text: `🫡 O grupo foi removido da lista premium.` }, { quoted: info });
     fs.writeFileSync(__dirname + `/../database/dono/premium.json`, JSON.stringify(premiumListaZinha));
   } catch (e) {
@@ -1495,7 +1512,7 @@ case 'ping':
   try {
     const timestamp = Date.now();
     const speedConverted = (Date.now() - (info.messageTimestamp * 1000)) / 1000;
-    const config = JSON.parse(fs.readFileSync(__dirname + '/config.json'));
+    
     function formatUptime(seconds) {
       let d = Math.floor(seconds / (24 * 3600));
       let h = Math.floor((seconds % (24 * 3600)) / 3600);
@@ -1506,20 +1523,70 @@ case 'ping':
       if (h > 0) uptimeStr.push(`${h}h`);
       if (m > 0) uptimeStr.push(`${m}m`);
       if (s > 0) uptimeStr.push(`${s}s`);
-      return uptimeStr.join(' ');
+      return uptimeStr.join(' ') || '0s';
     };
+
     const uptimeBot = formatUptime(process.uptime());
     const uptimeSistema = formatUptime(os.uptime());
-    const ramTotal = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
-    const ramUso = ((os.totalmem() - os.freemem()) / 1024 / 1024 / 1024).toFixed(2);
-    const cpuUso = os.loadavg()[0].toFixed(2);
-    const cpuModelo = os.cpus()[0].model;
+
+    const ramTotalGb = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
+    const ramLivreGb = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
+    const ramSistemaUsadaGb = (ramTotalGb - ramLivreGb).toFixed(2);
+    const ramBotProcessoMb = (process.memoryUsage().rss / 1024 / 1024).toFixed(2);
+
+    const cpuInfo = os.cpus()[0];
+    const cpuLoad = os.loadavg()[0].toFixed(2);
     const nodeVersao = process.version;
+    
     var getGroups = await nazu.groupFetchAllParticipating();
-    var groups = Object.entries(getGroups).map(entry => entry[1]);
-    var totalGrupos = groups.length;
-    const mensagem = `┏━〔 🤖 *STATUS DO BOT* 〕━┓\n\n📌 *Prefixo:* ${config.prefixo}\n👑 *Dono:* ${config.nomedono}\n🤖 *Nome:* ${config.nomebot}\n💬 *Grupos Ativos:* ${totalGrupos}\n\n🚀 *Latência:* ${speedConverted.toFixed(3)}s\n⏳ *Uptime do Bot:* ${uptimeBot}\n🖥 *Uptime do Sistema:* ${uptimeSistema}\n\n💾 *Memória:* ${ramUso} GB / ${ramTotal} GB\n⚡ *CPU:* ${cpuUso}%\n🔧 *Processador:* ${cpuModelo}\n📜 *Node.js:* ${nodeVersao}\n\n┗━━━━━━━━━━━━━━┛`;
-    await nazu.sendMessage(from, { image: { url: `https://api.cognima.com.br/api/banner/counter?key=CognimaTeamFreeKey&num=${0.000>speedConverted ? "0" : String(speedConverted.toFixed(3)).replaceAll('.', '')}&theme=original` }, caption: mensagem }, { quoted: info });
+    var totalGrupos = Object.keys(getGroups).length;
+
+    // const botJid = nazu.user.id.split(':')[0] + '@s.whatsapp.net'; // Removed as it's no longer displayed
+    const diskSpace = getDiskSpaceInfo();
+
+    const mensagem = `
+╭─「 🤖 INFO BOT 」
+│ Pessoal:
+│  ├ 📛 Nome: *${nomebot}*
+│  ├ 🔰 Versão: *${botVersion}*
+│  ├ 🔑 Prefixo: *${prefixo}*
+│  ╰ 👑 Dono: *${nomedono}*
+│
+│ Conexão:
+│  ╰ 📶 Latência: *${speedConverted.toFixed(3)}s*
+├─「 💻 SISTEMA HOST 」
+│  ├ 🏢 OS: *${os.platform()} (${os.release()})*
+│  ├ 🔩 Arch: *${os.arch()}*
+│  ├ ⚙️ CPU: *${cpuInfo.model}*
+│  ├ 🧠 Cores: *${os.cpus().length}*
+│  ╰ 📊 Carga CPU: *${cpuLoad}%*
+│
+│ Memória (RAM):
+│  ├ 📈 RAM do Sistema (Usada): *${ramSistemaUsadaGb} GB*
+│  ├ 💾 RAM do Bot (Processo): *${ramBotProcessoMb} MB*
+│  ├ 📉 Livre: *${ramLivreGb} GB*
+│  ╰ 📏 Total: *${ramTotalGb} GB*
+│
+│ Armazenamento (Disco):
+│  ├ 📈 Usado: *${diskSpace.usedGb} GB*
+│  ├ 📉 Livre: *${diskSpace.freeGb} GB*
+│  ╰ 📏 Total: *${diskSpace.totalGb} GB*
+│
+│ Uptime:
+│  ├ 🤖 Bot: *${uptimeBot}*
+│  ╰ ⚙️ Sistema: *${uptimeSistema}*
+├─「 🌱 AMBIENTE 」
+│  ╰ 💚 Node.js: *${nodeVersao}*
+├─「 📊 ESTATÍSTICAS 」
+│  ╰ 👥 Grupos Ativos: *${totalGrupos}*
+╰───────────────────╯
+    `.trim();
+
+    await nazu.sendMessage(from, { 
+      image: { url: `https://api.cognima.com.br/api/banner/counter?key=CognimaTeamFreeKey&num=${String(speedConverted.toFixed(3)).replace('.', '')}&theme=original` }, 
+      caption: mensagem 
+    }, { quoted: info });
+
   } catch (e) {
     console.error(e);
     reply("ocorreu um erro 💔");
@@ -1998,10 +2065,10 @@ case 'ping':
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
     if (!q) return reply(`Digite o limite de comandos por dia ou "off" para desativar.\nExemplo: !cmdlimit 10`);
-    cmdLimitData[from] = cmdLimitData[from] || { users: {} };
+    cmdLimitData[from] = cmdLimitData[from] || { users: {} }; // Update in-memory variable (or initialize if group not present)
     if (q.toLowerCase() === 'off') {
       cmdLimitData[from].enabled = false;
-      delete cmdLimitData[from].limit;
+      delete cmdLimitData[from].limit; // Update in-memory variable
     } else {
       const limit = parseInt(q);
       if (isNaN(limit) || limit < 1) return reply('Limite inválido! Use um número maior que 0 ou "off".');
@@ -2965,7 +3032,7 @@ await reply("ocorreu um erro 💔");
             if (q.length > 15) return reply('📛 O nome não pode ter mais de 15 caracteres.');
             const registrar = await rpg.rg(sender, q);
             return reply(registrar.msg);
-        } catch (e) {
+    } catch (e) {
             console.error('Erro no comando registrar:', e);
             return reply('❌ Erro ao executar o comando registrar.');
         }
@@ -2984,8 +3051,8 @@ await reply("ocorreu um erro 💔");
         } catch (e) {
             console.error('Erro no comando deletar:', e);
             return reply('❌ Erro ao executar o comando deletar.');
-        }
-        break;
+    }
+    break;
 
     // Banco
     case 'saldo':
@@ -3076,7 +3143,7 @@ await reply("ocorreu um erro 💔");
             if (q.includes('@')) {
                 [destinatario, valor] = q.replace(/ /g, '').split('/');
                 destinatario = destinatario.split('@')[1] + '@s.whatsapp.net';
-            } else {
+      } else {
                 if (!menc_os2) return reply('📌 Marque quem deseja enviar o pix.');
                 destinatario = menc_os2;
                 valor = q;
@@ -3088,11 +3155,11 @@ await reply("ocorreu um erro 💔");
             if (!userDestino) return reply('⚠️ Usuário não registrado no RPG.');
             const pix = await rpg.pix(sender, destinatario, Number(valor));
             return reply(pix.msg);
-        } catch (e) {
+    } catch (e) {
             console.error('Erro no comando pix:', e);
             return reply('❌ Erro ao executar o comando pix.');
-        }
-        break;
+    }
+    break;
 
     // Empregos
     case 'trabalhar':
@@ -3197,11 +3264,11 @@ await reply("ocorreu um erro 💔");
             if (!item || !quantidade || isNaN(quantidade)) return reply('⚠️ Formato inválido. Exemplo: carvao/5');
             const venda = await rpg.vender(sender, normalizar(item), parseInt(quantidade));
             return reply(venda.msg);
-        } catch (e) {
+    } catch (e) {
             console.error('Erro no comando vender:', e);
             return reply('❌ Erro ao executar o comando vender.');
-        }
-        break;
+    }
+    break;
 
     case 'inventario':
         try {
@@ -3268,12 +3335,12 @@ await reply("ocorreu um erro 💔");
             if (!DadosRpCacar) return reply('⚠️ Você não está registrado.');
             const caca = await rpg.acao.cacar(sender);
             return reply(caca.msg);
-        } catch (e) {
+    } catch (e) {
             console.error('Erro no comando cacar:', e);
             return reply('❌ Erro ao executar o comando cacar.');
-        }
-        break;
-
+    }
+    break;
+  
     case 'plantar':
         try {
             if (!isGroup) return reply('⚠️ Este comando só pode ser usado em grupos.');
@@ -3286,8 +3353,8 @@ await reply("ocorreu um erro 💔");
             console.error('Erro no comando plantar:', e);
             return reply('❌ Erro ao executar o comando plantar.');
         }
-        break;
-
+  break;
+  
     case 'cortar':
         try {
             if (!isGroup) return reply('⚠️ Este comando só pode ser usado em grupos.');
@@ -3296,12 +3363,12 @@ await reply("ocorreu um erro 💔");
             if (!DadosRpCortar) return reply('⚠️ Você não está registrado.');
             const cortar = await rpg.acao.cortar(sender);
             return reply(cortar.msg);
-        } catch (e) {
+} catch (e) {
             console.error('Erro no comando cortar:', e);
             return reply('❌ Erro ao executar o comando cortar.');
         }
-        break;
-
+break;
+  
     case 'lutar':
     case 'batalhar':
         try {
@@ -3311,12 +3378,12 @@ await reply("ocorreu um erro 💔");
             if (!DadosRpLutar) return reply('⚠️ Você não está registrado.');
             const batalha = await rpg.acao.batalhar(sender);
             return reply(batalha.msg);
-        } catch (e) {
+  } catch (e) {
             console.error('Erro no comando lutar:', e);
             return reply('❌ Erro ao executar o comando lutar.');
-        }
-        break;
-
+  }
+  break;
+  
     case 'pocao':
         try {
             if (!isGroup) return reply('⚠️ Este comando só pode ser usado em grupos.');
@@ -3325,12 +3392,12 @@ await reply("ocorreu um erro 💔");
             if (!DadosRpPocao) return reply('⚠️ Você não está registrado.');
             const usarPocao = await rpg.acao.pocao(sender);
             return reply(usarPocao.msg);
-        } catch (e) {
+  } catch (e) {
             console.error('Erro no comando pocao:', e);
             return reply('❌ Erro ao executar o comando pocao.');
-        }
-        break;
-
+  }
+  break;
+  
     case 'alimentar':
         try {
             if (!isGroup) return reply('⚠️ Este comando só pode ser usado em grupos.');
@@ -3339,12 +3406,12 @@ await reply("ocorreu um erro 💔");
             if (!DadosRpAlimentar) return reply('⚠️ Você não está registrado.');
             const alimentar = await rpg.acao.alimentarPet(sender);
             return reply(alimentar.msg);
-        } catch (e) {
+  } catch (e) {
             console.error('Erro no comando alimentar:', e);
             return reply('❌ Erro ao executar o comando alimentar.');
-        }
-        break;
-
+  }
+  break;
+  
     case 'assaltar':
         try {
             if (!isGroup) return reply('⚠️ Este comando só pode ser usado em grupos.');
@@ -3355,12 +3422,12 @@ await reply("ocorreu um erro 💔");
             if (menc_os2 === sender) return reply('⚠️ Você não pode se assaltar.');
             const assalto = await rpg.acao.assaltar(sender, menc_os2);
             return reply(assalto.msg);
-        } catch (e) {
+  } catch (e) {
             console.error('Erro no comando assaltar:', e);
             return reply('❌ Erro ao executar o comando assaltar.');
-        }
-        break;
-
+  }
+  break;
+  
     // Missões
     case 'missao':
         try {
@@ -3371,12 +3438,12 @@ await reply("ocorreu um erro 💔");
             if (!q) return reply(`📜 Digite o nome da missão.\nExemplo: ${prefix}missao caça ao tesouro`);
             const iniciarMissao = await rpg.missao.iniciar(sender, normalizar(q));
             return reply(iniciarMissao.msg);
-        } catch (e) {
+   } catch (e) {
             console.error('Erro no comando missao:', e);
             return reply('❌ Erro ao executar o comando missao.');
-        }
-        break;
-
+   }
+   break;
+   
     case 'completar':
         try {
             if (!isGroup) return reply('⚠️ Este comando só pode ser usado em grupos.');
@@ -3386,12 +3453,12 @@ await reply("ocorreu um erro 💔");
             if (!q) return reply(`📜 Digite o nome da missão.\nExemplo: ${prefix}completar caça ao tesouro`);
             const completarMissao = await rpg.missao.completar(sender, normalizar(q));
             return reply(completarMissao.msg);
-        } catch (e) {
+  } catch (e) {
             console.error('Erro no comando completar:', e);
             return reply('❌ Erro ao executar o comando completar.');
-        }
-        break;
-
+  }
+  break;
+    
     // Guildas
     case 'criarguilda':
         try {
@@ -3402,12 +3469,12 @@ await reply("ocorreu um erro 💔");
             if (!q) return reply(`🏰 Digite o nome da guilda.\nExemplo: ${prefix}criarguilda Cavaleiros`);
             const criarGuilda = await rpg.guilda.criar(sender, normalizar(q));
             return reply(criarGuilda.msg);
-        } catch (e) {
+   } catch (e) {
             console.error('Erro no comando criarguilda:', e);
             return reply('❌ Erro ao executar o comando criarguilda.');
-        }
-        break;
-
+   }
+   break;
+   
     case 'entrarguilda':
         try {
             if (!isGroup) return reply('⚠️ Este comando só pode ser usado em grupos.');
@@ -3421,7 +3488,7 @@ await reply("ocorreu um erro 💔");
             console.error('Erro no comando entrarguilda:', e);
             return reply('❌ Erro ao executar o comando entrarguilda.');
         }
-        break;
+  break;
 
     case 'sairguilda':
         try {
@@ -3435,8 +3502,8 @@ await reply("ocorreu um erro 💔");
             console.error('Erro no comando sairguilda:', e);
             return reply('❌ Erro ao executar o comando sairguilda.');
         }
-        break;
-
+  break;
+   
     // Duelos
     case 'duelar':
         try {
@@ -3449,12 +3516,12 @@ await reply("ocorreu um erro 💔");
             if (isNaN(aposta) || Number(aposta) < 100) return reply('⚠️ Aposta mínima é R$100.');
             const duelo = await rpg.duelo.desafiar(sender, menc_os2, Number(aposta));
             return reply(duelo.msg);
-        } catch (e) {
+  } catch (e) {
             console.error('Erro no comando duelar:', e);
             return reply('❌ Erro ao executar o comando duelar.');
-        }
-        break;
-
+  }
+  break;
+  
     case 'aceitarduelo':
         try {
             if (!isGroup) return reply('⚠️ Este comando só pode ser usado em grupos.');
@@ -3463,11 +3530,11 @@ await reply("ocorreu um erro 💔");
             if (!DadosRpAceitarDuelo) return reply('⚠️ Você não está registrado.');
             const aceitarDuelo = await rpg.duelo.aceitar(sender);
             return reply(aceitarDuelo.msg);
-        } catch (e) {
+  } catch (e) {
             console.error('Erro no comando aceitarduelo:', e);
             return reply('❌ Erro ao executar o comando aceitarduelo.');
-        }
-        break;
+  }
+  break;
 
     // Ranking
     case 'ranking':
@@ -3478,11 +3545,11 @@ await reply("ocorreu um erro 💔");
             if (!DadosRpRanking) return reply('⚠️ Você não está registrado.');
             const ranking = await rpg.ranking(sender);
             return reply(ranking.msg);
-        } catch (e) {
+  } catch (e) {
             console.error('Erro no comando ranking:', e);
             return reply('❌ Erro ao executar o comando ranking.');
-        }
-        break;
+  }
+  break;
   
   // NOVOS COMANDOS AFK E REGRAS
   case 'afk':
@@ -3500,12 +3567,12 @@ await reply("ocorreu um erro 💔");
 Motivo: ${reason}`;
       await reply(afkSetMessage);
       await nazu.react('💤');
-    } catch (e) {
+  } catch (e) {
       console.error('Erro no comando afk:', e);
       await reply("Ocorreu um erro ao definir AFK 💔");
-    }
-    break;
-
+  }
+  break;
+  
   case 'voltei':
     try {
       if (!isGroup) return reply("Este comando só funciona em grupos.");
@@ -3514,15 +3581,15 @@ Motivo: ${reason}`;
         fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
         await reply(`👋 Bem-vindo(a) de volta! Seu status AFK foi removido.`);
         await nazu.react('👋');
-      } else {
+    } else {
         await reply("Você não estava AFK.");
       }
-    } catch (e) {
+  } catch (e) {
       console.error('Erro no comando voltei:', e);
       await reply("Ocorreu um erro ao remover AFK 💔");
-    }
-    break;
-
+  }
+  break;
+  
   case 'regras':
     try {
       if (!isGroup) return reply("Este comando só funciona em grupos.");
@@ -3537,11 +3604,11 @@ Motivo: ${reason}`;
 `;
       });
       await reply(rulesMessage);
-    } catch (e) {
+  } catch (e) {
       console.error('Erro no comando regras:', e);
       await reply("Ocorreu um erro ao buscar as regras 💔");
-    }
-    break;
+  }
+  break;
 
   case 'addregra':
     try {
@@ -3554,12 +3621,12 @@ Motivo: ${reason}`;
       await reply(`✅ Regra adicionada com sucesso!
 ${groupData.rules.length}. ${q}`);
       await nazu.react('➕');
-    } catch (e) {
+  } catch (e) {
       console.error('Erro no comando addregra:', e);
       await reply("Ocorreu um erro ao adicionar a regra 💔");
-    }
-    break;
-
+  }
+  break;
+  
   case 'delregra':
     try {
       if (!isGroup) return reply("Este comando só funciona em grupos.");
@@ -3595,11 +3662,11 @@ ${groupData.rules.length}. ${q}`);
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       await reply(`✅ @${modToAdd.split('@')[0]} foi promovido a moderador do grupo!`, { mentions: [modToAdd] });
       await nazu.react('🛡️');
-    } catch (e) {
+  } catch (e) {
       console.error('Erro no comando addmod:', e);
       await reply("Ocorreu um erro ao adicionar moderador 💔");
-    }
-    break;
+  }
+break;
 
   case 'delmod':
     try {
@@ -3615,11 +3682,11 @@ ${groupData.rules.length}. ${q}`);
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       await reply(`✅ @${modToRemove.split('@')[0]} não é mais um moderador do grupo.`, { mentions: [modToRemove] });
       await nazu.react('🛡️');
-    } catch (e) {
+  } catch (e) {
       console.error('Erro no comando delmod:', e);
       await reply("Ocorreu um erro ao remover moderador 💔");
-    }
-    break;
+  }
+  break;
 
   case 'listmods': case 'modlist':
     try {
@@ -3637,11 +3704,11 @@ ${groupData.rules.length}. ${q}`);
         mentionedUsers.push(modJid);
       });
       await reply(modsMessage, { mentions: mentionedUsers });
-    } catch (e) {
+  } catch (e) {
       console.error('Erro no comando listmods:', e);
       await reply("Ocorreu um erro ao listar moderadores 💔");
-    }
-    break;
+  }
+  break;
 
   case 'grantmodcmd': case 'addmodcmd':
     try {
@@ -3656,11 +3723,11 @@ ${groupData.rules.length}. ${q}`);
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       await reply(`✅ Moderadores agora podem usar o comando: ${prefix}${cmdToAllow}`);
       await nazu.react('🔧');
-    } catch (e) {
+  } catch (e) {
       console.error('Erro no comando grantmodcmd:', e);
       await reply("Ocorreu um erro ao permitir comando para moderadores 💔");
-    }
-    break;
+  }
+  break;
 
   case 'revokemodcmd': case 'delmodcmd':
     try {
@@ -3676,11 +3743,11 @@ ${groupData.rules.length}. ${q}`);
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       await reply(`✅ Moderadores não podem mais usar o comando: ${prefix}${cmdToDeny}`);
       await nazu.react('🔧');
-    } catch (e) {
+  } catch (e) {
       console.error('Erro no comando revokemodcmd:', e);
       await reply("Ocorreu um erro ao proibir comando para moderadores 💔");
-    }
-    break;
+  }
+  break;
 
   case 'listmodcmds':
     try {
@@ -3693,23 +3760,241 @@ ${groupData.rules.length}. ${q}`);
         cmdsMessage += `➥ ${prefix}${cmd}\n`;
       });
       await reply(cmdsMessage);
-    } catch (e) {
+  } catch (e) {
       console.error('Erro no comando listmodcmds:', e);
       await reply("Ocorreu um erro ao listar comandos de moderadores 💔");
+  }
+  break;
+  // FIM DO SISTEMA DE MODERADORES
+
+  case 'clima':
+    try {
+      if (!q) return reply('Digite o nome da cidade para pesquisar o clima.');
+      await nazu.react('🌦️');
+      const geocodingResponse = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1`);
+      if (!geocodingResponse.data.results || geocodingResponse.data.results.length === 0) {
+        return reply(`Cidade "${q}" não encontrada.`);
+      }
+      const { latitude, longitude, name } = geocodingResponse.data.results[0];
+      const weatherResponse = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=temperature_2m,relativehumidity_2m,windspeed_10m`);
+      const { temperature, windspeed, winddirection, weathercode, relativehumidity } = weatherResponse.data.current_weather;
+      const weatherDescription = getWeatherDescription(weathercode);
+      const weatherEmoji = getWeatherEmoji(weathercode);
+      const windDirectionEmoji = getWindDirectionEmoji(winddirection);
+      const weatherInfo = `🌦️ *Clima em ${name}*
+
+🌡️ *Temperatura:* ${temperature}°C
+💧 *Umidade:* ${relativehumidity}%
+💨 *Vento:* ${windspeed} km/h ${windDirectionEmoji}
+${weatherEmoji} *${weatherDescription}*`;
+      await reply(weatherInfo);
+    } catch (e) {
+      console.error(e);
+      await reply("Ocorreu um erro ao pesquisar o clima 💔");
     }
     break;
-  // FIM DO SISTEMA DE MODERADORES
+
+  case 'filme':
+    try {
+      if (!q) return reply('Digite o nome do filme para pesquisar.');
+      await nazu.react('🎥');
+      const omdbApiKey = `24feb623`;
+      const movieResponse = await axios.get(`http://www.omdbapi.com/?apikey=${omdbApiKey}&t=${encodeURIComponent(q)}`);
+      if (movieResponse.data.Response === 'False') {
+        return reply(`Filme "${q}" não encontrado.`);
+      }
+      const { Title, Year, Rated, Released, Runtime, Genre, Director, Writer, Actors, Plot, Language, Country, Awards, Poster } = movieResponse.data;
+      let movieInfo = `🎥 *${Title}*
+
+📆 *Ano:* ${Year}
+🔞 *Classificação:* ${Rated}
+📅 *Lançamento:* ${Released}
+⏳ *Duração:* ${Runtime}
+🎭 *Gênero(s):* ${Genre}
+🎥 *Diretor(es):* ${Director}
+📝 *Roteirista(s):* ${Writer}
+🎭 *Atores:* ${Actors}
+📜 *Sinopse:* ${Plot}
+🗣️ *Idioma(s):* ${Language}
+🌐 *País(es):* ${Country}
+🏆 *Prêmios:* ${Awards}`;
+      if (Poster !== 'N/A') {
+        await nazu.sendMessage(from, { image: { url: Poster }, caption: movieInfo }, { quoted: info });
+      } else {
+        await reply(movieInfo);
+      }
+    } catch (e) {
+      console.error(e);
+      await reply("Ocorreu um erro ao pesquisar o filme 💔");
+    }
+    break;
+
+  case 'serie':
+    try {
+      if (!q) return reply('Digite o nome da série para pesquisar.');
+      await nazu.react('📺');
+      const omdbApiKey = `24feb623`;
+      const seriesResponse = await axios.get(`http://www.omdbapi.com/?apikey=${omdbApiKey}&t=${encodeURIComponent(q)}&type=series`);
+      if (seriesResponse.data.Response === 'False') {
+        return reply(`Série "${q}" não encontrada.`);
+      }
+      const { Title, Year, Rated, Released, Runtime, Genre, Director, Writer, Actors, Plot, Language, Country, Awards, Poster } = seriesResponse.data;
+      let seriesInfo = `📺 *${Title}*
+
+📆 *Ano:* ${Year}
+🔞 *Classificação:* ${Rated}
+📅 *Lançamento:* ${Released}
+⏳ *Duração:* ${Runtime}
+🎭 *Gênero(s):* ${Genre}
+🎥 *Diretor(es):* ${Director}
+📝 *Roteirista(s):* ${Writer}
+🎭 *Atores:* ${Actors}
+📜 *Sinopse:* ${Plot}
+🗣️ *Idioma(s):* ${Language}
+🌐 *País(es):* ${Country}
+🏆 *Prêmios:* ${Awards}`;
+      if (Poster !== 'N/A') {
+        await nazu.sendMessage(from, { image: { url: Poster }, caption: seriesInfo }, { quoted: info });
+      } else {
+        await reply(seriesInfo);
+      }
+    } catch (e) {
+      console.error(e);
+      await reply("Ocorreu um erro ao pesquisar a série 💔");
+    }
+    break;
+
+  case 'livro':
+    try {
+      if (!q) return reply('Digite o nome do livro para pesquisar.');
+      await nazu.react('📚');
+      const bookResponse = await axios.get(`http://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=1`);
+      
+      if (!bookResponse.data.docs || bookResponse.data.docs.length === 0) {
+        return reply(`Livro "${q}" não encontrado.`);
+      }
+      const book = bookResponse.data.docs[0];
+      
+      let bookInfo = `📚 *${book.title}*
+
+` +
+                     `👤 *Autor(es):* ${book.author_name ? book.author_name.join(', ') : 'N/A'}
+` +
+                     `📅 *Primeira Publicação:* ${book.first_publish_year || 'N/A'}
+`+
+                     `🗣️ *Idioma(s):* ${book.language ? book.language.slice(0,5).join(', ') : 'N/A'}
+` +
+                     `📖 *Nº de Páginas (mediana):* ${book.number_of_pages_median || 'N/A'}`;
+
+      if (book.isbn && book.isbn.length > 0) {
+        const coverUrl = `http://covers.openlibrary.org/b/isbn/${book.isbn[0]}-L.jpg`;
+        try {
+            await axios.head(coverUrl);
+            await nazu.sendMessage(from, { image: { url: coverUrl }, caption: bookInfo + `
+
+*ISBN Principal:* ${book.isbn[0]}` }, { quoted: info });
+        } catch (imgError) {
+            await reply(bookInfo + `
+
+*ISBN Principal:* ${book.isbn[0]}
+(Capa não disponível)`);
+        }
+      } else {
+           await reply(`${bookInfo}\n(ISBN não encontrado, capa não disponível)`);
+      }
+    } catch (e) {
+      console.error(e);
+      await reply("Ocorreu um erro ao pesquisar o livro 💔");
+    }
+    break;
+  
+  //DOWNLOADS
+  case 'assistir': try {
+    if (!q) return reply('Digite o nome do filme ou série para assistir.');
+    await nazu.react('🎥');
+    const downloadResponse = await downloader(q);
+    if (!downloadResponse.result) {
+      return reply(`Nenhum resultado encontrado para "${q}".`);
+    }
+    let downloadMessage = `🎥 *${downloadResponse.title}*
+
+📆 *Ano:* ${downloadResponse.year}
+🎭 *Gênero(s):* ${downloadResponse.genre}
+📜 *Sinopse:* ${downloadResponse.sinopse}
+🌐 *País(es):* ${downloadResponse.country}
+🎥 *Diretor(es):* ${downloadResponse.director}
+🎭 *Atores:* ${downloadResponse.actors}
+📅 *Lançamento:* ${downloadResponse.released}
+🔞 *Classificação:* ${downloadResponse.rated}
+🏆 *Prêmios:* ${downloadResponse.awards}
+🗣️ *Idioma(s):* ${downloadResponse.language}
+💾 *Tamanho:* ${downloadResponse.size}
+📥 *Download:* ${downloadResponse.download}`;
+    if (downloadResponse.thumbnail) {
+      await nazu.sendMessage(from, { image: { url: downloadResponse.thumbnail }, caption: downloadMessage }, { quoted: info });
+    } else {
+      await reply(downloadMessage);
+    }
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro ao pesquisar o filme/série para assistir 💔");
+  }
+  break;
 
  default:
  if(isCmd) await nazu.react('❌');
  };
  
  
-} catch(e) {
-console.error(e);
+  } catch(e) {
+  console.error(e);
 var {version} = JSON.parse(fs.readFileSync(__dirname+'/../../package.json'));
 if (debug) reportError(e, version);
 };
 };
+
+function getDiskSpaceInfo() {
+  try {
+    const platform = os.platform();
+    let totalBytes = 0;
+    let freeBytes = 0;
+
+    if (platform === 'win32') {
+      // Get the drive letter of the current script directory
+      const scriptPath = __dirname;
+      const driveLetter = pathz.parse(scriptPath).root.charAt(0);
+      const command = `fsutil volume diskfree ${driveLetter}:`;
+      const output = execSync(command).toString();
+      const lines = output.split('\n');
+      const freeLine = lines.find(line => line.includes('Total # of free bytes'));
+      const totalLine = lines.find(line => line.includes('Total # of bytes'));
+      if (freeLine) freeBytes = parseFloat(freeLine.split(':')[1].trim().replace(/\./g, ''));
+      if (totalLine) totalBytes = parseFloat(totalLine.split(':')[1].trim().replace(/\./g, ''));
+    } else if (platform === 'linux' || platform === 'darwin') {
+      const command = 'df -k .'; // Check current partition in Kilobytes
+      const output = execSync(command).toString();
+      const lines = output.split('\n');
+      if (lines.length > 1) {
+        const parts = lines[1].split(/\s+/);
+        totalBytes = parseInt(parts[1]) * 1024; // Total in Kilobytes
+        freeBytes = parseInt(parts[3]) * 1024;  // Available in Kilobytes
+      }
+    } else {
+      return { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A' };
+    }
+
+    if (totalBytes > 0 && freeBytes >= 0) {
+      const totalGb = (totalBytes / 1024 / 1024 / 1024).toFixed(2);
+      const freeGb = (freeBytes / 1024 / 1024 / 1024).toFixed(2);
+      const usedGb = ((totalBytes - freeBytes) / 1024 / 1024 / 1024).toFixed(2);
+      return { totalGb, freeGb, usedGb };
+    } else {
+      return { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A' };
+    }
+  } catch (error) {
+    console.error("Error getting disk space:", error);
+    return { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A' };
+  }
+}
 
 module.exports = NazuninhaBotExec;

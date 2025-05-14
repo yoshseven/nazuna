@@ -20,7 +20,8 @@ const NodeCache = require('node-cache');
 const readline = require('readline');
 const { execSync } = require('child_process');
 const pino = require('pino');
-const fs = require('fs').promises;
+const fsPromises = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 
 const logger = pino({ level: 'silent' });
@@ -39,9 +40,49 @@ const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream
 
 async function startNazu() {
   try {
-    await fs.mkdir(DATABASE_DIR, { recursive: true });
+    await fsPromises.mkdir(DATABASE_DIR, { recursive: true });
     const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
     const { version } = await fetchLatestBaileysVersion();
+
+    const indexModulePath = path.join(__dirname, 'index.js');
+    let indexModule;
+
+    function loadOrReloadMainModule() {
+      try {
+        if (require.cache[require.resolve(indexModulePath)]) {
+          delete require.cache[require.resolve(indexModulePath)];
+        }
+        indexModule = require(indexModulePath);
+        if (typeof indexModule === 'function') {
+          console.log('🔄 Módulo principal (index.js) carregado/recarregado com sucesso.');
+        } else {
+          console.error('❌ Erro: Módulo principal (index.js) não exporta uma função válida.');
+          indexModule = null;
+        }
+      } catch (e) {
+        console.error('❌ Erro crítico ao carregar/recarregar o módulo principal (index.js):', e);
+        indexModule = null;
+      }
+    }
+
+    loadOrReloadMainModule();
+
+    const srcDirToWatch = __dirname;
+    fs.watch(srcDirToWatch, { recursive: true }, (eventType, filename) => {
+      if (filename && filename.endsWith('.js')) {
+        const changedFilePath = path.resolve(srcDirToWatch, filename);
+        console.log(`[FileWatcher] ${eventType} detectado em: ${filename}`);
+
+        if (require.cache[changedFilePath]) {
+          delete require.cache[changedFilePath];
+          console.log(`[FileWatcher] Cache removido para: ${changedFilePath}`);
+        } else {
+        }
+        
+        console.log('[FileWatcher] Recarregando o módulo principal (index.js) devido à alteração de arquivo...');
+        loadOrReloadMainModule();
+      }
+    });
 
     async function getMessage(key) {
       if (!store) return proto.Message.fromObject({});
@@ -105,7 +146,7 @@ async function startNazu() {
       const groupFilePath = path.join(DATABASE_DIR, `${from}.json`);
       let jsonGp;
       try {
-        jsonGp = JSON.parse(await fs.readFile(groupFilePath, 'utf-8'));
+        jsonGp = JSON.parse(await fsPromises.readFile(groupFilePath, 'utf-8'));
       } catch (e) {
         console.error(`Erro ao carregar JSON do grupo ${from}:`, e);
         return;
@@ -211,17 +252,14 @@ async function startNazu() {
       if (!m.messages || !Array.isArray(m.messages) || m.type === 'append') return;
       for (const info of m.messages) {
         if (!info.message) continue;
-        try {
-          const indexModulePath = path.join(__dirname, 'index.js');
-          delete require.cache[require.resolve(indexModulePath)];
-          const indexModule = require(indexModulePath);
-          if (typeof indexModule === 'function') {
+        if (indexModule && typeof indexModule === 'function') {
+          try {
             await indexModule(nazu, info, store);
-          } else {
-            console.error('O módulo index.js não exporta uma função válida.');
+          } catch (err) {
+            console.error(`Erro ao processar mensagem ${info.key.id} com index.js:`, err);
           }
-        } catch (err) {
-          console.error('Erro ao processar mensagem:', err);
+        } else {
+          console.error('⚠️ Módulo principal (index.js) não está carregado ou não é uma função. Mensagem ignorada.');
         }
       }
     });
@@ -252,7 +290,7 @@ async function startNazu() {
         if (reason) {
           console.log(`⚠️ Conexão fechada, motivo: ${reason} - ${reasonMessages[reason] || 'Motivo desconhecido'}`);
           if ([DisconnectReason.loggedOut, 401].includes(reason)) {
-            await fs.rm(AUTH_DIR, { recursive: true, force: true });
+            await fsPromises.rm(AUTH_DIR, { recursive: true, force: true });
           }
         }
 

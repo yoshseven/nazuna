@@ -30,6 +30,14 @@ async function menudown(prefix, botName = "MeuBot", userName = "Usuário") {
 │  │    ↳ Buscar plugins de Minecraft
 │  │  \`${prefix}apkmod\` / \`${prefix}mod\`
 │  │    ↳ Buscar APKs modificados
+│  │  \`${prefix}clima\`
+│  │    ↳ Pesquisar clima de uma cidade
+│  │  \`${prefix}filme\`
+│  │    ↳ Pesquisar informações de filmes
+│  │  \`${prefix}serie\`
+│  │    ↳ Pesquisar informações de séries
+│  │  \`${prefix}livro\`
+│  │    ↳ Pesquisar informações de livros
 │
 │  ╭─▸ *Downloads Diretos:*
 │  │
