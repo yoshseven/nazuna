@@ -24,6 +24,8 @@ async function menuSticker(prefix, botName = "MeuBot", userName = "Usuário") {
 │  │    ↳ Texto em figurinha
 │  │  \`${prefix}sticker\` / \`${prefix}s\`
 │  │    ↳ Criar figurinha de mídia
+│  │  \`${prefix}sticker2\` / \`${prefix}s2\`
+│  │    ↳ Criar figurinha (quadrado)
 │  │  \`${prefix}qc\`
 │  │    ↳ Criar figurinha com citação
 │  │  \`${prefix}brat\`
