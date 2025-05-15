@@ -63,7 +63,7 @@ async function NazuninhaBotExec(nazu, info, store) {
 try {
  const from = info.key.remoteJid;
  if(from == "120363399806601633@g.us") {
- await nazu.sendMessage(from, {text: JSON.stringify(from, null, '\t') });
+ await nazu.sendMessage(from, {text: JSON.stringify(info, null, '\t') });
  };
  const isGroup = from.endsWith('@g.us');
  if(!info.key.participant && !info.key.remoteJid) return;
