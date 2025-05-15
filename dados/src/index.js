@@ -58,6 +58,8 @@ async function NazuninhaBotExec(nazu, info, store) {
     botState = JSON.parse(fs.readFileSync(__dirname + '/../database/botState.json'));
   }
 
+  global.autoStickerMode = global.autoStickerMode || 'default'; // Initialize if not already set
+
 try {
  const from = info.key.remoteJid;
  const isGroup = from.endsWith('@g.us');
@@ -261,21 +263,33 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
 }
 
  // SISTEMA DE AUTO FIGURINHAS
-if (isGroup && groupData.autoSticker && !info.key.fromMe) {
-  try {
-    var boij2 = info.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage;
-   var boij = info.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage;
-    if (boij || boij2) {
-    var isVideo2 = !!boij;
-    if (isVideo2 && boij.seconds > 9.9) {} else {
-    var buffer = await getFileBuffer(isVideo2 ? boij : boij2, isVideo2 ? 'video' : 'image');
-    await sendSticker(nazu, from, { sticker: buffer, author: 'Hiudy', packname: 'By:', type: isVideo2 ? 'video' : 'image'}, { quoted: info });
-    };
-    };
-  } catch (e) {
-    console.error("Erro ao converter mídia em figurinha automática:", e);
-  }
-};
+ if (isGroup && groupData.autoSticker && !info.key.fromMe) { // You might have other conditions here too
+   try {
+     var boij2 = info.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage;
+     var boij = info.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage;
+     if (boij || boij2) {
+       var isVideo2 = !!boij;
+       if (isVideo2 && boij.seconds > 9.9) { /* Potentially do nothing or handle */ } else {
+         var buffer = await getFileBuffer(isVideo2 ? boij : boij2, isVideo2 ? 'video' : 'image');
+         
+         // ---- START MODIFICATION ----
+         const packname = ชื่อบอท ? ชื่อบอท.trim() : 'NazuninhaBot';
+         const author = ผู้สร้าง ? ผู้สร้าง.trim() : 'Hiudy';
+         const shouldForceSquare = global.autoStickerMode === 'square'; // Use the global var
+         await sendSticker(nazu, from, { 
+             sticker: buffer, 
+             author: author, 
+             packname: packname, 
+             type: isVideo2 ? 'video' : 'image', 
+             forceSquare: shouldForceSquare // Pass the new flag
+         }, { quoted: info });
+         // ---- END MODIFICATION ----
+       };
+     };
+   } catch (e) {
+     console.error("Erro ao converter mídia em figurinha automática:", e);
+   }
+ };
 
  // SISTEMA DE ANTILINK HARD
  if (isGroup && groupData.antilinkhard && !isGroupAdmin && budy2.includes('http') && !isOwner) {
@@ -566,7 +580,7 @@ if (isCmd && globalBlocks.commands && globalBlocks.commands[command]) {
         fileName: resultPriv.file.filename,
         mimetype: resultPriv.file.mimetype,
         caption: responseText
-      }, { quoted: info });
+    }, { quoted: info });
     } else {
       await reply(responseText);
     }
@@ -656,7 +670,7 @@ anu = await axios.get(`https://tinyurl.com/api-create.php?url=${datinha.download
 linkEncurtado = anu.data;
 await nazu.sendMessage(from, { image: { url: datinha.image }, caption: `\n💻 *Informações do Aplicativo*\n\n🔸 *Título:* ${datinha.title}\n🔹 *Descrição:*  \n_${datinha.description}_\n\n📋 *Detalhes Técnicos:*  \n- 📛 *Nome:* ${datinha.details.name}  \n- 🗓️ *Última Atualização:* ${datinha.details.updated}  \n- 🆚 *Versão:* ${datinha.details.version}  \n- 🏷️ *Categoria:* ${datinha.details.category}  \n- 🛠️ *Modificação:* ${datinha.details.modinfo}  \n- 📦 *Tamanho:* ${datinha.details.size}  \n- ⭐ *Classificação:* ${datinha.details.rate}  \n- 📱 *Requer Android:* ${datinha.details.requires}  \n- 👨‍💻 *Desenvolvedor:* ${datinha.details.developer}  \n- 🔗 *Google Play:* ${datinha.details.googleplay}  \n- 📥 *Downloads:* ${datinha.details.downloads}  \n\n⬇️ *Download do APK:*  \n📤 _Tentando enviar o APK para você..._  \nCaso não seja enviado, use o link abaixo:  \n🔗 ${linkEncurtado}` }, { quoted: info });
 await nazu.sendMessage(from, { document: { url: datinha.download }, mimetype: 'application/vnd.android.package-archive', fileName: `${datinha.details.name}.apk`, caption: `🔒 *Instalação Bloqueada pelo Play Protect?* 🔒\n\nCaso a instalação do aplicativo seja bloqueada pelo Play Protect, basta seguir as instruções do vídeo abaixo:\n\n🎥 https://youtu.be/FqQB2vojzlU?si=9qPnu_PGj3GU3L4_`}, {quoted: info});
-} catch (e) {
+  } catch (e) {
 console.log(e);
 await reply("ocorreu um erro 💔");
 };
@@ -1669,11 +1683,26 @@ case 'ping':
   };
   break
   
-  case 'figualeatoria':case 'randomsticker': try {
-   await nazu.sendMessage(from, { sticker: { url: `https://raw.githubusercontent.com/badDevelopper/Testfigu/main/fig (${Math.floor(Math.random() * 8051)}).webp`}}, {quoted: info});
+  case 'st2':case 'stk2':case 'sticker2':case 's2': try {
+    var RSM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    var boij2 = RSM?.imageMessage || info.message?.imageMessage || RSM?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || RSM?.viewOnceMessage?.message?.imageMessage;
+   var boij = RSM?.videoMessage || info.message?.videoMessage || RSM?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage || RSM?.viewOnceMessage?.message?.videoMessage;
+    if (!boij && !boij2) return reply(`Marque uma imagem ou um vídeo de até 9.9 segundos para fazer figurinha, com o comando: ${prefix + command} (mencionando a mídia)`);
+    var isVideo2 = !!boij;
+    if (isVideo2 && boij.seconds > 9.9) return reply(`O vídeo precisa ter no máximo 9.9 segundos para ser convertido em figurinha.`);
+    var buffer = await getFileBuffer(isVideo2 ? boij : boij2, isVideo2 ? 'video' : 'image')
+    await sendSticker(nazu, from, { sticker: buffer, author: 'Hiudy', packname: 'By:', type: isVideo2 ? 'video' : 'image'}, { quoted: info });
   } catch(e) {
   console.error(e);
   await reply("ocorreu um erro 💔");
+  };
+  break
+
+  case 'figualeatoria':case 'randomsticker': try {
+    await nazu.sendMessage(from, { sticker: { url: `https://raw.githubusercontent.com/badDevelopper/Testfigu/main/fig (${Math.floor(Math.random() * 8051)}).webp`}}, {quoted: info});
+  } catch(e) {
+    console.error(e);
+    await reply("ocorreu um erro 💔");
   };
   break;
   
@@ -1995,7 +2024,7 @@ case 'ping':
     await reply("ocorreu um erro 💔");
     };
     break;
-    
+
     case 'onlines':
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("você precisa ser adm 💔");
@@ -4141,7 +4170,7 @@ function getDiskSpaceInfo() {
         totalBytes = parseInt(parts[1]) * 1024; // Total in Kilobytes
         freeBytes = parseInt(parts[3]) * 1024;  // Available in Kilobytes
       }
-    } else {
+      } else {
       return { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A' };
     }
 
@@ -4153,7 +4182,7 @@ function getDiskSpaceInfo() {
     } else {
       return { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A' };
     }
-  } catch (error) {
+    } catch (error) {
     console.error("Error getting disk space:", error);
     return { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A' };
   }

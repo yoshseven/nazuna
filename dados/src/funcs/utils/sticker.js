@@ -16,16 +16,25 @@ async function getBuffer(url) {
     return Buffer.from(response.data, 'binary');
 }
 
-async function convertToWebp(media, isVideo = false) {
+async function convertToWebp(media, isVideo = false, forceSquare = false) {
     const tmpFileOut = generateTempFileName('webp');
     const tmpFileIn = generateTempFileName(isVideo ? 'mp4' : 'jpg');
 
     await fs.writeFile(tmpFileIn, media);
 
+    let scaleOption;
+    if (forceSquare) {
+        scaleOption = "scale=320:320,fps=15";
+    } else {
+        scaleOption = "scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0";
+    }
+
     await new Promise((resolve, reject) => {
         const ff = require('fluent-ffmpeg')(tmpFileIn)
             .on("error", (err) => {
                 console.error("Erro ao converter mídia:", err);
+                fs.unlink(tmpFileIn).catch(e => console.error("Erro ao excluir tmpFileIn após erro de conversão:", e));
+                fs.unlink(tmpFileOut).catch(e => console.error("Erro ao excluir tmpFileOut após erro de conversão:", e));
                 reject(err);
             })
             .on("end", () => {
@@ -33,7 +42,7 @@ async function convertToWebp(media, isVideo = false) {
             })
             .addOutputOptions([
                 "-vcodec", "libwebp",
-                "-vf", "scale='min(320,iw)':min'(320,ih)':force_original_aspect_ratio=decrease,fps=15, pad=320:320:-1:-1:color=white@0.0, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse"
+                "-vf", `${scaleOption}, split [a][b]; [a] palettegen=reserve_transparent=on:transparency_color=ffffff [p]; [b][p] paletteuse`
             ])
             .toFormat("webp")
             .save(tmpFileOut);
@@ -45,8 +54,8 @@ async function convertToWebp(media, isVideo = false) {
     return buff;
 }
 
-async function writeExif(media, metadata, isVideo = false, rename = false) {
-    const wMedia = rename ? media : await convertToWebp(media, isVideo);
+async function writeExif(media, metadata, isVideo = false, rename = false, forceSquare = false) {
+    const wMedia = rename ? media : await convertToWebp(media, isVideo, forceSquare);
     const tmpFileIn = generateTempFileName('webp');
     const tmpFileOut = generateTempFileName('webp');
 
@@ -92,7 +101,7 @@ async function writeExif(media, metadata, isVideo = false, rename = false) {
     
 }
 
-const sendSticker = async (nazu, jid, { sticker: path, type = 'image', packname = '', author = '', rename = false }, { quoted } = {}) => {
+const sendSticker = async (nazu, jid, { sticker: path, type = 'image', packname = '', author = '', rename = false, forceSquare = false }, { quoted } = {}) => {
     if (!type || !['image', 'video'].includes(type)) {
         throw new Error('O tipo de mídia deve ser "image" ou "video".');
     }
@@ -101,9 +110,9 @@ const sendSticker = async (nazu, jid, { sticker: path, type = 'image', packname 
 
     let buffer;
     if (packname || author) {
-        buffer = await writeExif(buff, { packname, author }, type === 'video', rename);
+        buffer = await writeExif(buff, { packname, author }, type === 'video', rename, forceSquare);
     } else {
-        buffer = await convertToWebp(buff, type === 'video');
+        buffer = await convertToWebp(buff, type === 'video', forceSquare);
     }
 
     await nazu.sendMessage(jid, { sticker: buffer, ...(packname || author ? { packname, author } : {}) }, { quoted });
