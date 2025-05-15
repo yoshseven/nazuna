@@ -2,15 +2,15 @@
 
 # Função para exibir mensagens formatadas
 mensagem() {
-    printf "\033[1;32m$1\033[0m"
+    printf "\033[1;32m%s\033[0m\n" "$1"
 }
 
 aviso() {
-    printf "\033[1;31m$1\033[0m"
+    printf "\033[1;31m%s\033[0m\n" "$1"
 }
 
 separador() {
-    printf "\033[1;34m============================================\033[0m"
+    printf "\033[1;34m============================================\033[0m\n"
 }
 
 # Obtém a versão do package.json
@@ -48,19 +48,20 @@ if [ -d "$qr_code_dir" ] && [ "$(ls -1 "$qr_code_dir" 2>/dev/null | wc -l)" -gt 
     mensagem "📡 QR Code já detectado! Iniciando conexão automática..."
     while true; do
         node --expose-gc "$connect_file" || {
-            aviso "⚠ O bot caiu! Reiniciando em 0.01 segundo..."
-            sleep 0.01
+            aviso "⚠ O bot caiu! Reiniciando em 0.05 segundo..."
+            sleep 0.05
         }
     done
     exit 0
 fi
 
 # Pergunta sobre o método de conexão
-echo "🔗 Como deseja conectar o bot?"
-echo "\033[1;33m1.\033[0m Conexão por QR Code"
-echo "\033[1;33m2.\033[0m Conexão por Código"
-echo "Escolha uma opção (1/2):"
+printf "\033[1;33m🔗 Como deseja conectar o bot?\033[0m\n"
+printf "\033[1;33m1.\033[0m Conexão por QR Code\n"
+printf "\033[1;33m2.\033[0m Conexão por Código\n"
+printf "Escolha uma opção (1/2): "
 read conexao
+echo ""
 
 # Inicia conforme a escolha
 case "$conexao" in
@@ -68,8 +69,8 @@ case "$conexao" in
         mensagem "📡 Iniciando conexão por QR Code..."
         while true; do
             node --expose-gc "$connect_file" || {
-                aviso "⚠ O bot caiu! Reiniciando em 0.01 segundo..."
-                sleep 0.01
+                aviso "⚠ O bot caiu! Reiniciando em 0.05 segundo..."
+                sleep 0.05
             }
         done
         ;;
@@ -77,8 +78,8 @@ case "$conexao" in
         mensagem "🔑 Iniciando conexão por Código..."
         while true; do
             node --expose-gc "$connect_file" --code || {
-                aviso "⚠ O bot caiu! Reiniciando em 0.01 segundo..."
-                sleep 0.01
+                aviso "⚠ O bot caiu! Reiniciando em 0.05 segundo..."
+                sleep 0.05
             }
         done
         ;;

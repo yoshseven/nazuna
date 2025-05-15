@@ -7,8 +7,11 @@
 # Configurações iniciais
 set -e
 BACKUP_DIR="./backup_$(date +%Y%m%d_%H%M%S)"
-TEMP_DIR="./temp_nazuna"
 REPO_URL="https://github.com/hiudyy/nazuna.git"
+BRANCH="main"
+
+# Lista de arquivos/diretórios "inúteis" a serem excluídos
+UNWANTED_FILES=(".git" ".gitignore" "README.md" "LICENSE" ".github")
 
 # Funções utilitárias
 print_message() {
@@ -31,17 +34,15 @@ check_requirements() {
 
 # Confirmação do usuário com timeout de 5 segundos
 confirm_update() {
-    print_warning "⚠ Esta ação substituirá arquivos existentes (com backup dos dados)."
+    print_warning "⚠ Esta ação atualizará apenas os arquivos modificados e removerá arquivos desnecessários (com backup dos dados)."
     print_warning "Pressione Ctrl+C para cancelar. Iniciando em 5 segundos..."
     
-    # Timeout de 5 segundos
     for i in {5..1}; do
         printf "\rIniciando em %d..." "$i"
         sleep 1
     done
     printf "\r%-20s\n" ""
     
-    # Prossegue automaticamente após o timeout
     print_message "✔ Prosseguindo com a atualização..."
 }
 
@@ -57,51 +58,80 @@ create_backup() {
     print_message "✔ Backup salvo em $BACKUP_DIR"
 }
 
-# Download da nova versão
-download_update() {
-    print_message "⬇️ Baixando versão mais recente..."
-    rm -rf "$TEMP_DIR"
-    git clone --depth 1 "$REPO_URL" "$TEMP_DIR" || {
-        print_warning "❌ Falha ao baixar o repositório. Verifique sua conexão."
-        exit 1
-    }
-    rm -f "$TEMP_DIR/README.md"
+# Inicializa o repositório Git, se necessário
+init_git_repo() {
+    if [ ! -d ".git" ]; then
+        print_message "🔧 Inicializando repositório Git local..."
+        git init
+        git remote add origin "$REPO_URL"
+        git fetch origin
+        git checkout -b "$BRANCH" --track "origin/$BRANCH" || {
+            print_warning "❌ Falha ao configurar o repositório. Verifique a URL ou o branch."
+            exit 1
+        }
+    else
+        print_message "🔄 Repositório Git já existe. Verificando configuração..."
+        git remote set-url origin "$REPO_URL" 2>/dev/null || git remote add origin "$REPO_URL"
+    fi
 }
 
-# Limpeza de arquivos antigos
-clean_old_files() {
-    print_message "🧹 Limpando arquivos antigos..."
-    rm -rf .git package.json package-lock.json
-    find ./dados/ -mindepth 1 -not -path "$BACKUP_DIR/*" -delete 2>/dev/null || true
+# Download apenas das alterações
+download_update() {
+    print_message "⬇️ Baixando alterações do repositório..."
+    git fetch origin || {
+        print_warning "❌ Falha ao buscar atualizações. Verifique sua conexão."
+        exit 1
+    }
+    
+    # Verifica se há alterações
+    if git diff --quiet "origin/$BRANCH" -- . ':!dados'; then
+        print_message "ℹ️ Nenhuma alteração detectada no repositório remoto."
+        exit 0
+    fi
 }
 
 # Aplicação da atualização
 apply_update() {
-    print_message "🚚 Aplicando atualização..."
-    mv "$TEMP_DIR"/* ./
-    rm -rf "$TEMP_DIR"
-}
-
-# Restauração do backup
-restore_backup() {
-    print_message "🔄 Restaurando dados do backup..."
-    mkdir -p "./dados/database" "./dados/src" "./dados/midias"
+    print_message "🚚 Aplicando alterações..."
+    # Preserva arquivos importantes antes do merge
+    cp -p "./dados/src/config.json" "/tmp/config.json" 2>/dev/null || true
     
-    cp -rp "$BACKUP_DIR/dados/database/." "./dados/database/" 2>/dev/null || true
-    cp -p "$BACKUP_DIR/dados/src/config.json" "./dados/src/" 2>/dev/null || true
-    cp -rp "$BACKUP_DIR/dados/midias/." "./dados/midias/" 2>/dev/null || true
-    
-    print_message "✔ Dados restaurados com sucesso!"
-}
-
-# Instalação de dependências
-install_dependencies() {
-    print_message "📦 Instalando dependências..."
-    npm install --no-bin-links --force || {
-        print_warning "❌ Falha ao instalar dependências. Verifique package.json."
+    # Faz o merge das alterações, ignorando a pasta dados
+    git pull origin "$BRANCH" --no-rebase || {
+        print_warning "❌ Conflito detectado. Resolva os conflitos manualmente ou restaure o backup."
         exit 1
     }
-    print_message "✔ Dependências instaladas!"
+    
+    # Restaura arquivos preservados
+    cp -p "/tmp/config.json" "./dados/src/config.json" 2>/dev/null || true
+    rm -f "/tmp/config.json" 2>/dev/null || true
+}
+
+# Exclusão de arquivos inúteis
+remove_unwanted_files() {
+    print_message "🗑️ Removendo arquivos desnecessários..."
+    for file in "${UNWANTED_FILES[@]}"; do
+        if [ -e "$file" ]; then
+            rm -rf "$file" && print_message "✔ $file removido."
+        else
+            print_message "ℹ️ $file não encontrado, pulando."
+        fi
+    done
+}
+
+# Instalação de dependências (se necessário)
+install_dependencies() {
+    print_message "📦 Verificando dependências..."
+    if [ -f "package.json" ] && ! git diff --quiet "origin/$BRANCH" -- package.json; then
+        print_message "🔄 package.json foi alterado. Instalando dependências..."
+        npm install --no-bin-links --force || {
+            print_warning "❌ Falha ao instalar dependências. Verifique package.json."
+            exit 1
+        }
+        print_message "✔ Dependências instaladas!"
+    else
+        print_message "ℹ️ Nenhuma alteração em package.json. Pulando instalação de dependências."
+    fi
 }
 
 # Limpeza final
@@ -121,10 +151,10 @@ main() {
     check_requirements
     confirm_update
     create_backup
+    init_git_repo
     download_update
-    clean_old_files
     apply_update
-    restore_backup
+    remove_unwanted_files
     install_dependencies
     cleanup
 
