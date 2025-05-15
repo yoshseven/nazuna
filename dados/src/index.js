@@ -3776,9 +3776,9 @@ break;
         return reply(`Cidade "${q}" não encontrada.`);
       }
       const { latitude, longitude, name } = geocodingResponse.data.results[0];
-      const weatherResponse = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&t_weather=true&hourly=temperature_2m,relativehumidity_2m,windspeed_10m`);
-      const { temperature, windspeed, winddirection, weathercode, relativehumidity } = weatherResponse.data.current_weather;
-      
+      const weatherResponse = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=weathercode,temperature_2m,relativehumidity_2m,windspeed_10m,winddirection_10m`);
+      const { temperature_2m: temperature, relativehumidity_2m: relativehumidity, windspeed_10m: windspeed, winddirection_10m: winddirection, weathercode } = weatherResponse.data.current;
+
       // Mapeamento da descrição do clima
       let weatherDescription;
       switch (weathercode) {
