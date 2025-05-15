@@ -3776,11 +3776,173 @@ break;
         return reply(`Cidade "${q}" não encontrada.`);
       }
       const { latitude, longitude, name } = geocodingResponse.data.results[0];
-      const weatherResponse = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=temperature_2m,relativehumidity_2m,windspeed_10m`);
+      const weatherResponse = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}¤t_weather=true&hourly=temperature_2m,relativehumidity_2m,windspeed_10m`);
       const { temperature, windspeed, winddirection, weathercode, relativehumidity } = weatherResponse.data.current_weather;
-      const weatherDescription = getWeatherDescription(weathercode);
-      const weatherEmoji = getWeatherEmoji(weathercode);
-      const windDirectionEmoji = getWindDirectionEmoji(winddirection);
+      
+      // Mapeamento da descrição do clima
+      let weatherDescription;
+      switch (weathercode) {
+        case 0:
+          weatherDescription = "Céu limpo";
+          break;
+        case 1:
+          weatherDescription = "Predominantemente limpo";
+          break;
+        case 2:
+          weatherDescription = "Parcialmente nublado";
+          break;
+        case 3:
+          weatherDescription = "Nublado";
+          break;
+        case 45:
+          weatherDescription = "Nevoeiro";
+          break;
+        case 48:
+          weatherDescription = "Nevoeiro com geada";
+          break;
+        case 51:
+          weatherDescription = "Chuvisco leve";
+          break;
+        case 53:
+          weatherDescription = "Chuvisco moderado";
+          break;
+        case 55:
+          weatherDescription = "Chuvisco intenso";
+          break;
+        case 56:
+          weatherDescription = "Chuvisco leve com geada";
+          break;
+        case 57:
+          weatherDescription = "Chuvisco intenso com geada";
+          break;
+        case 61:
+          weatherDescription = "Chuva leve";
+          break;
+        case 63:
+          weatherDescription = "Chuva moderada";
+          break;
+        case 65:
+          weatherDescription = "Chuva intensa";
+          break;
+        case 66:
+          weatherDescription = "Chuva leve com geada";
+          break;
+        case 67:
+          weatherDescription = "Chuva intensa com geada";
+          break;
+        case 71:
+          weatherDescription = "Neve leve";
+          break;
+        case 73:
+          weatherDescription = "Neve moderada";
+          break;
+        case 75:
+          weatherDescription = "Neve intensa";
+          break;
+        case 77:
+          weatherDescription = "Grãos de neve";
+          break;
+        case 80:
+          weatherDescription = "Pancadas de chuva leve";
+          break;
+        case 81:
+          weatherDescription = "Pancadas de chuva moderada";
+          break;
+        case 82:
+          weatherDescription = "Pancadas de chuva intensa";
+          break;
+        case 85:
+          weatherDescription = "Pancadas de neve leve";
+          break;
+        case 86:
+          weatherDescription = "Pancadas de neve intensa";
+          break;
+        case 95:
+          weatherDescription = "Tempestade";
+          break;
+        case 96:
+          weatherDescription = "Tempestade com granizo leve";
+          break;
+        case 99:
+          weatherDescription = "Tempestade com granizo intenso";
+          break;
+        default:
+          weatherDescription = "Condição desconhecida";
+      }
+
+      // Mapeamento do emoji do clima
+      let weatherEmoji;
+      switch (weathercode) {
+        case 0:
+          weatherEmoji = "☀️";
+          break;
+        case 1:
+        case 2:
+          weatherEmoji = "🌤️";
+          break;
+        case 3:
+          weatherEmoji = "☁️";
+          break;
+        case 45:
+        case 48:
+          weatherEmoji = "🌫️";
+          break;
+        case 51:
+        case 53:
+        case 55:
+        case 56:
+        case 57:
+          weatherEmoji = "🌧️";
+          break;
+        case 61:
+        case 63:
+        case 65:
+        case 66:
+        case 67:
+          weatherEmoji = "🌧️";
+          break;
+        case 71:
+        case 73:
+        case 75:
+        case 77:
+        case 85:
+        case 86:
+          weatherEmoji = "❄️";
+          break;
+        case 80:
+        case 81:
+        case 82:
+          weatherEmoji = "🌧️";
+          break;
+        case 95:
+        case 96:
+        case 99:
+          weatherEmoji = "⛈️";
+          break;
+        default:
+          weatherEmoji = "🌈";
+      }
+
+      // Mapeamento do emoji da direção do vento
+      let windDirectionEmoji;
+      if (winddirection >= 337.5 || winddirection < 22.5) {
+        windDirectionEmoji = "⬆️"; // Norte
+      } else if (winddirection >= 22.5 && winddirection < 67.5) {
+        windDirectionEmoji = "↗️"; // Nordeste
+      } else if (winddirection >= 67.5 && winddirection < 112.5) {
+        windDirectionEmoji = "➡️"; // Leste
+      } else if (winddirection >= 112.5 && winddirection < 157.5) {
+        windDirectionEmoji = "↘️"; // Sudeste
+      } else if (winddirection >= 157.5 && winddirection < 202.5) {
+        windDirectionEmoji = "⬇️"; // Sul
+      } else if (winddirection >= 202.5 && winddirection < 247.5) {
+        windDirectionEmoji = "↙️"; // Sudoeste
+      } else if (winddirection >= 247.5 && winddirection < 292.5) {
+        windDirectionEmoji = "⬅️"; // Oeste
+      } else {
+        windDirectionEmoji = "↖️"; // Noroeste
+      }
+
       const weatherInfo = `🌦️ *Clima em ${name}*
 
 🌡️ *Temperatura:* ${temperature}°C
