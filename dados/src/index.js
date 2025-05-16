@@ -400,6 +400,35 @@ if (isCmd && globalBlocks.commands && globalBlocks.commands[command]) {
   return reply(`🚫 O comando *${command}* está bloqueado globalmente!\nMotivo: ${globalBlocks.commands[command].reason}`);
 };
 
+if(budy2 == "rpz") {
+try {
+var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
+  var boij22 = RSMM?.imageMessage || info.message?.imageMessage || RSMM?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || RSMM?.viewOnceMessage?.message?.imageMessage;
+  var boijj = RSMM?.videoMessage || info.message?.videoMessage || RSMM?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage || RSMM?.viewOnceMessage?.message?.videoMessage;
+  var boij33 = RSMM?.audioMessage || info.message?.audioMessage || RSMM?.viewOnceMessageV2?.message?.audioMessage || info.message?.viewOnceMessageV2?.message?.audioMessage || info.message?.viewOnceMessage?.message?.audioMessage || RSMM?.viewOnceMessage?.message?.audioMessage;
+  if(boijj) {
+  var px = boijj;
+  px.viewOnce = false;
+  px.video = {url: px.url};
+  await nazu.sendMessage(from,px,{quoted:info});
+  } else if(boij22) {
+  var px = boij22;
+  px.viewOnce = false;
+  px.image = {url: px.url};
+  await nazu.sendMessage(from,px,{quoted:info});
+  } else if(boij33) {
+  var px = boij33;
+  px.viewOnce = false;
+  px.audio = {url: px.url};
+  await nazu.sendMessage(from,px,{quoted:info});
+  } else {
+  
+  };
+  } catch(e) {
+  
+  }
+  }
+  
  switch(command) {
   //INTELIGENCIA ARTIFICIAL
   
