@@ -8,7 +8,7 @@
 
 const { Boom } = require('@hapi/boom');
 const { makeWASocket, useMultiFileAuthState, makeCacheableSignalKeyStore, DisconnectReason, proto, makeInMemoryStore } = require('baileys');
-const NodeCache = require('@cacheable/node-cache');
+const { NodeCache } = require('@cacheable/node-cache');
 const readline = require('readline');
 const { execSync } = require('child_process');
 const pino = require('pino');
