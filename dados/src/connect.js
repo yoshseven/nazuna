@@ -2,21 +2,13 @@
 ═════════════════════════════
   Nazuna - Conexão WhatsApp
   Autor: Hiudy
-  Revisão: 15/05/2025
+  Revisão: 17/05/2025
 ═════════════════════════════
 */
 
 const { Boom } = require('@hapi/boom');
-const {
-  makeWASocket,
-  useMultiFileAuthState,
-  makeCacheableSignalKeyStore,
-  fetchLatestBaileysVersion,
-  DisconnectReason,
-  proto,
-  makeInMemoryStore,
-} = require('baileys');
-const NodeCache = require('node-cache');
+const { makeWASocket, useMultiFileAuthState, makeCacheableSignalKeyStore, DisconnectReason, proto, makeInMemoryStore } = require('baileys');
+const NodeCache = require('@cacheable/node-cache');
 const readline = require('readline');
 const { execSync } = require('child_process');
 const pino = require('pino');
@@ -27,7 +19,7 @@ const logger = pino({ level: 'silent' });
 const AUTH_DIR = path.join(__dirname, '..', 'database', 'qr-code');
 const DATABASE_DIR = path.join(__dirname, '..', 'database', 'grupos');
 const msgRetryCounterCache = new Map();
-const { prefixo, nomebot, nomedono, numerodono, aviso } = require('./config.json');
+const { prefixo, nomebot, nomedono, numerodono } = require('./config.json');
 
 const ask = (question) => {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -41,34 +33,36 @@ async function startNazu() {
   try {
     await fs.mkdir(DATABASE_DIR, { recursive: true });
     const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
-    const { version } = await fetchLatestBaileysVersion();
 
     async function getMessage(key) {
       if (!store) return proto.Message.fromObject({});
       const msg = await store.loadMessage(key.remoteJid, key.id).catch(() => null);
       return msg?.message || proto.Message.fromObject({});
-    }
+    };
 
     const nazu = makeWASocket({
-      version,
-      auth: { creds: state.creds, keys: makeCacheableSignalKeyStore(state.keys, logger) },
+      countryCode: 'BR',
+      auth: { 
+        creds: state.creds, 
+        keys: makeCacheableSignalKeyStore(state.keys, logger) 
+      },
       printQRInTerminal: !process.argv.includes('--code'),
       syncFullHistory: false,
       downloadHistory: false,
       markOnlineOnConnect: false,
-      fireInitQueriesEarly: true,
-      fireInitQueries: true,
+      fireInitQueriesEarly: false,
+      fireInitQueries: false,
       msgRetryCounterCache,
       connectTimeoutMs: 180000,
       defaultQueryTimeoutMs: 60000,
-      keepAliveIntervalMs: 60000,
-      retryRequestDelayMs: 10000,
-      generateHighQualityLinkPreview: true,
+      keepAliveIntervalMs: 30000,
+      retryRequestDelayMs: 1000,
+      generateHighQualityLinkPreview: false,
       logger,
       getMessage,
-      shouldSyncHistoryMessage: () => true,
+      shouldSyncHistoryMessage: () => false,
       cachedGroupMetadata: (jid) => groupCache.get(jid) || null,
-      browser: ['Ubuntu', 'Edge', '110.0.1587.56'],
+      browser: ['Ubuntu', 'Edge', '110.0.1587.56']
     });
 
     if (process.argv.includes('--code') && !nazu.authState.creds.registered) {
@@ -212,9 +206,7 @@ async function startNazu() {
       for (const info of m.messages) {
         if (!info.message) continue;
         try {
-          const indexModulePath = path.join(__dirname, 'index.js');
-          delete require.cache[require.resolve(indexModulePath)];
-          const indexModule = require(indexModulePath);
+          const indexModule = require(path.join(__dirname, 'index.js'));
           if (typeof indexModule === 'function') {
             await indexModule(nazu, info, store);
           } else {

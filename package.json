@@ -1,7 +1,7 @@
 {
   "name": "nazuna",
-  "version": "2.0",
-  "description": "O bot de WhatsApp mais leve e funcional que você já viu",
+  "version": "3.0",
+  "description": "Bot de whatsapp criado por hiudy e otimizado",
   "main": "app.js",
   "scripts": {
     "start": "npm run start:silent --silent",
@@ -28,8 +28,7 @@
     "qrcode-terminal": "latest",
     "ruhend-scraper": "latest",
     "yt-search": "latest",
-    "crypto-js": "latest",
-    "node-cache": "latest"
+    "crypto-js": "latest"
   },
   "engines": {
     "node": ">=20.0.0",
