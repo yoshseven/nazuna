@@ -40,6 +40,9 @@ async function menu(prefix, botName = "MeuBot", userName = "Usuário") {
 │  │  💫 \`${prefix}menufig\`
 │  │    ↳ Criar figurinhas
 │  │
+│  │  🎵 \`${prefix}alteradores\` (Novo!)
+│  │    ↳ Efeitos Audio/Video
+│  │
 │  │  💡 \`${prefix}menurpg\` (Novo!)
 │  │    ↳ Aventura e diversão RPG
 │
