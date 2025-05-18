@@ -4180,4 +4180,12 @@ function getDiskSpaceInfo() {
   }
 }
 
+let file = require.resolve(__filename)
+fs.watchFile(file, () => {
+fs.unwatchFile(file)
+console.log(`Alterações salvas - '${__filename}'`)
+delete require.cache[file]
+require(file)
+})
+
 module.exports = NazuninhaBotExec;
