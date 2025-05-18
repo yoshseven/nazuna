@@ -473,7 +473,6 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
     fade=t=in:st=0:d=0.5,
     fade=t=out:st=5:d=0.5,
     rotate=angle='if(between(t,1,2),5*PI/180,if(between(t,3,4),-5*PI/180,0))',
-    lensflare=i=1:t=sparkle:enable='between(t,1,4)',
     hue=s='if(between(t,1,2),1.8,if(between(t,3,4),1.8,1))',
     drawbox=x='iw*0.8-(t-1)*100':y='ih*0.1':w=50:h=50:c=yellow:t=fill:enable='between(t,1,2)',
     drawbox=x='iw*0.1+(t-3)*100':y='ih*0.8':w=50:h=50:c=yellow:t=fill:enable='between(t,3,4)'
