@@ -43,7 +43,7 @@ if (!fs.existsSync(__dirname + '/../database/botState.json')) {
 }
 
 async function NazuninhaBotExec(nazu, info, store) {
-  const { reportError, youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, rpg, toolsJson, vabJson, apkMod, google }  = await require(__dirname+'/funcs/exports.js');
+  const { reportError, youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, rpg, toolsJson, vabJson, apkMod, google, Lyrics }  = await require(__dirname+'/funcs/exports.js');
   const antipvData = JSON.parse(fs.existsSync(__dirname + '/../database/antipv.json') ? fs.readFileSync(__dirname + '/../database/antipv.json') : '{}');
   const premiumListaZinha = JSON.parse(fs.readFileSync(__dirname + `/../database/dono/premium.json`, 'utf-8'));
   const banGpIds = JSON.parse(fs.readFileSync(__dirname + `/../database/dono/bangp.json`, 'utf-8'));
@@ -787,6 +787,15 @@ break;
     console.error(e);
     reply("ocorreu um erro 💔");
   }
+  break;
+  
+  case 'letra': case 'lyrics': try {
+  if(!q) return reply('cade o nome da musica?');
+  await reply(await Lyrics(q));
+  } catch (e) {
+    console.error(e);
+    reply("ocorreu um erro 💔");
+  };
   break;
   
   case 'tiktok': case 'tiktokaudio': case 'tiktokvideo': case 'tiktoks': case 'tiktoksearch': case 'ttk': case 'tkk':

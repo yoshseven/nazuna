@@ -63,8 +63,6 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 │  │    ↳ Mudar nome do grupo
 │  │  \`${prefix}setdesc\`
 │  │    ↳ Mudar descrição
-│  │  \`${prefix}tttend\` / \`${prefix}rv\`
-│  │    ↳ Encerrar jogo da velha
 │
 │  ╭─▸ *Controle de Comandos do Grupo:*
 │  │
