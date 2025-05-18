@@ -43,6 +43,8 @@ async function menubn(prefix, botName = "MeuBot", userName = "Usuário") {
 │
 │  ╭─▸ *Interações "Hot" 🔥:*
 │  │
+│  │  \`${prefix}surubao\`
+│  │  \`${prefix}sexo\`
 │  │  \`${prefix}beijob\`, \`${prefix}beijarb\`
 │  │  \`${prefix}tapar\`
 │  │  \`${prefix}goza\`, \`${prefix}gozar\`

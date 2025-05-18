@@ -2960,6 +2960,32 @@ case 'listadv':
    };
    break
    
+   case 'surubao': case 'suruba': try {
+   if(!isGroup) return reply(`Apenas em grupos`);
+   if(!isModoBn) return reply('O modo brincadeira nao esta ativo no grupo')
+   if (!q) return reply(`Eita, coloque o número de pessoas após o comando.`)
+   if (Number(q) > 15) return reply("Coloque um número menor, ou seja, abaixo de *15*.")
+   emojiskk = ["🥵", "😈", "🫣", "😏"];
+   emojis2 = emojiskk[Math.floor(Math.random() * emojiskk.length)];
+   frasekk = [`tá querendo relações sexuais a ${q}, topa?`, `quer que *${q}* pessoas venham de *chicote, algema e corda de alpinista*.`, `quer que ${q} pessoas der tapa na cara, lhe chame de cachorra e fud3r bem gostosinho...`]
+   let path = __dirname + '/../database/grupos/' + from + '.json';
+   let data = fs.existsSync(path) ? JSON.parse(fs.readFileSync(path)) : { mark: {} };
+   let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
+   context = frasekk[Math.floor(Math.random() * frasekk.length)]  
+   ABC = `${emojis2} @${sender.split('@')[0]} ${context}\n\n`
+   mencts = [];
+   for (var i = 0; i < q; i++) {
+   menb = membros[Math.floor(Math.random() * membros.length)];
+   ABC += `@${menb.split("@")[0]}\n`;
+   mencts.push(menb);
+  };
+  await nazu.sendMessage(from, {image: {url: 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1747545773146_rrv7of.bin'}, caption: ABC, mentions: mencts});
+  } catch(e) {
+  console.error(e);
+  await reply("ocorreu um erro 💔");
+  };
+  break;
+
    case 'gay': case 'burro': case 'inteligente': case 'otaku': case 'fiel': case 'infiel': case 'corno':  case 'gado': case 'gostoso': case 'feio': case 'rico': case 'pobre': case 'pirocudo': case 'pirokudo': case 'nazista': case 'ladrao': case 'safado': case 'vesgo': case 'bebado': case 'machista': case 'homofobico': case 'racista': case 'chato': case 'sortudo': case 'azarado': case 'forte': case 'fraco': case 'pegador': case 'otario': case 'macho': case 'bobo': case 'nerd': case 'preguicoso': case 'trabalhador': case 'brabo': case 'lindo': case 'malandro': case 'simpatico': case 'engracado': case 'charmoso': case 'misterioso': case 'carinhoso': case 'desumilde': case 'humilde': case 'ciumento': case 'corajoso': case 'covarde': case 'esperto': case 'talarico': case 'chorao': case 'brincalhao': case 'bolsonarista': case 'petista': case 'comunista': case 'lulista': case 'traidor': case 'bandido': case 'cachorro': case 'vagabundo': case 'pilantra': case 'mito': case 'padrao': case 'comedia': case 'psicopata': case 'fortao': case 'magrelo': case 'bombado': case 'chefe': case 'presidente': case 'rei': case 'patrao': case 'playboy': case 'zueiro': case 'gamer': case 'programador': case 'visionario': case 'billionario': case 'poderoso': case 'vencedor': case 'senhor': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isModoBn) return reply('❌ O modo brincadeira não esta ativo nesse grupo');
@@ -3064,7 +3090,7 @@ await reply("ocorreu um erro 💔");
 };
 break;
 
-case 'chute': case 'chutar': case 'tapa': case 'soco': case 'socar': case 'beijo': case 'beijar': case 'beijob': case 'beijarb': case 'abraco': case 'abracar': case 'mata': case 'matar': case 'tapar': case 'goza': case 'gozar': case 'mamar': case 'mamada': case 'cafune': case 'morder': case 'mordida': case 'lamber': case 'lambida': case 'explodir': try {
+case 'chute': case 'chutar': case 'tapa': case 'soco': case 'socar': case 'beijo': case 'beijar': case 'beijob': case 'beijarb': case 'abraco': case 'abracar': case 'mata': case 'matar': case 'tapar': case 'goza': case 'gozar': case 'mamar': case 'mamada': case 'cafune': case 'morder': case 'mordida': case 'lamber': case 'lambida': case 'explodir': case 'sexo': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
     if(!menc_os2) return reply('Marque um usuário.');
