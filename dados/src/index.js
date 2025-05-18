@@ -469,17 +469,17 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   glitch: 'noise=alls=20:allf=t+u',
   edit: `
     [0:v]
-    zoompan=z='if(between(t,1,2),zoom+0.01,if(between(t,3,4),zoom+0.01,zoom))':d=1:s=1280x720:fps=30,
-    fade=t=in:st=0:d=0.5,
-    fade=t=out:st=5:d=0.5,
-    rotate=angle='if(between(t,1,2),5*PI/180,if(between(t,3,4),-5*PI/180,0))',
-    hue=s='if(between(t,1,2),1.8,if(between(t,3,4),1.8,1))',
-    drawbox=x='iw*0.8-(t-1)*100':y='ih*0.1':w=50:h=50:c=yellow:t=fill:enable='between(t,1,2)',
-    drawbox=x='iw*0.1+(t-3)*100':y='ih*0.8':w=50:h=50:c=yellow:t=fill:enable='between(t,3,4)'
-    [v];
-    [0:a]
-    chorus=0.5:0.9:50:0.4:0.25:2
-    [a]
+zoompan=z='zoom + 0.01*between(t,1,2) + 0.01*between(t,3,4)':d=1:s=1280x720:fps=30,
+fade=t=in:st=0:d=0.5,
+fade=t=out:st=5:d=0.5,
+rotate=angle='if(between(t,1,2),5*PI/180,if(between(t,3,4),-5*PI/180,0))',
+hue=s='if(between(t,1,2),1.8,if(between(t,3,4),1.8,1))',
+drawbox=x='iw*0.8-(t-1)*100':y='ih*0.1':w=50:h=50:c=yellow:t=fill:enable='between(t,1,2)',
+drawbox=x='iw*0.1+(t-3)*100':y='ih*0.8':w=50:h=50:c=yellow:t=fill:enable='between(t,3,4)'
+[v];
+[0:a]
+chorus=0.5:0.9:50:0.4:0.25:2
+[a]
   `
 };
         const rane = __dirname+`/../database/tmp/${Math.random()}.mp4`
