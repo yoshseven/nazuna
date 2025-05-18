@@ -76,7 +76,9 @@ const downloadModuleUrls = {
   igdl: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/igdl.js',
   mcPlugin: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/mcplugins.js',
   FilmesDL: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/filmes.js',
-  apkMod: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/apkmod.js'
+  apkMod: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/apkmod.js',
+  tictactoe: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/games/tictactoe.js',
+  rpg: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/games/rpg.js'
 };
 
 // Carregamento dos outros módulos
@@ -132,8 +134,6 @@ module.exports = (async () => {
       styleText,
       emojiMix,
       upload,
-      tictactoe,
-      rpg,
       toolsJson: () => toolsJson,
       vabJson: () => vabJson
     };
