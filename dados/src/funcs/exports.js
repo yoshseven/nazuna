@@ -46,17 +46,37 @@ const utilsDir = path.join(__dirname, 'utils');
 const gamesDir = path.join(__dirname, 'games');
 const jsonDir = path.join(__dirname, 'json');
 
-// Carregamento dos módulos
-// Downloads
-const youtube = loadModule(path.join(downloadsDir, 'youtube.js'), 'youtube');
-const tiktok = loadModule(path.join(downloadsDir, 'tiktok.js'), 'tiktok');
-const pinterest = loadModule(path.join(downloadsDir, 'pinterest.js'), 'pinterest');
-const igdl = loadModule(path.join(downloadsDir, 'igdl.js'), 'igdl');
-const mcPlugin = loadModule(path.join(downloadsDir, 'mcplugins.js'), 'mcPlugin');
-const FilmesDL = loadModule(path.join(downloadsDir, 'filmes.js'), 'FilmesDL');
-const apkMod = loadModule(path.join(downloadsDir, 'apkmod.js'), 'apkMod');
+// Importar requireRemote
+const { requireRemote } = loadModule(path.join(utilsDir, 'import.js'), 'import');
 
-// Utils
+// Mapeamento de URLs para módulos de download
+const downloadModuleUrls = {
+  youtube: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/youtube.js,
+  tiktok: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/tiktok.js,
+  pinterest: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/pinterest.js',
+  igdl: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/igdl.js',
+  mcPlugin: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/mcplugins.js',
+  FilmesDL: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/filmes.js',
+  apkMod: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/apkmod.js'
+};
+
+// Carregamento assíncrono dos módulos de download
+let youtube = {}, tiktok = {}, pinterest = {}, igdl = {}, mcPlugin = {}, FilmesDL = {}, apkMod = {};
+async function loadDownloadModules() {
+  try {
+    youtube = await requireRemote(downloadModuleUrls.youtube, 'youtube') || {};
+    tiktok = await requireRemote(downloadModuleUrls.tiktok, 'tiktok') || {};
+    pinterest = await requireRemote(downloadModuleUrls.pinterest, 'pinterest') || {};
+    igdl = await requireRemote(downloadModuleUrls.igdl, 'igdl') || {};
+    mcPlugin = await requireRemote(downloadModuleUrls.mcPlugin, 'mcPlugin') || {};
+    FilmesDL = await requireRemote(downloadModuleUrls.FilmesDL, 'FilmesDL') || {};
+    apkMod = await requireRemote(downloadModuleUrls.apkMod, 'apkMod') || {};
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] Erro ao carregar módulos de download:`, error.message);
+  }
+}
+
+// Carregamento dos outros módulos
 const reportError = loadModule(path.join(utilsDir, 'debug.js'), 'reportError');
 const styleText = loadModule(path.join(utilsDir, 'gerarnick.js'), 'styleText');
 const emojiMix = loadModule(path.join(utilsDir, 'emojimix.js'), 'emojiMix');
@@ -70,9 +90,14 @@ const rpg = loadModule(path.join(gamesDir, 'rpg.js'), 'rpg');
 
 // JSONs
 let toolsJson, vabJson;
-(async () => {
+async function loadJsons() {
   toolsJson = await loadJson(path.join(jsonDir, 'tools.json'), 'tools.json');
   vabJson = await loadJson(path.join(jsonDir, 'vab.json'), 'vab.json');
+}
+
+// Inicialização
+(async () => {
+  await Promise.all([loadDownloadModules(), loadJsons()]);
 })();
 
 // Exportação
