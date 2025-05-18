@@ -6,6 +6,8 @@
 
 const { downloadContentFromMessage, Mimetype, getAggregateVotesInPollMessage } = require('baileys');
 const { exec, spawn, execSync } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 const axios = require('axios');
 const pathz = require('path');
 const fs = require('fs');
@@ -434,7 +436,6 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   //ALTERADORES
   case 'speedup':
   case 'vozmenino':
-  case 'vozrobo':
   case 'vozmulher':
   case 'vozhomem':
   case 'vozcrianca':
@@ -451,7 +452,7 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   case 'volumeboost':
   case 'aumentarvolume':
   case 'reverb':
-  case 'drive':
+  case 'address':
   case 'equalizer':
   case 'equalizar':
   case 'reverse':
@@ -465,32 +466,13 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   case 'tremolo':
   case 'vibrato':
   case 'lowpass':
-    try {
-      if ((isMedia && !info.message.imageMessage && !info.message.videoMessage) || isQuotedAudio) {
-        const audioEffects = { speedup: 'atempo=1.06,asetrate=44100*1.25', vozmenino: 'atempo=1.06,asetrate=44100*1.25', vozrobo: 'afftfilt=real="hypot(re,im)":imag="atan2(im,re)",atempo=1.0', vozmulher: 'asetrate=44100*1.25,atempo=0.8', vozhomem: 'asetrate=44100*0.8,atempo=1.2', vozcrianca: 'asetrate=44100*1.4,atempo=0.9', vozeco: 'aecho=0.8:0.88:60:0.4', eco: 'aecho=0.8:0.88:60:0.4', vozlenta: 'atempo=0.6', audiolento: 'atempo=0.6', vozrapida: 'atempo=1.5', audiorapido: 'atempo=1.5', vozcaverna: 'aecho=0.6:0.3:1000:0.5', bass: 'bass=g=5', bass2: 'bass=g=10', bass3: 'bass=g=15', volumeboost: 'volume=1.5', aumentarvolume: 'volume=1.5', reverb: 'aecho=0.8:0.88:60:0.4', drive: 'afftdn=nf=-25', equalizer: 'equalizer=f=100:width_type=h:width=200:g=3,equalizer=f=1000:width_type=h:width=200:g=-1,equalizer=f=10000:width_type=h:width=200:g=4', equalizar: 'equalizer=f=100:width_type=h:width=200:g=3,equalizer=f=1000:width_type=h:width=200:g=-1,equalizer=f=10000:width_type=h:width=200:g=4', reverse: 'areverse', audioreverso: 'areverse', pitch: 'asetrate=44100*0.8', flanger: 'flanger', grave: 'atempo=0.9,asetrate=44100', vozgrave: 'atempo=0.9,asetrate=44100', chorus: 'chorus=0.7:0.9:55:0.4:0.25:2', phaser: 'aphaser=type=t:decay=0.4', tremolo: 'tremolo=f=6:d=0.8', vibrato: 'vibrato=f=6', lowpass: 'lowpass=f=500' };
-        const muk = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
-        const rane = __dirname+`/../database/tmp/${Math.random()}.mp3`;
-        const buffimg = await getFileBuffer(muk, 'audio');
-        fs.writeFileSync(rane, buffimg);
-        const gem = rane;
-        const ran = __dirname+`/../database/tmp/${Math.random()}.mp3`;
-
-        const effect = audioEffects[command];
-        exec(`ffmpeg -i ${gem} -filter:a "${effect}" ${ran}`, async (err, stderr, stdout) => {
-          await fs.unlinkSync(gem);
-          if (err) return reply(`Ocorreu um erro ao adicionar o *efeito ${command}* no áudio.`);
-          const hah = fs.readFileSync(ran);
-          await nazu.sendMessage(from, { audio: hah, mimetype: 'audio/mpeg' }, { quoted: info });
-          await fs.unlinkSync(ran);
-        });
-      } else {
-        reply("Marque o áudio..");
-      }
-    } catch (e) {
-    console.error(e);
-    await reply("ocorreu um erro 💔");
-  }
-  break
+    if ((isMedia && !info.message.imageMessage && !info.message.videoMessage) || isQuotedAudio) {
+      const muk = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
+      await applyAudioEffect(command, muk, from, info, nazu);
+    } else {
+      await reply('Marque o áudio.');
+    }
+    break;
 
   case 'videorapido':
   case 'fastvid':
@@ -505,49 +487,15 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   case 'sepia':
   case 'espelhar':
   case 'rotacionar':
-    try {
-      if ((isMedia && info.message.videoMessage) || isQuotedVideo) {
-        const encmedia = isQuotedVideo ? info.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage : info.message.videoMessage;
-        const videoEffects = { videorapido: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]', fastvid: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]', videoslow: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]', videolento: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]', videoreverso: 'reverse,areverse', videoloop: 'loop=2',videomudo: 'an', videobw: 'hue=s=0', pretoebranco: 'hue=s=0', tomp3: 'q:a=0 -map a', sepia: 'colorchannelmixer=.393:.769:.189:.349:.686:.168:.272:.534:.131', espelhar: 'hflip', rotacionar: 'rotate=90*PI/180', };
-        const rane = __dirname+`/../database/tmp/${Math.random()}.mp4`
-        const buffimg = await getFileBuffer(encmedia, 'video');
-        fs.writeFileSync(rane, buffimg);
-        const media = rane;
-        const outputExt = command === 'tomp3' ? '.mp3' : '.mp4';
-        const ran = __dirname+`/../database/tmp/${Math.random()}${outputExt}`
-
-        let ffmpegCmd;
-        if (command === 'tomp3') {
-          ffmpegCmd = `ffmpeg -i ${media} -q:a 0 -map a ${ran}`;
-        } else if (command === 'videoloop') {
-          ffmpegCmd = `ffmpeg -stream_loop 2 -i ${media} -c copy ${ran}`;
-        } else if (command === 'videomudo') {
-          ffmpegCmd = `ffmpeg -i ${media} -an ${ran}`;
-        } else {
-          const effect = videoEffects[command];
-          if (['sepia', 'espelhar', 'rotacionar', 'zoom', 'glitch', 'videobw', 'pretoebranco'].includes(command)) {
-            ffmpegCmd = `ffmpeg -i ${media} -vf "${effect}" ${ran}`;
-          } else {
-            ffmpegCmd = `ffmpeg -i ${media} -filter_complex "${effect}" -map "[v]" -map "[a]" ${ran}`;
-          }
-        }
-
-        exec(ffmpegCmd, async (err) => {
-          await fs.unlinkSync(media);
-          if (err) return reply(`Err: ${err}`);
-          const buffer453 = fs.readFileSync(ran);
-          const messageType = command === 'tomp3' ? { audio: buffer453, mimetype: 'audio/mpeg' } : { video: buffer453, mimetype: 'video/mp4' };
-          await nazu.sendMessage(from, messageType, { quoted: info });
-          await fs.unlinkSync(ran);
-        });
-      } else {
-        reply(command === 'tomp3' ? "Marque o vídeo para converter para áudio." : "Marque o vídeo..");
-      }
-  } catch (e) {
-    console.error(e);
-    await reply("ocorreu um erro 💔");
-  }
+    if ((isMedia && info.message.videoMessage) || isQuotedVideo) {
+      const encmedia = isQuotedVideo ? info.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage : info.message.videoMessage;
+      await applyVideoEffect(command, encmedia, from, info, nazu);
+    } else {
+      await reply(command === 'tomp3' ? 'Marque o vídeo para converter para áudio.' : 'Marque o vídeo.');
+    }
     break;
+    
+    
   //INTELIGENCIA ARTIFICIAL
   
   case 'nazu': case 'nazuna': case 'ai': 
@@ -4237,6 +4185,97 @@ function getDiskSpaceInfo() {
     } catch (error) {
     console.error("Error getting disk space:", error);
     return { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A' };
+  }
+}
+
+const audioEffects = {
+  speedup: 'atempo=1.06,asetrate=44100*1.25',
+  vozmenino: 'atempo=1.06,asetrate=44100*1.25',
+  vozmulher: 'asetrate=44100*1.25,atempo=0.8',
+  vozhomem: 'asetrate=44100*0.8,atempo=1.2',
+  vozcrianca: 'asetrate=44100*1.4,atempo=0.9',
+  vozeco: 'aecho=0.8:0.9:60:0.4',
+  eco: 'aecho=0.8:0.9:60:0.4',
+  vozlenta: 'atempo=0.6',
+  audiolento: 'atempo=0.6',
+  vozrapida: 'atempo=1.5',
+  audiorapido: 'atempo=1.5',
+  vozcaverna: 'aecho=0.6:0.3:1000:0.5',
+  bass: 'bass=g=5',
+  bass2: 'bass=g=10',
+  bass3: 'bass=g=15',
+  volumeboost: 'volume=1.5',
+  aumentarvolume: 'volume=1.5',
+  reverb: 'aecho=0.8:0.9:60:0.4',
+  drive: 'afftdn=nf=-20',
+  equalizer: 'equalizer=f=100:t=h:w=200:g=3,equalizer=f=1000:t=h:w=200:g=-1',
+  equalizar: 'equalizer=f=100:t=h:w=200:g=3,equalizer=f=1000:t=h:w=200:g=-1',
+  reverse: 'areverse',
+  audioreverso: 'areverse',
+  pitch: 'asetrate=44100*0.8',
+  flanger: 'flanger=delay=10:depth=2',
+  grave: 'atempo=0.9,asetrate=44100*0.9',
+  vozgrave: 'atempo=0.9,asetrate=44100*0.9',
+  chorus: 'chorus=0.5:0.9:50:0.4:0.25:1',
+  phaser: 'aphaser=decay=0.3',
+  tremolo: 'tremolo=f=5:d=0.7',
+  vibrato: 'vibrato=f=5',
+  lowpass: 'lowpass=f=500'
+};
+
+const videoEffects = {
+  videorapido: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]',
+  fastvid: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]',
+  videoslow: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]',
+  videolento: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]',
+  videoreverso: 'reverse,areverse',
+  videoloop: 'loop=2',
+  videomudo: 'an',
+  videobw: 'hue=s=0',
+  pretoebranco: 'hue=s=0',
+  tomp3: 'q:a=0 -map a',
+  sepia: 'colorchannelmixer=.3:.7:.2:.3:.6:.2:.2:.5:.1',
+  espelhar: 'hflip',
+  rotacionar: 'rotate=PI/2'
+};
+
+async function applyAudioEffect(command, muk, from, info, nazu) {
+  if (!audioEffects[command]) return reply('Efeito de áudio inválido.');
+  try {
+    const buffimg = await getFileBuffer(muk, 'audio');
+    if (buffimg.length > 10 * 1024 * 1024) throw new Error('Arquivo muito grande (>10MB).');
+    const ffmpegCmd = `ffmpeg -i pipe:0 -filter:a "${audioEffects[command]}" -c:a mp3 -b:a 96k -f mp3 pipe:1 -bufsize 256k`;
+    const { stdout } = await execAsync(ffmpegCmd, { input: buffimg });
+    await nazu.sendMessage(from, { audio: stdout, mimetype: 'audio/mpeg' }, { quoted: info });
+  } catch (e) {
+    console.error(e);
+    await reply(`Erro ao aplicar o efeito *${command}*: ${e.message}`);
+  }
+}
+
+async function applyVideoEffect(command, encmedia, from, info, nazu) {
+  if (!videoEffects[command]) return reply('Efeito de vídeo inválido.');
+  try {
+    const buffimg = await getFileBuffer(encmedia, 'video');
+    if (buffimg.length > 20 * 1024 * 1024) throw new Error('Arquivo muito grande (>20MB).');
+    let ffmpegCmd;
+    const outputFormat = command === 'tomp3' ? 'mp3' : 'mp4';
+    if (command === 'tomp3') {
+      ffmpegCmd = `ffmpeg -i pipe:0 -q:a 0 -map a -c:a mp3 -b:a 96k -f mp3 pipe:1 -bufsize 256k`;
+    } else if (command === 'videoloop') {
+      ffmpegCmd = `ffmpeg -stream_loop 2 -i pipe:0 -c:v copy -c:a copy -f mp4 pipe:1 -bufsize 512k`;
+    } else if (command === 'videomudo') {
+      ffmpegCmd = `ffmpeg -i pipe:0 -an -c:v copy -f mp4 pipe:1 -bufsize 512k`;
+    } else {
+      const effect = videoEffects[command];
+      ffmpegCmd = `ffmpeg -i pipe:0 -vf "${effect}" -c:v libx264 -preset ultrafast -b:v 500k -c:a mp3 -b:a 96k -f mp4 pipe:1 -bufsize 512k`;
+    }
+    const { stdout } = await execAsync(ffmpegCmd, { input: buffimg });
+    const messageType = command === 'tomp3' ? { audio: stdout, mimetype: 'audio/mpeg' } : { video: stdout, mimetype: 'video/mp4' };
+    await nazu.sendMessage(from, messageType, { quoted: info });
+  } catch (e) {
+    console.error(e);
+    await reply(`Erro ao aplicar o efeito *${command}*: ${e.message}`);
   }
 }
 
