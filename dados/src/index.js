@@ -838,71 +838,235 @@ break;
   break
   
   case 'play':
-  case 'ytmp3':
+case 'ytmp3':
   try {
-    if (!q) return reply(`Digite o nome da música.\n> Ex: ${prefix + command} Back to Black`);
+    if (!q) return reply(`Digite o nome da música ou um link do YouTube.\n> Ex: ${prefix + command} Back to Black`);
     nazu.react(['💖']);
-    datinha = await youtube.search(q);
-    if(!datinha.ok) return reply(datinha.msg);
-    await nazu.sendMessage(from, { image: { url: datinha.data.thumbnail }, caption: `🎵 *Música Encontrada* 🎵\n\n📌 *Nome:* ${datinha.data.title}\n👤 *Canal:* ${datinha.data.author.name}\n👀 *Visualizações:* ${datinha.data.views}\n🔗 *Link:* ${datinha.data.url}`, footer: `By: ${nomebot}` }, { quoted: info });
-    dlRes = await youtube.mp3(datinha.data.url);
-    if(!dlRes.ok) return reply(dlRes.msg);
-    await nazu.sendMessage(from, {audio: {url: dlRes.url}, fileName: datinha.data.title, mimetype: 'audio/mp4'}, {quoted: info});
+    let videoUrl;
+    if (q.includes('youtube.com') || q.includes('youtu.be')) {
+      videoUrl = q;
+    } else {
+      const searchResult = await youtube.search(q);
+      if (!searchResult.ok) return reply(searchResult.msg);
+      videoUrl = searchResult.data.url;
+    }
+    const videoInfo = await youtube.getInfo(videoUrl) || (await youtube.search(q));
+    if (!videoInfo.ok) return reply(videoInfo.msg);
+    const caption = `
+🎵 *Música Encontrada* 🎵
+
+📌 *Título:* ${videoInfo.data.title}
+👤 *Artista/Canal:* ${videoInfo.data.author.name}
+⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)
+👀 *Visualizações:* ${videoInfo.data.views.toLocaleString()}
+📅 *Publicado:* ${videoInfo.data.ago}
+📜 *Descrição:* ${videoInfo.data.description.slice(0, 100)}${videoInfo.data.description.length > 100 ? '...' : ''}
+🔗 *Link:* ${videoInfo.data.url}
+
+🎧 *Enviando sua música, aguarde!*`;
+    await nazu.sendMessage(from, { 
+      image: { url: videoInfo.data.thumbnail }, 
+      caption: caption, 
+      footer: `By: ${nomebot}` 
+    }, { quoted: info });
+    const dlRes = await youtube.mp3(videoUrl);
+    if (!dlRes.ok) return reply(dlRes.msg);
+    try {
+      await nazu.sendMessage(from, {
+        audio: { url: dlRes.url }, 
+        fileName: `${videoInfo.data.title}.mp3`, 
+        mimetype: 'audio/mp4'
+      }, { quoted: info });
+    } catch (audioError) {
+      if (String(audioError).includes("ENOSPC") || String(audioError).includes("size")) {
+        await reply('Arquivo muito grande, enviando como documento...');
+        await nazu.sendMessage(from, {
+          document: { url: dlRes.url }, 
+          fileName: `${videoInfo.data.title}.mp3`, 
+          mimetype: 'audio/mpeg'
+        }, { quoted: info });
+      } else {
+        throw audioError;
+      }
+    }
   } catch (e) {
+    if (String(e).includes("age")) return reply(`Conteúdo com restrição de idade`);
     console.error(e);
-    reply("ocorreu um erro 💔");
+    reply("Ocorreu um erro 💔");
   }
   break;
-  
-  case 'playvid':
-  case 'ytmp4':
+
+case 'playvid':
+case 'ytmp4':
   try {
-    if (!q) return reply(`Digite o nome da música.\n> Ex: ${prefix + command} Back to Black`);
+    if (!q) return reply(`Digite o nome do vídeo ou um link do YouTube.\n> Ex: ${prefix + command} Back to Black`);
     nazu.react(['💖']);
-    datinha = await youtube.search(q);
-    if(!datinha.ok) return reply(datinha.msg);
-    await nazu.sendMessage(from, { image: { url: datinha.data.thumbnail }, caption: `🎵 *Música Encontrada* 🎵\n\n📌 *Nome:* ${datinha.data.title}\n👤 *Canal:* ${datinha.data.author.name}\n👀 *Visualizações:* ${datinha.data.views}\n🔗 *Link:* ${datinha.data.url}`, footer: `By: ${nomebot}` }, { quoted: info });
-    dlRes = await youtube.mp4(datinha.data.url);
-    if(!dlRes.ok) return reply(dlRes.msg);
-    await nazu.sendMessage(from, {video: {url: dlRes.url}, fileName: datinha.data.title, mimetype: 'video/mp4'}, {quoted: info});
+    let videoUrl;
+    if (q.includes('youtube.com') || q.includes('youtu.be')) {
+      videoUrl = q;
+    } else {
+      const searchResult = await youtube.search(q);
+      if (!searchResult.ok) return reply(searchResult.msg);
+      videoUrl = searchResult.data.url;
+    }
+    const videoInfo = await youtube.getInfo(videoUrl) || (await youtube.search(q));
+    if (!videoInfo.ok) return reply(videoInfo.msg);
+    const caption = `
+🎬 *Vídeo Encontrado* 🎬
+
+📌 *Título:* ${videoInfo.data.title}
+👤 *Artista/Canal:* ${videoInfo.data.author.name}
+⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)
+👀 *Visualizações:* ${videoInfo.data.views.toLocaleString()}
+📅 *Publicado:* ${videoInfo.data.ago}
+📜 *Descrição:* ${videoInfo.data.description.slice(0, 100)}${videoInfo.data.description.length > 100 ? '...' : ''}
+🔗 *Link:* ${videoInfo.data.url}
+
+📹 *Enviando seu vídeo, aguarde!*`;
+    await nazu.sendMessage(from, { 
+      image: { url: videoInfo.data.thumbnail }, 
+      caption: caption, 
+      footer: `By: ${nomebot}` 
+    }, { quoted: info });
+    const dlRes = await youtube.mp4(videoUrl);
+    if (!dlRes.ok) return reply(dlRes.msg);
+    try {
+      await nazu.sendMessage(from, {
+        video: { url: dlRes.url }, 
+        fileName: `${videoInfo.data.title}.mp4`, 
+        mimetype: 'video/mp4'
+      }, { quoted: info });
+    } catch (videoError) {
+      if (String(videoError).includes("ENOSPC") || String(videoError).includes("size")) {
+        await reply('Arquivo muito grande, enviando como documento...');
+        await nazu.sendMessage(from, {
+          document: { url: dlRes.url }, 
+          fileName: `${videoInfo.data.title}.mp4`, 
+          mimetype: 'video/mp4'
+        }, { quoted: info });
+      } else {
+        throw videoError;
+      }
+    }
   } catch (e) {
     console.error(e);
-    reply("ocorreu um erro 💔");
+    reply("Ocorreu um erro 💔");
   }
   break;
-  
-    
-  case 'play2':
-  case 'ytmp32':
+
+case 'play2':
+case 'ytmp32':
   try {
-    if (!q) return reply(`Digite o nome da música.\n> Ex: ${prefix + command} Back to Black`);
+    if (!q) return reply(`Digite o nome da música ou um link do YouTube.\n> Ex: ${prefix + command} Back to Black`);
     nazu.react(['💖']);
-    datinha = await youtube.search(q);
-    if(!datinha.ok) return reply(datinha.msg);
-    await nazu.sendMessage(from, { image: { url: datinha.data.thumbnail }, caption: `🎵 *Música Encontrada* 🎵\n\n📌 *Nome:* ${datinha.data.title}\n👤 *Canal:* ${datinha.data.author.name}\n👀 *Visualizações:* ${datinha.data.views}\n🔗 *Link:* ${datinha.data.url}`, footer: `By: ${nomebot}` }, { quoted: info });
-    dlRes = await youtube.mp3v2(datinha.data.url);
-    if(!dlRes.ok) return reply(dlRes.msg);
-    await nazu.sendMessage(from, {audio: {url: dlRes.url}, fileName: datinha.data.title, mimetype: 'audio/mp4'}, {quoted: info});
+    let videoUrl;
+    if (q.includes('youtube.com') || q.includes('youtu.be')) {
+      videoUrl = q;
+    } else {
+      const searchResult = await youtube.search(q);
+      if (!searchResult.ok) return reply(searchResult.msg);
+      videoUrl = searchResult.data.url;
+    }
+    const videoInfo = await youtube.getInfo(videoUrl) || (await youtube.search(q));
+    if (!videoInfo.ok) return reply(videoInfo.msg);
+    const caption = `
+🎵 *Música Encontrada* 🎵
+
+📌 *Título:* ${videoInfo.data.title}
+👤 *Artista/Canal:* ${videoInfo.data.author.name}
+⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)
+👀 *Visualizações:* ${videoInfo.data.views.toLocaleString()}
+📅 *Publicado:* ${videoInfo.data.ago}
+📜 *Descrição:* ${videoInfo.data.description.slice(0, 100)}${videoInfo.data.description.length > 100 ? '...' : ''}
+🔗 *Link:* ${videoInfo.data.url}
+
+🎧 *Enviando sua música, aguarde!*`;
+    await nazu.sendMessage(from, { 
+      image: { url: videoInfo.data.thumbnail }, 
+      caption: caption, 
+      footer: `By: ${nomebot}` 
+    }, { quoted: info });
+    const dlRes = await youtube.mp3v2(videoUrl);
+    if (!dlRes.ok) return reply(dlRes.msg);
+    try {
+      await nazu.sendMessage(from, {
+        audio: { url: dlRes.url }, 
+        fileName: `${videoInfo.data.title}.mp3`, 
+        mimetype: 'audio/mp4'
+      }, { quoted: info });
+    } catch (audioError) {
+      if (String(audioError).includes("ENOSPC") || String(audioError).includes("size")) {
+        await reply('Arquivo muito grande, enviando como documento...');
+        await nazu.sendMessage(from, {
+          document: { url: dlRes.url }, 
+          fileName: `${videoInfo.data.title}.mp3`, 
+          mimetype: 'audio/mpeg'
+        }, { quoted: info });
+      } else {
+        throw audioError;
+      }
+    }
   } catch (e) {
     console.error(e);
-    reply("ocorreu um erro 💔");
+    reply("Ocorreu um erro 💔");
   }
   break;
-  
-  case 'playvid2':
-  case 'ytmp42':
+
+case 'playvid2':
+case 'ytmp42':
   try {
-    if (!q) return reply(`Digite o nome da música.\n> Ex: ${prefix + command} Back to Black`);
+    if (!q) return reply(`Digite o nome do vídeo ou um link do YouTube.\n> Ex: ${prefix + command} Back to Black`);
     nazu.react(['💖']);
-    datinha = await youtube.search(q);
-    if(!datinha.ok) return reply(datinha.msg);
-    await nazu.sendMessage(from, { image: { url: datinha.data.thumbnail }, caption: `🎵 *Música Encontrada* 🎵\n\n📌 *Nome:* ${datinha.data.title}\n👤 *Canal:* ${datinha.data.author.name}\n👀 *Visualizações:* ${datinha.data.views}\n🔗 *Link:* ${datinha.data.url}`, footer: `By: ${nomebot}` }, { quoted: info });
-    dlRes = await youtube.mp4v2(datinha.data.url);
-    if(!dlRes.ok) return reply(dlRes.msg);
-    await nazu.sendMessage(from, {video: {url: dlRes.url}, fileName: datinha.data.title, mimetype: 'video/mp4'}, {quoted: info});
+    let videoUrl;
+    if (q.includes('youtube.com') || q.includes('youtu.be')) {
+      videoUrl = q;
+    } else {
+      const searchResult = await youtube.search(q);
+      if (!searchResult.ok) return reply(searchResult.msg);
+      videoUrl = searchResult.data.url;
+    }
+    const videoInfo = await youtube.getInfo(videoUrl) || (await youtube.search(q));
+    if (!videoInfo.ok) return reply(videoInfo.msg);
+    const caption = `
+🎬 *Vídeo Encontrado* 🎬
+
+📌 *Título:* ${videoInfo.data.title}
+👤 *Artista/Canal:* ${videoInfo.data.author.name}
+⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)
+👀 *Visualizações:* ${videoInfo.data.views.toLocaleString()}
+📅 *Publicado:* ${videoInfo.data.ago}
+📜 *Descrição:* ${videoInfo.data.description.slice(0, 100)}${videoInfo.data.description.length > 100 ? '...' : ''}
+🔗 *Link:* ${videoInfo.data.url}
+
+📹 *Enviando seu vídeo, aguarde!*`;
+    await nazu.sendMessage(from, { 
+      image: { url: videoInfo.data.thumbnail }, 
+      caption: caption, 
+      footer: `By: ${nomebot}` 
+    }, { quoted: info });
+    const dlRes = await youtube.mp4v2(videoUrl);
+    if (!dlRes.ok) return reply(dlRes.msg);
+    try {
+      await nazu.sendMessage(from, {
+        video: { url: dlRes.url }, 
+        fileName: `${videoInfo.data.title}.mp4`, 
+        mimetype: 'video/mp4'
+      }, { quoted: info });
+    } catch (videoError) {
+      if (String(videoError).includes("ENOSPC") || String(videoError).includes("size")) {
+        await reply('Arquivo muito grande, enviando como documento...');
+        await nazu.sendMessage(from, {
+          document: { url: dlRes.url }, 
+          fileName: `${videoInfo.data.title}.mp4`, 
+          mimetype: 'video/mp4'
+        }, { quoted: info });
+      } else {
+        throw videoError;
+      }
+    }
   } catch (e) {
     console.error(e);
-    reply("ocorreu um erro 💔");
+    reply("Ocorreu um erro 💔");
   }
   break;
   
