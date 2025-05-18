@@ -64,13 +64,13 @@ const downloadModuleUrls = {
 let youtube = {}, tiktok = {}, pinterest = {}, igdl = {}, mcPlugin = {}, FilmesDL = {}, apkMod = {};
 async function loadDownloadModules() {
   try {
-    youtube = await requireRemote(downloadModuleUrls.youtube, 'youtube') || {};
-    tiktok = await requireRemote(downloadModuleUrls.tiktok, 'tiktok') || {};
-    pinterest = await requireRemote(downloadModuleUrls.pinterest, 'pinterest') || {};
-    igdl = await requireRemote(downloadModuleUrls.igdl, 'igdl') || {};
-    mcPlugin = await requireRemote(downloadModuleUrls.mcPlugin, 'mcPlugin') || {};
-    FilmesDL = await requireRemote(downloadModuleUrls.FilmesDL, 'FilmesDL') || {};
-    apkMod = await requireRemote(downloadModuleUrls.apkMod, 'apkMod') || {};
+    youtube = await requireRemote(downloadModuleUrls.youtube) || {};
+    tiktok = await requireRemote(downloadModuleUrls.tiktok) || {};
+    pinterest = await requireRemote(downloadModuleUrls.pinterest) || {};
+    igdl = await requireRemote(downloadModuleUrls.igdl) || {};
+    mcPlugin = await requireRemote(downloadModuleUrls.mcPlugin) || {};
+    FilmesDL = await requireRemote(downloadModuleUrls.FilmesDL) || {};
+    apkMod = await requireRemote(downloadModuleUrls.apkMod) || {};
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Erro ao carregar módulos de download:`, error.message);
   }
