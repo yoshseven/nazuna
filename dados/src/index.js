@@ -75,6 +75,7 @@ try {
  const baileys = require('baileys');
  const type = baileys.getContentType(info.message);
  
+ const isMedia = (type === "imageMessage" || type === "videoMessage" || type === "audioMessage") 
  const isImage = type == 'imageMessage'
  const isVideo = type == 'videoMessage'
  const isVisuU2 = type == 'viewOnceMessageV2'
