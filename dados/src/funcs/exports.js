@@ -109,6 +109,7 @@ module.exports = (async () => {
     // Carrega todos os módulos de download em paralelo com retry
     const downloadPromises = Object.entries(downloadModuleUrls).map(async ([key, url]) => {
       modules[key] = await loadRemoteModuleWithRetry(url, key);
+      modules[key] = modules[key].default ? modules[key].default : modules[key]
     });
 
     // Carrega os JSONs
