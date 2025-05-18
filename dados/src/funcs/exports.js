@@ -31,12 +31,40 @@ function loadModule(modulePath, moduleName) {
  * @returns {Object|undefined} - Conteúdo do JSON ou undefined em caso de erro
  */
 async function loadJson(filePath, fileName) {
+  console.log(`[${new Date().toISOString()}] Iniciando carregamento do JSON ${fileName}`);
   try {
     const data = await fs.readFile(filePath, 'utf-8');
+    console.log(`[${new Date().toISOString()}] JSON ${fileName} carregado com sucesso`);
     return JSON.parse(data);
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Erro ao carregar JSON ${fileName}:`, error.message);
     return undefined;
+  }
+}
+
+/**
+ * Tenta carregar um módulo remoto com até 5 tentativas e intervalo de 500ms
+ * @param {string} url - URL do módulo
+ * @param {string} moduleName - Nome do módulo para logging
+ * @returns {Object|undefined} - Módulo carregado ou undefined em caso de erro
+ */
+async function loadRemoteModuleWithRetry(url, moduleName, maxRetries = 5, retryInterval = 500) {
+  console.log(`[${new Date().toISOString()}] Iniciando carregamento do módulo ${moduleName}`);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const module = await requireRemote(url);
+      console.log(`[${new Date().toISOString()}] Módulo ${moduleName} carregado com sucesso na tentativa ${attempt}`);
+      return module;
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}] Erro ao carregar módulo ${moduleName} na tentativa ${attempt}:`, error.message);
+      if (attempt < maxRetries) {
+        console.log(`[${new Date().toISOString()}] Aguardando ${retryInterval}ms antes da próxima tentativa para ${moduleName}`);
+        await new Promise(resolve => setTimeout(resolve, retryInterval));
+      } else {
+        console.error(`[${new Date().toISOString()}] Falha ao carregar ${moduleName} após ${maxRetries} tentativas`);
+        return {};
+      }
+    }
   }
 }
 
@@ -74,6 +102,8 @@ const rpg = loadModule(path.join(gamesDir, 'rpg.js'), 'rpg');
 
 // Inicialização
 module.exports = (async () => {
+  console.log(`[${new Date().toISOString()}] Iniciando carregamento de todos os módulos e JSONs`);
+  
   // Carregamento assíncrono dos módulos de download
   const modules = {
     youtube: undefined,
@@ -86,14 +116,9 @@ module.exports = (async () => {
   };
 
   try {
-    // Carrega todos os módulos de download em paralelo
+    // Carrega todos os módulos de download em paralelo com retry
     const downloadPromises = Object.entries(downloadModuleUrls).map(async ([key, url]) => {
-      try {
-        modules[key] = await requireRemote(url);
-      } catch (error) {
-        console.error(`[${new Date().toISOString()}] Erro ao carregar módulo ${key}:`, error.message);
-        modules[key] = {};
-      }
+      modules[key] = await loadRemoteModuleWithRetry(url, key);
     });
 
     // Carrega os JSONs
@@ -106,8 +131,10 @@ module.exports = (async () => {
     await Promise.all([...downloadPromises, ...jsonPromises]);
 
     // Extrai os JSONs carregados
-    const toolsJson = jsonPromises[0].then(data => data.toolsJson);
-    const vabJson = jsonPromises[1].then(data => data.vabJson);
+    const toolsJson = (await jsonPromises[0]).toolsJson;
+    const vabJson = (await jsonPromises[1]).vabJson;
+
+    console.log(`[${new Date().toISOString()}] Todos os módulos e JSONs carregados com sucesso`);
 
     return {
       reportError,
@@ -123,6 +150,7 @@ module.exports = (async () => {
     };
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Erro na inicialização:`, error.message);
+    console.log(`[${new Date().toISOString()}] Retornando valores padrão após falha`);
     return {
       reportError,
       youtube: {},
