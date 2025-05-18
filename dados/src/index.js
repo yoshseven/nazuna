@@ -468,7 +468,7 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   case 'lowpass':
     if ((isMedia && !info.message.imageMessage && !info.message.videoMessage) || isQuotedAudio) {
       const muk = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
-      await applyAudioEffect(command, muk, from, info, nazu);
+      await applyAudioEffect(command, muk, from, info, nazu, getFileBuffer, reply);
     } else {
       await reply('Marque o áudio.');
     }
@@ -489,7 +489,7 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   case 'rotacionar':
     if ((isMedia && info.message.videoMessage) || isQuotedVideo) {
       const encmedia = isQuotedVideo ? info.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage : info.message.videoMessage;
-      await applyVideoEffect(command, encmedia, from, info, nazu);
+      await applyVideoEffect(command, encmedia, from, info, nazu, getFileBuffer, reply);
     } else {
       await reply(command === 'tomp3' ? 'Marque o vídeo para converter para áudio.' : 'Marque o vídeo.');
     }
@@ -4239,7 +4239,7 @@ const videoEffects = {
   rotacionar: 'rotate=PI/2'
 };
 
-async function applyAudioEffect(command, muk, from, info, nazu) {
+async function applyAudioEffect(command, muk, from, info, nazu, getFileBuffer, reply) {
   if (!audioEffects[command]) return reply('Efeito de áudio inválido.');
   try {
     const buffimg = await getFileBuffer(muk, 'audio');
@@ -4253,7 +4253,7 @@ async function applyAudioEffect(command, muk, from, info, nazu) {
   }
 }
 
-async function applyVideoEffect(command, encmedia, from, info, nazu) {
+async function applyVideoEffect(command, encmedia, from, info, nazu, getFileBuffer, reply) {
   if (!videoEffects[command]) return reply('Efeito de vídeo inválido.');
   try {
     const buffimg = await getFileBuffer(encmedia, 'video');
