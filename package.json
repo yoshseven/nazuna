@@ -26,7 +26,6 @@
     "linkedom": "latest",
     "node-webpmux": "latest",
     "qrcode-terminal": "latest",
-    "ruhend-scraper": "latest",
     "yt-search": "latest"
   },
   "engines": {
