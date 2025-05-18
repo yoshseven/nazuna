@@ -430,6 +430,97 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   }
   
  switch(command) {
+ 
+  case 'videorapido':
+  case 'fastvid':
+  case 'videoslow':
+  case 'videolento':
+  case 'videoreverso':
+  case 'videoloop':
+  case 'videomudo':
+  case 'videobw':
+  case 'pretoebranco':
+  case 'tomp3':
+  case 'sepia':
+  case 'espelhar':
+  case 'rotacionar':
+  case 'zoom':
+  case 'glitch':
+  case 'edit':
+    try {
+      if ((isMedia && info.message.videoMessage) || isQuotedVideo) {
+        const encmedia = isQuotedVideo ? info.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage : info.message.videoMessage;
+        const videoEffects = {
+  videorapido: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]',
+  fastvid: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]',
+  videoslow: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]',
+  videolento: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]',
+  videoreverso: 'reverse,areverse',
+  videoloop: 'loop=2',
+  videomudo: 'an',
+  videobw: 'hue=s=0',
+  pretoebranco: 'hue=s=0',
+  tomp3: 'q:a=0 -map a',
+  sepia: 'colorchannelmixer=.393:.769:.189:.349:.686:.168:.272:.534:.131',
+  espelhar: 'hflip',
+  rotacionar: 'rotate=90*PI/180',
+  zoom: 'zoompan=z="zoom+0.002":d=125:s=1280x720',
+  glitch: 'noise=alls=20:allf=t+u',
+  edit: `
+    [0:v]
+    zoompan=z='if(between(t,1,2),zoom+0.01,if(between(t,3,4),zoom+0.01,zoom))':d=1:s=1280x720:fps=30,
+    fade=t=in:st=0:d=0.5,
+    fade=t=out:st=5:d=0.5,
+    rotate=angle='if(between(t,1,2),5*PI/180,if(between(t,3,4),-5*PI/180,0))',
+    lensflare=i=1:t=sparkle:enable='between(t,1,4)',
+    hue=s='if(between(t,1,2),1.8,if(between(t,3,4),1.8,1))',
+    drawbox=x='iw*0.8-(t-1)*100':y='ih*0.1':w=50:h=50:c=yellow:t=fill:enable='between(t,1,2)',
+    drawbox=x='iw*0.1+(t-3)*100':y='ih*0.8':w=50:h=50:c=yellow:t=fill:enable='between(t,3,4)'
+    [v];
+    [0:a]
+    chorus=0.5:0.9:50:0.4:0.25:2
+    [a]
+  `
+};
+        const rane = __dirname+`/../database/tmp/${Math.random()}.mp4`
+        const buffimg = await getFileBuffer(encmedia, 'video');
+        fs.writeFileSync(rane, buffimg);
+        const media = rane;
+        const outputExt = command === 'tomp3' ? '.mp3' : '.mp4';
+        const ran = __dirname+`/../database/tmp/${Math.random()}${outputExt}`
+
+        let ffmpegCmd;
+        if (command === 'tomp3') {
+          ffmpegCmd = `ffmpeg -i ${media} -q:a 0 -map a ${ran}`;
+        } else if (command === 'videoloop') {
+          ffmpegCmd = `ffmpeg -stream_loop 2 -i ${media} -c copy ${ran}`;
+        } else if (command === 'videomudo') {
+          ffmpegCmd = `ffmpeg -i ${media} -an ${ran}`;
+        } else {
+          const effect = videoEffects[command];
+          if (['sepia', 'espelhar', 'rotacionar', 'zoom', 'glitch', 'videobw', 'pretoebranco'].includes(command)) {
+            ffmpegCmd = `ffmpeg -i ${media} -vf "${effect}" ${ran}`;
+          } else {
+            ffmpegCmd = `ffmpeg -i ${media} -filter_complex "${effect}" -map "[v]" -map "[a]" ${ran}`;
+          }
+        }
+
+        exec(ffmpegCmd, async (err) => {
+          await fs.unlinkSync(media);
+          if (err) return reply(`Err: ${err}`);
+          const buffer453 = fs.readFileSync(ran);
+          const messageType = command === 'tomp3' ? { audio: buffer453, mimetype: 'audio/mpeg' } : { video: buffer453, mimetype: 'video/mp4' };
+          await nazu.sendMessage(from, messageType, { quoted: info });
+          await fs.unlinkSync(ran);
+        });
+      } else {
+        reply(command === 'tomp3' ? "Marque o vídeo para converter para áudio." : "Marque o vídeo..");
+      }
+  } catch (e) {
+    console.error(e);
+    await reply("ocorreu um erro 💔");
+  }
+    break;
   //INTELIGENCIA ARTIFICIAL
   
   case 'nazu': case 'nazuna': case 'ai': 
