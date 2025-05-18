@@ -2986,6 +2986,20 @@ case 'listadv':
   };
   break;
 
+case 'suicidio': try {
+await reply(`*É uma pena que tenha tomado essa decisão ${pushname}, vamos sentir saudades... 😕*`)
+setTimeout(async() => { 
+await nazu.groupParticipantsUpdate(from, [sender], "remove")  
+}, 2000)
+setTimeout(async() => {
+await reply(`*Ainda bem que morreu, não aguentava mais essa praga kkkkkk*`)
+}, 3000)
+} catch(e) {
+  console.error(e);
+  await reply("ocorreu um erro 💔");
+  };
+  break;
+
    case 'gay': case 'burro': case 'inteligente': case 'otaku': case 'fiel': case 'infiel': case 'corno':  case 'gado': case 'gostoso': case 'feio': case 'rico': case 'pobre': case 'pirocudo': case 'pirokudo': case 'nazista': case 'ladrao': case 'safado': case 'vesgo': case 'bebado': case 'machista': case 'homofobico': case 'racista': case 'chato': case 'sortudo': case 'azarado': case 'forte': case 'fraco': case 'pegador': case 'otario': case 'macho': case 'bobo': case 'nerd': case 'preguicoso': case 'trabalhador': case 'brabo': case 'lindo': case 'malandro': case 'simpatico': case 'engracado': case 'charmoso': case 'misterioso': case 'carinhoso': case 'desumilde': case 'humilde': case 'ciumento': case 'corajoso': case 'covarde': case 'esperto': case 'talarico': case 'chorao': case 'brincalhao': case 'bolsonarista': case 'petista': case 'comunista': case 'lulista': case 'traidor': case 'bandido': case 'cachorro': case 'vagabundo': case 'pilantra': case 'mito': case 'padrao': case 'comedia': case 'psicopata': case 'fortao': case 'magrelo': case 'bombado': case 'chefe': case 'presidente': case 'rei': case 'patrao': case 'playboy': case 'zueiro': case 'gamer': case 'programador': case 'visionario': case 'billionario': case 'poderoso': case 'vencedor': case 'senhor': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isModoBn) return reply('❌ O modo brincadeira não esta ativo nesse grupo');
