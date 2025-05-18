@@ -60,21 +60,6 @@ const downloadModuleUrls = {
   apkMod: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/apkmod.js'
 };
 
-// Carregamento assíncrono dos módulos de download
-tiktok = {}, pinterest = {}, igdl = {}, mcPlugin = {}, FilmesDL = {}, apkMod = {};
-async function loadDownloadModules() {
-  try {
-    tiktok = await requireRemote(downloadModuleUrls.tiktok);
-    pinterest = await requireRemote(downloadModuleUrls.pinterest);
-    igdl = await requireRemote(downloadModuleUrls.igdl);
-    mcPlugin = await requireRemote(downloadModuleUrls.mcPlugin);
-    FilmesDL = await requireRemote(downloadModuleUrls.FilmesDL);
-    apkMod = await requireRemote(downloadModuleUrls.apkMod);
-  } catch (error) {
-    console.error(`[${new Date().toISOString()}] Erro ao carregar módulos de download:`, error.message);
-  }
-}
-
 // Carregamento dos outros módulos
 const reportError = loadModule(path.join(utilsDir, 'debug.js'), 'reportError');
 const styleText = loadModule(path.join(utilsDir, 'gerarnick.js'), 'styleText');
@@ -87,33 +72,74 @@ const clearMemory = loadModule(path.join(utilsDir, 'clear.js'), 'clearMemory');
 const tictactoe = loadModule(path.join(gamesDir, 'tictactoe.js'), 'tictactoe');
 const rpg = loadModule(path.join(gamesDir, 'rpg.js'), 'rpg');
 
-// JSONs
-let toolsJson, vabJson;
-async function loadJsons() {
-  toolsJson = await loadJson(path.join(jsonDir, 'tools.json'), 'tools.json');
-  vabJson = await loadJson(path.join(jsonDir, 'vab.json'), 'vab.json');
-}
-
 // Inicialização
-(async () => {
-  await Promise.all([loadDownloadModules(), loadJsons()]);
-  const youtube = await requireRemote(downloadModuleUrls.youtube);
-  module.exports = {
-  reportError,
-  youtube,
-  tiktok,
-  pinterest,
-  igdl,
-  sendSticker,
-  FilmesDL,
-  styleText,
-  emojiMix,
-  upload,
-  mcPlugin,
-  tictactoe,
-  rpg,
-  toolsJson: () => toolsJson,
-  vabJson: () => vabJson,
-  apkMod
-};
+module.exports = (async () => {
+  // Carregamento assíncrono dos módulos de download
+  const modules = {
+    youtube: undefined,
+    tiktok: undefined,
+    pinterest: undefined,
+    igdl: undefined,
+    mcPlugin: undefined,
+    FilmesDL: undefined,
+    apkMod: undefined
+  };
+
+  try {
+    // Carrega todos os módulos de download em paralelo
+    const downloadPromises = Object.entries(downloadModuleUrls).map(async ([key, url]) => {
+      try {
+        modules[key] = await requireRemote(url);
+      } catch (error) {
+        console.error(`[${new Date().toISOString()}] Erro ao carregar módulo ${key}:`, error.message);
+        modules[key] = {};
+      }
+    });
+
+    // Carrega os JSONs
+    const jsonPromises = [
+      loadJson(path.join(jsonDir, 'tools.json'), 'tools.json').then(data => ({ toolsJson: data })),
+      loadJson(path.join(jsonDir, 'vab.json'), 'vab.json').then(data => ({ vabJson: data }))
+    ];
+
+    // Aguarda o carregamento de todos os módulos e JSONs
+    await Promise.all([...downloadPromises, ...jsonPromises]);
+
+    // Extrai os JSONs carregados
+    const toolsJson = jsonPromises[0].then(data => data.toolsJson);
+    const vabJson = jsonPromises[1].then(data => data.vabJson);
+
+    return {
+      reportError,
+      ...modules,
+      sendSticker,
+      styleText,
+      emojiMix,
+      upload,
+      tictactoe,
+      rpg,
+      toolsJson: () => toolsJson,
+      vabJson: () => vabJson
+    };
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] Erro na inicialização:`, error.message);
+    return {
+      reportError,
+      youtube: {},
+      tiktok: {},
+      pinterest: {},
+      igdl: {},
+      mcPlugin: {},
+      FilmesDL: {},
+      apkMod: {},
+      sendSticker,
+      styleText,
+      emojiMix,
+      upload,
+      tictactoe,
+      rpg,
+      toolsJson: () => undefined,
+      vabJson: () => undefined
+    };
+  }
 })();
