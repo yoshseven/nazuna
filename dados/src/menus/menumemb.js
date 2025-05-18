@@ -36,6 +36,8 @@ async function menuMembros(prefix, botName = "MeuBot", userName = "Usuário") {
 │  │    ↳ Ver estatísticas globais do bot
 │  │  \`${prefix}meustatus\`
 │  │    ↳ Ver suas estatísticas pessoais
+│  │  \`${prefix}regras\`
+│  │    ↳ Ver regras do grupo
 │
 │  ╭─▸ *Configurações Pessoais:*
 │  │

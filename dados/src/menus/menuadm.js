@@ -63,6 +63,10 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 │  │    ↳ Mudar nome do grupo
 │  │  \`${prefix}setdesc\`
 │  │    ↳ Mudar descrição
+│  │  \`${prefix}addregra [regra]\`
+│  │    ↳ Adicionar regra ao grupo
+│  │  \`${prefix}delregra [número]\`
+│  │    ↳ Remover regra do grupo
 │
 │  ╭─▸ *Controle de Comandos do Grupo:*
 │  │
