@@ -98,10 +98,7 @@ async function loadJsons() {
 (async () => {
   await Promise.all([loadDownloadModules(), loadJsons()]);
   const youtube = await requireRemote(downloadModuleUrls.youtube);
-})();
-
-// Exportação
-module.exports = {
+  module.exports = {
   reportError,
   youtube,
   tiktok,
@@ -119,3 +116,4 @@ module.exports = {
   vabJson: () => vabJson,
   apkMod
 };
+})();
