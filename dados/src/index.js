@@ -6,7 +6,6 @@
 
 const { downloadContentFromMessage, Mimetype, getAggregateVotesInPollMessage } = require('baileys');
 const { exec, spawn, execSync } = require('child_process');
-const { reportError, youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, rpg, toolsJson, vabJson, apkMod, google }  = require(__dirname+'/funcs/exports.js');
 const axios = require('axios');
 const pathz = require('path');
 const fs = require('fs');
@@ -44,6 +43,7 @@ if (!fs.existsSync(__dirname + '/../database/botState.json')) {
 }
 
 async function NazuninhaBotExec(nazu, info, store) {
+  const { reportError, youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, rpg, toolsJson, vabJson, apkMod, google }  = await require(__dirname+'/funcs/exports.js');
   const antipvData = JSON.parse(fs.existsSync(__dirname + '/../database/antipv.json') ? fs.readFileSync(__dirname + '/../database/antipv.json') : '{}');
   const premiumListaZinha = JSON.parse(fs.readFileSync(__dirname + `/../database/dono/premium.json`, 'utf-8'));
   const banGpIds = JSON.parse(fs.readFileSync(__dirname + `/../database/dono/bangp.json`, 'utf-8'));

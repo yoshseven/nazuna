@@ -19,7 +19,6 @@ function loadModule(modulePath, moduleName) {
   try {
     return require(modulePath);
   } catch (error) {
-    console.error(`[${new Date().toISOString()}] Erro ao carregar módulo ${moduleName}:`, error.message);
     return undefined;
   }
 }
@@ -31,13 +30,10 @@ function loadModule(modulePath, moduleName) {
  * @returns {Object|undefined} - Conteúdo do JSON ou undefined em caso de erro
  */
 async function loadJson(filePath, fileName) {
-  console.log(`[${new Date().toISOString()}] Iniciando carregamento do JSON ${fileName}`);
   try {
     const data = await fs.readFile(filePath, 'utf-8');
-    console.log(`[${new Date().toISOString()}] JSON ${fileName} carregado com sucesso`);
     return JSON.parse(data);
   } catch (error) {
-    console.error(`[${new Date().toISOString()}] Erro ao carregar JSON ${fileName}:`, error.message);
     return undefined;
   }
 }
@@ -49,19 +45,14 @@ async function loadJson(filePath, fileName) {
  * @returns {Object|undefined} - Módulo carregado ou undefined em caso de erro
  */
 async function loadRemoteModuleWithRetry(url, moduleName, maxRetries = 5, retryInterval = 500) {
-  console.log(`[${new Date().toISOString()}] Iniciando carregamento do módulo ${moduleName}`);
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const module = await requireRemote(url);
-      console.log(`[${new Date().toISOString()}] Módulo ${moduleName} carregado com sucesso na tentativa ${attempt}`);
       return module;
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Erro ao carregar módulo ${moduleName} na tentativa ${attempt}:`, error.message);
       if (attempt < maxRetries) {
-        console.log(`[${new Date().toISOString()}] Aguardando ${retryInterval}ms antes da próxima tentativa para ${moduleName}`);
         await new Promise(resolve => setTimeout(resolve, retryInterval));
       } else {
-        console.error(`[${new Date().toISOString()}] Falha ao carregar ${moduleName} após ${maxRetries} tentativas`);
         return {};
       }
     }
@@ -102,7 +93,6 @@ const rpg = loadModule(path.join(gamesDir, 'rpg.js'), 'rpg');
 
 // Inicialização
 module.exports = (async () => {
-  console.log(`[${new Date().toISOString()}] Iniciando carregamento de todos os módulos e JSONs`);
   
   // Carregamento assíncrono dos módulos de download
   const modules = {
@@ -133,8 +123,6 @@ module.exports = (async () => {
     // Extrai os JSONs carregados
     const toolsJson = (await jsonPromises[0]).toolsJson;
     const vabJson = (await jsonPromises[1]).vabJson;
-
-    console.log(`[${new Date().toISOString()}] Todos os módulos e JSONs carregados com sucesso`);
 
     return {
       reportError,
