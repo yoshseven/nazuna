@@ -445,43 +445,10 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   case 'sepia':
   case 'espelhar':
   case 'rotacionar':
-  case 'zoom':
-  case 'glitch':
-  case 'edit':
     try {
       if ((isMedia && info.message.videoMessage) || isQuotedVideo) {
         const encmedia = isQuotedVideo ? info.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage : info.message.videoMessage;
-        const videoEffects = {
-  videorapido: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]',
-  fastvid: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]',
-  videoslow: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]',
-  videolento: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]',
-  videoreverso: 'reverse,areverse',
-  videoloop: 'loop=2',
-  videomudo: 'an',
-  videobw: 'hue=s=0',
-  pretoebranco: 'hue=s=0',
-  tomp3: 'q:a=0 -map a',
-  sepia: 'colorchannelmixer=.393:.769:.189:.349:.686:.168:.272:.534:.131',
-  espelhar: 'hflip',
-  rotacionar: 'rotate=90*PI/180',
-  zoom: 'zoompan=z="zoom+0.002":d=125:s=1280x720',
-  glitch: 'noise=alls=20:allf=t+u',
-  edit: `
-    [0:v]
-zoompan=z='zoom + 0.01*between(t,1,2) + 0.01*between(t,3,4)':d=1:s=1280x720:fps=30,
-fade=t=in:st=0:d=0.5,
-fade=t=out:st=5:d=0.5,
-rotate=angle='if(between(t,1,2),5*PI/180,if(between(t,3,4),-5*PI/180,0))',
-hue=s='if(between(t,1,2),1.8,if(between(t,3,4),1.8,1))',
-drawbox=x='iw*0.8-(t-1)*100':y='ih*0.1':w=50:h=50:c=yellow:t=fill:enable='between(t,1,2)',
-drawbox=x='iw*0.1+(t-3)*100':y='ih*0.8':w=50:h=50:c=yellow:t=fill:enable='between(t,3,4)'
-[v];
-[0:a]
-chorus=0.5:0.9:50:0.4:0.25:2
-[a]
-  `
-};
+        const videoEffects = { videorapido: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]', fastvid: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]', videoslow: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]', videolento: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]', videoreverso: 'reverse,areverse', videoloop: 'loop=2',videomudo: 'an', videobw: 'hue=s=0', pretoebranco: 'hue=s=0', tomp3: 'q:a=0 -map a', sepia: 'colorchannelmixer=.393:.769:.189:.349:.686:.168:.272:.534:.131', espelhar: 'hflip', rotacionar: 'rotate=90*PI/180', };
         const rane = __dirname+`/../database/tmp/${Math.random()}.mp4`
         const buffimg = await getFileBuffer(encmedia, 'video');
         fs.writeFileSync(rane, buffimg);
