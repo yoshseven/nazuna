@@ -850,7 +850,7 @@ case 'ytmp3':
       if (!searchResult.ok) return reply(searchResult.msg);
       videoUrl = searchResult.data.url;
     }
-    const videoInfo = await youtube.getInfo(videoUrl) || (await youtube.search(q));
+    const videoInfo = (await youtube.search(q));
     if (!videoInfo.ok) return reply(videoInfo.msg);
     const caption = `
 🎵 *Música Encontrada* 🎵
@@ -909,7 +909,7 @@ case 'ytmp4':
       if (!searchResult.ok) return reply(searchResult.msg);
       videoUrl = searchResult.data.url;
     }
-    const videoInfo = await youtube.getInfo(videoUrl) || (await youtube.search(q));
+    const videoInfo = (await youtube.search(q));
     if (!videoInfo.ok) return reply(videoInfo.msg);
     const caption = `
 🎬 *Vídeo Encontrado* 🎬
@@ -967,7 +967,7 @@ case 'ytmp32':
       if (!searchResult.ok) return reply(searchResult.msg);
       videoUrl = searchResult.data.url;
     }
-    const videoInfo = await youtube.getInfo(videoUrl) || (await youtube.search(q));
+    const videoInfo = (await youtube.search(q));
     if (!videoInfo.ok) return reply(videoInfo.msg);
     const caption = `
 🎵 *Música Encontrada* 🎵
@@ -1025,7 +1025,7 @@ case 'ytmp42':
       if (!searchResult.ok) return reply(searchResult.msg);
       videoUrl = searchResult.data.url;
     }
-    const videoInfo = await youtube.getInfo(videoUrl) || (await youtube.search(q));
+    const videoInfo = (await youtube.search(q));
     if (!videoInfo.ok) return reply(videoInfo.msg);
     const caption = `
 🎬 *Vídeo Encontrado* 🎬
