@@ -14,6 +14,7 @@
  */
 const menus = {
   menu: require('./menu'),
+  menuAlterador: require('./alteradores'),
   menudown: require('./menudown'),
   menuadm: require('./menuadm'),
   menubn: require('./menubn'),

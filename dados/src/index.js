@@ -431,7 +431,67 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   }
   
  switch(command) {
- 
+  //ALTERADORES
+  case 'speedup':
+  case 'vozmenino':
+  case 'vozrobo':
+  case 'vozmulher':
+  case 'vozhomem':
+  case 'vozcrianca':
+  case 'vozeco':
+  case 'eco':
+  case 'vozlenta':
+  case 'audiolento':
+  case 'vozrapida':
+  case 'audiorapido':
+  case 'vozcaverna':
+  case 'bass':
+  case 'bass2':
+  case 'bass3':
+  case 'volumeboost':
+  case 'aumentarvolume':
+  case 'reverb':
+  case 'drive':
+  case 'equalizer':
+  case 'equalizar':
+  case 'reverse':
+  case 'audioreverso':
+  case 'pitch':
+  case 'flanger':
+  case 'grave':
+  case 'vozgrave':
+  case 'chorus':
+  case 'phaser':
+  case 'tremolo':
+  case 'vibrato':
+  case 'lowpass':
+    try {
+      if ((isMedia && !info.message.imageMessage && !info.message.videoMessage) || isQuotedAudio) {
+        const audioEffects = { speedup: 'atempo=1.06,asetrate=44100*1.25', vozmenino: 'atempo=1.06,asetrate=44100*1.25', vozrobo: 'afftfilt=real="hypot(re,im)":imag="atan2(im,re)",atempo=1.0', vozmulher: 'asetrate=44100*1.25,atempo=0.8', vozhomem: 'asetrate=44100*0.8,atempo=1.2', vozcrianca: 'asetrate=44100*1.4,atempo=0.9', vozeco: 'aecho=0.8:0.88:60:0.4', eco: 'aecho=0.8:0.88:60:0.4', vozlenta: 'atempo=0.6', audiolento: 'atempo=0.6', vozrapida: 'atempo=1.5', audiorapido: 'atempo=1.5', vozcaverna: 'aecho=0.6:0.3:1000:0.5', bass: 'bass=g=5', bass2: 'bass=g=10', bass3: 'bass=g=15', volumeboost: 'volume=1.5', aumentarvolume: 'volume=1.5', reverb: 'aecho=0.8:0.88:60:0.4', drive: 'afftdn=nf=-25', equalizer: 'equalizer=f=100:width_type=h:width=200:g=3,equalizer=f=1000:width_type=h:width=200:g=-1,equalizer=f=10000:width_type=h:width=200:g=4', equalizar: 'equalizer=f=100:width_type=h:width=200:g=3,equalizer=f=1000:width_type=h:width=200:g=-1,equalizer=f=10000:width_type=h:width=200:g=4', reverse: 'areverse', audioreverso: 'areverse', pitch: 'asetrate=44100*0.8', flanger: 'flanger', grave: 'atempo=0.9,asetrate=44100', vozgrave: 'atempo=0.9,asetrate=44100', chorus: 'chorus=0.7:0.9:55:0.4:0.25:2', phaser: 'aphaser=type=t:decay=0.4', tremolo: 'tremolo=f=6:d=0.8', vibrato: 'vibrato=f=6', lowpass: 'lowpass=f=500' };
+        const muk = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
+        const rane = __dirname+`/../database/tmp/${Math.random()}.mp3`;
+        const buffimg = await getFileBuffer(muk, 'audio');
+        fs.writeFileSync(rane, buffimg);
+        const gem = rane;
+        const ran = __dirname+`/../database/tmp/${Math.random()}.mp3`;
+
+        const effect = audioEffects[command];
+        exec(`ffmpeg -i ${gem} -filter:a "${effect}" ${ran}`, async (err, stderr, stdout) => {
+          await fs.unlinkSync(gem);
+          if (err) return reply(`Ocorreu um erro ao adicionar o *efeito ${command}* no áudio.`);
+          const hah = fs.readFileSync(ran);
+          await nazu.sendMessage(from, { audio: hah, mimetype: 'audio/mpeg' }, { quoted: info });
+          await fs.unlinkSync(ran);
+        });
+      } else {
+        reply("Marque o áudio..");
+      }
+    } catch (e) {
+    console.error(e);
+    await reply("ocorreu um erro 💔");
+  }
+  break
+
   case 'videorapido':
   case 'fastvid':
   case 'videoslow':
