@@ -41,26 +41,25 @@ async function startNazu() {
     };
 
     const nazu = makeWASocket({
-      countryCode: 'BR',
       auth: { 
         creds: state.creds, 
         keys: makeCacheableSignalKeyStore(state.keys, logger) 
       },
       printQRInTerminal: !process.argv.includes('--code'),
-      syncFullHistory: false,
-      downloadHistory: false,
-      markOnlineOnConnect: false,
-      fireInitQueriesEarly: false,
-      fireInitQueries: false,
+      syncFullHistory: true,
+      emitOwnEvents: true,
+      markOnlineOnConnect: true,
+      fireInitQueriesEarly: true,
+      fireInitQueries: true,
       msgRetryCounterCache,
       connectTimeoutMs: 180000,
       defaultQueryTimeoutMs: 60000,
-      keepAliveIntervalMs: 30000,
-      retryRequestDelayMs: 1000,
-      generateHighQualityLinkPreview: false,
+      keepAliveIntervalMs: 20000,
+      retryRequestDelayMs: 200,
+      generateHighQualityLinkPreview: true,
       logger,
       getMessage,
-      shouldSyncHistoryMessage: () => false,
+      shouldSyncHistoryMessage: () => true,
       cachedGroupMetadata: (jid) => groupCache.get(jid) || null,
       browser: ['Ubuntu', 'Edge', '110.0.1587.56']
     });
