@@ -51,7 +51,6 @@ async function startNazu() {
       markOnlineOnConnect: true,
       fireInitQueriesEarly: true,
       fireInitQueries: true,
-      msgRetryCounterCache,
       connectTimeoutMs: 180000,
       defaultQueryTimeoutMs: 60000,
       keepAliveIntervalMs: 20000,

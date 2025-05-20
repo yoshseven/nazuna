@@ -16,6 +16,8 @@ async function menudown(prefix, botName = "MeuBot", userName = "Usuário") {
 │
 │  ╭─▸ *Pesquisas de Mídia:*
 │  │
+│  │  \`${prefix}letra\`
+│  │    ↳ Buscar letras de musicas
 │  │  \`${prefix}play\`
 │  │    ↳ Baixar música do YouTube
 │  │  \`${prefix}play2\`
