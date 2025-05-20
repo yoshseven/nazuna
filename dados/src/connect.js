@@ -224,7 +224,7 @@ async function startNazu() {
         try {
           const indexModule = require(path.join(__dirname, 'index.js'));
           if (typeof indexModule === 'function') {
-            await indexModule(nazu, info, store);
+            await indexModule(nazu, info, store, groupCache);
           } else {
             console.error('O módulo index.js não exporta uma função válida.');
           }

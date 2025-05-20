@@ -42,7 +42,7 @@ if (!fs.existsSync(__dirname + '/../database/botState.json')) {
   fs.writeFileSync(__dirname + '/../database/botState.json', JSON.stringify({ status: 'on' }, null, 2));
 }
 
-async function NazuninhaBotExec(nazu, info, store) {
+async function NazuninhaBotExec(nazu, info, store, groupCache) {
   const { reportError, youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, rpg, toolsJson, vabJson, apkMod, google, Lyrics }  = await require(__dirname+'/funcs/exports.js');
   const antipvData = JSON.parse(fs.existsSync(__dirname + '/../database/antipv.json') ? fs.readFileSync(__dirname + '/../database/antipv.json') : '{}');
   const premiumListaZinha = JSON.parse(fs.readFileSync(__dirname + `/../database/dono/premium.json`, 'utf-8'));
