@@ -70,16 +70,16 @@ const { requireRemote } = loadModule(path.join(utilsDir, 'import.js'), 'import')
 
 // Mapeamento de URLs para módulos de download
 const downloadModuleUrls = {
-  youtube: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/youtube.js',
-  tiktok: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/tiktok.js',
-  pinterest: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/pinterest.js',
-  igdl: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/igdl.js',
-  Lyrics: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/lyrics.js',
-  mcPlugin: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/mcplugins.js',
-  FilmesDL: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/filmes.js',
-  apkMod: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/downloads/apkmod.js',
-  tictactoe: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/games/tictactoe.js',
-  rpg: 'https://raw.githubusercontent.com/hiudyy/nazuna-funcs/refs/heads/main/funcs/games/rpg.js'
+  youtube: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/youtube.js',
+  tiktok: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/tiktok.js',
+  pinterest: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/pinterest.js',
+  igdl: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/igdl.js',
+  Lyrics: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/lyrics.js',
+  mcPlugin: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/mcplugins.js',
+  FilmesDL: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/filmes.js',
+  apkMod: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/apkmod.js',
+  tictactoe: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/tictactoe.js',
+  rpg: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/rpg.js'
 };
 
 // Carregamento dos outros módulos
