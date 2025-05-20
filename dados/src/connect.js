@@ -2,7 +2,7 @@
 ═════════════════════════════
   Nazuna - Conexão WhatsApp
   Autor: Hiudy
-  Revisão: 17/05/2025
+  Revisão: 20/05/2025
 ═════════════════════════════
 */
 
@@ -26,7 +26,7 @@ const ask = (question) => {
   return new Promise((resolve) => rl.question(question, (answer) => { rl.close(); resolve(answer.trim()); }));
 };
 
-const groupCache = new NodeCache({ stdTTL: 300, useClones: false });
+const groupCache = new NodeCache({ stdTTL: 0, useClones: false, checkperiod: 0 });
 const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
 
 async function startNazu() {
@@ -63,7 +63,24 @@ async function startNazu() {
       cachedGroupMetadata: (jid) => groupCache.get(jid) || null,
       browser: ['Ubuntu', 'Edge', '110.0.1587.56']
     });
+    
+    const originalGroupMetadata = nazu.groupMetadata;
 
+    nazu.groupMetadata = async (from) => {
+      try {
+      const cachedData = groupCache.get(from);
+      if (cachedData) {
+        return cachedData;
+      }
+      const metadata = await originalGroupMetadata(from);
+      groupCache.set(from, metadata);
+      return metadata;
+    } catch (error) {
+      console.error(`Erro ao buscar metadados para ${from}:`, error);
+      throw new Error(`Falha ao obter metadados: ${error.message}`);
+    }
+  };
+  
     if (process.argv.includes('--code') && !nazu.authState.creds.registered) {
       let phoneNumber = await ask('📞 Digite seu número (com DDD e DDI, ex: +5511999999999): \n\n');
       phoneNumber = phoneNumber.replace(/\D/g, '');
