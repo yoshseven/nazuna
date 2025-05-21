@@ -1047,7 +1047,10 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
       if (isBotAdmin && 
           backupData.metadata.admins && 
           backupData.metadata.admins !== adminList) {
-        await nazu.groupParticipantsUpdate(from, backupData.metadata.admins, "promote");
+          for(user of backupData.metadata.admins) {
+          if(!adminList.includes(user)) {
+        await nazu.groupParticipantsUpdate(from, [user], "promote");
+        }}
       }
     } catch (err) {
       console.log("Erro ao atualizar nome/descrição:", err);
