@@ -1170,7 +1170,7 @@ case 'ytmp42':
   let finalMenuContent = menuContent;
   if (isModoLite) {
     finalMenuContent = menuContent.replace(/│╭─▸ \*Interações "Hot" 🔥:\*[\s\S]*?│(\n|$)/g, '│$1');
-    const comandosImpróprios = ['sexo', 'surubao', 'goza', 'gozar', 'mamar', 'mamada', 'beijob', 'beijarb', 'pirocudo', 'bucetuda'];
+    const comandosImpróprios = ['sexo', 'surubao', 'goza', 'gozar', 'mamar', 'mamada', 'beijob', 'beijarb', 'pirocudo', 'bucetuda', 'tapar'];
     let menuFiltrado = finalMenuContent;
     comandosImpróprios.forEach(cmd => {
       const regex = new RegExp(`││◕⁠➜ ${prefix}${cmd}\n`, 'g');
