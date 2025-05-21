@@ -719,6 +719,81 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   }
   break;
   
+  case 'wikipedia':
+  try {
+    if (!q) return reply("Por favor, forneça um termo para buscar na Wikipédia.");
+    
+    nazu.react('📚');
+    reply("🔍 Buscando informações na Wikipédia...");
+
+    try {
+      const respPT = await axios.get(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`);
+      
+      if (respPT.data && respPT.data.extract) {
+        const titulo = respPT.data.title || q;
+        const descricao = respPT.data.extract;
+        const link = respPT.data.content_urls?.desktop?.page || '';
+        const thumbnail = respPT.data.thumbnail?.source || '';
+        
+        let mensagem = `📖 *${titulo}*\n\n${descricao}\n\n`;
+        
+        if (link) {
+          mensagem += `🔗 *Link:* ${link}\n`;
+        }
+        
+        if (thumbnail) {
+          await nazu.sendMessage(from, { 
+            image: { url: thumbnail },
+            caption: mensagem
+          }, { quoted: info });
+        } else {
+          await reply(mensagem);
+        }
+        
+        return;
+      }
+    } catch (err) {
+      console.log("Erro na busca PT Wikipedia, tentando EN:", err.message);
+    }
+
+    try {
+      const respEN = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`);
+      
+      if (respEN.data && respEN.data.extract) {
+        const titulo = respEN.data.title || q;
+        const descricao = respEN.data.extract;
+        const link = respEN.data.content_urls?.desktop?.page || '';
+        const thumbnail = respEN.data.thumbnail?.source || '';
+        
+        let mensagem = `📖 *${titulo}* (Inglês)\n\n${descricao}\n\n`;
+        
+        if (link) {
+          mensagem += `🔗 *Link:* ${link}\n`;
+        }
+        
+        if (thumbnail) {
+          await nazu.sendMessage(from, { 
+            image: { url: thumbnail },
+            caption: mensagem
+          }, { quoted: info });
+        } else {
+          await reply(mensagem);
+        }
+        
+        return;
+      }
+    } catch (err) {
+      console.log("Erro na busca EN Wikipedia:", err.message);
+    }
+
+    await reply("❌ Não foi possível encontrar informações sobre esse termo na Wikipédia. Tente usar palavras-chave diferentes.");
+    
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro ao buscar na Wikipédia 💔");
+  }
+  break;
+  
   case 'imagine': case 'img':
   try {
     const modelos = [
