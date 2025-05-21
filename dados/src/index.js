@@ -856,6 +856,252 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   }
   break;
   
+  
+  case 'backupgp':
+  try {
+    if (!isGroup) return reply("Este comando só pode ser usado em grupos!");
+    if (!isGroupAdmin && !isOwner) return reply("Apenas administradores podem fazer backup do grupo!");
+    
+    nazu.react('💾');
+    reply("📦 Criando backup do grupo, aguarde...");
+    
+    // Diretório de backup
+    const backupDir = path.join(__dirname, '..', 'database', 'backups');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    
+    // Verificar se o arquivo de grupo existe
+    const groupFile = path.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
+    if (!fs.existsSync(groupFile)) {
+      return reply("❌ Não há dados deste grupo para fazer backup!");
+    }
+    
+    // Obter os dados do grupo
+    const groupData = JSON.parse(fs.readFileSync(groupFile, 'utf-8'));
+    
+    // Obter informações detalhadas do grupo
+    const completeGroupInfo = await nazu.groupMetadata(from);
+    const groupDesc = completeGroupInfo.desc || '';
+    const adminList = groupAdmins.map(admin => {
+      const adminName = completeGroupInfo.participants.find(p => p.id === admin)?.name || admin.split('@')[0];
+      return {
+        id: admin,
+        name: adminName
+      };
+    });
+    
+    // Metadata do grupo
+    const metadata = {
+      id: from,
+      name: groupName,
+      description: groupDesc,
+      createdAt: new Date().toISOString(),
+      memberCount: AllgroupMembers.length,
+      admins: adminList,
+      createdBy: pushname || sender.split('@')[0]
+    };
+    
+    // Criar o objeto de backup
+    const backup = {
+      metadata,
+      configs: groupData, // Dados de configuração do grupo
+      internalData: true, // Indicador de que este backup inclui dados internos
+      version: "2.0"
+    };
+    
+    // Nome do arquivo de backup
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupFileName = `${from.split('@')[0]}_${timestamp}.json`;
+    const backupFilePath = path.join(backupDir, backupFileName);
+    
+    // Salvar o backup
+    fs.writeFileSync(backupFilePath, JSON.stringify(backup, null, 2));
+    
+    // Enviar o arquivo de backup
+    await nazu.sendMessage(from, {
+      document: fs.readFileSync(backupFilePath),
+      mimetype: 'application/json',
+      fileName: backupFileName,
+      caption: `✅ *Backup do Grupo Concluído*\n\n*Nome do Grupo:* ${groupName}\n*Data:* ${new Date().toLocaleString('pt-BR')}\n*Membros:* ${AllgroupMembers.length}\n*Admins:* ${adminList.length}\n*Descrição:* ${groupDesc.substring(0, 50)}${groupDesc.length > 50 ? '...' : ''}\n\nPara restaurar, use o comando *${prefix}restaurargp*`
+    }, { quoted: info });
+    
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro ao criar o backup do grupo 💔");
+  }
+  break;
+  
+  case 'restaurargp':
+  try {
+    if (!isGroup) return reply("Este comando só pode ser usado em grupos!");
+    if (!isGroupAdmin && !isOwner) return reply("Apenas administradores podem restaurar o grupo!");
+    
+    if (!isQuotedDocument) {
+      return reply(`Por favor, marque o arquivo de backup JSON enviado anteriormente pelo comando ${prefix}backupgp`);
+    }
+    
+    nazu.react('🔄');
+    reply("🔄 Restaurando backup, aguarde...");
+    
+    // Obter o arquivo de backup
+    const backupMsg = info.message.extendedTextMessage.contextInfo.quotedMessage.documentMessage;
+    if (!backupMsg.fileName.endsWith('.json')) {
+      return reply("❌ O arquivo marcado não é um backup válido! (deve ter extensão .json)");
+    }
+    
+    const backupBuffer = await getFileBuffer(backupMsg, "document");
+    let backupData;
+    
+    try {
+      backupData = JSON.parse(backupBuffer.toString());
+    } catch (err) {
+      return reply("❌ O arquivo de backup está corrompido ou não é um JSON válido!");
+    }
+    
+    // Verificar se é um backup válido (compatível com versões antigas e novas)
+    const isLegacyBackup = backupData.data && backupData.metadata;
+    const isNewBackup = backupData.configs && backupData.metadata;
+    
+    if (!isLegacyBackup && !isNewBackup) {
+      return reply("❌ O arquivo de backup não é válido!");
+    }
+    
+    // Mapear para o formato correto se for backup legado
+    if (isLegacyBackup) {
+      backupData.configs = backupData.data;
+      backupData.version = "1.0";
+    }
+    
+    // Verificar se o backup é para este grupo
+    if (backupData.metadata.id !== from) {
+      return reply(`⚠️ Este backup pertence a outro grupo (${backupData.metadata.name || 'desconhecido'}).\n\nDeseja restaurar mesmo assim? Responda com *sim* para confirmar.`);
+      // Você pode adicionar uma confirmação aqui se quiser
+    }
+    
+    // Carregar os dados atuais do grupo
+    const groupFile = path.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
+    let currentData = {};
+    if (fs.existsSync(groupFile)) {
+      currentData = JSON.parse(fs.readFileSync(groupFile, 'utf-8'));
+    }
+    
+    // Criar um backup dos dados atuais antes de restaurar
+    const backupDir = path.join(__dirname, '..', 'database', 'backups');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const autoBackupFileName = `auto_${from.split('@')[0]}_${timestamp}.json`;
+    const autoBackupFilePath = path.join(backupDir, autoBackupFileName);
+    
+    // Obter informações do grupo atual para o backup automático
+    const completeGroupInfo = await nazu.groupMetadata(from);
+    const groupDesc = completeGroupInfo.desc || '';
+    const adminList = groupAdmins.map(admin => {
+      const adminName = completeGroupInfo.participants.find(p => p.id === admin)?.name || admin.split('@')[0];
+      return {
+        id: admin,
+        name: adminName
+      };
+    });
+    
+    const autoBackup = {
+      metadata: {
+        id: from,
+        name: groupName,
+        description: groupDesc,
+        createdAt: new Date().toISOString(),
+        memberCount: AllgroupMembers.length,
+        admins: adminList,
+        createdBy: 'auto_backup_before_restore',
+        note: 'Este é um backup automático criado antes de uma restauração'
+      },
+      configs: currentData,
+      internalData: true,
+      version: "2.0"
+    };
+    
+    fs.writeFileSync(autoBackupFilePath, JSON.stringify(autoBackup, null, 2));
+    
+    // Restaurar os dados (backup.configs contém as configurações do grupo)
+    fs.writeFileSync(groupFile, JSON.stringify(backupData.configs, null, 2));
+    
+    // Aplicar configurações adicionais caso o backup contenha essa informação
+    try {
+      // Tentar atualizar nome do grupo se diferente e bot for admin
+      if (isBotAdmin && 
+          backupData.metadata.name && 
+          backupData.metadata.name !== groupName) {
+        await nazu.groupUpdateSubject(from, backupData.metadata.name);
+      }
+      
+      // Tentar atualizar descrição do grupo se diferente e bot for admin
+      if (isBotAdmin && 
+          backupData.metadata.description && 
+          backupData.metadata.description !== groupDesc) {
+        await nazu.groupUpdateDescription(from, backupData.metadata.description);
+      }
+    } catch (err) {
+      console.log("Erro ao atualizar nome/descrição:", err);
+    }
+    
+    // Gerar resumo das alterações
+    let alteracoes = [];
+    
+    // Verificar mudanças nas configurações
+    const configDiffs = {
+      antilinkgp: currentData.antilinkgp !== backupData.configs.antilinkgp ? "Proteção contra links" : null,
+      antiporn: currentData.antiporn !== backupData.configs.antiporn ? "Proteção contra conteúdo adulto" : null,
+      antiflood: currentData.antiflood !== backupData.configs.antiflood ? "Proteção contra flood" : null,
+      soadm: currentData.soadm !== backupData.configs.soadm ? "Modo só administradores" : null,
+      modobrincadeira: currentData.modobrincadeira !== backupData.configs.modobrincadeira ? "Modo brincadeira" : null,
+      modorpg: currentData.modorpg !== backupData.configs.modorpg ? "Modo RPG" : null,
+      autoSticker: currentData.autoSticker !== backupData.configs.autoSticker ? "Auto figurinhas" : null,
+      autodl: currentData.autodl !== backupData.configs.autodl ? "Download automático" : null
+    };
+    
+    // Adicionar mudanças encontradas
+    Object.entries(configDiffs).forEach(([key, value]) => {
+      if (value) {
+        const status = backupData.configs[key] ? "ativado" : "desativado";
+        alteracoes.push(`- ${value}: ${status}`);
+      }
+    });
+    
+    // Nome do grupo e descrição se foram alterados
+    if (isBotAdmin && backupData.metadata.name && backupData.metadata.name !== groupName) {
+      alteracoes.push(`- Nome do grupo: alterado para "${backupData.metadata.name}"`);
+    }
+    
+    if (isBotAdmin && backupData.metadata.description && backupData.metadata.description !== groupDesc) {
+      alteracoes.push(`- Descrição do grupo: atualizada`);
+    }
+    
+    // Informações sobre o backup
+    const backupDate = new Date(backupData.metadata.createdAt || Date.now()).toLocaleString('pt-BR');
+    
+    let mensagem = `✅ *Backup Restaurado com Sucesso*\n\n`;
+    mensagem += `*Nome do Grupo:* ${backupData.metadata.name || groupName}\n`;
+    mensagem += `*Data do Backup:* ${backupDate}\n\n`;
+    
+    if (alteracoes.length > 0) {
+      mensagem += `*Alterações aplicadas:*\n${alteracoes.join('\n')}\n\n`;
+    } else {
+      mensagem += `*Observação:* Nenhuma alteração significativa nas configurações.\n\n`;
+    }
+    
+    mensagem += `⚠️ Um backup automático dos dados anteriores foi criado caso precise reverter.`;
+    
+    await reply(mensagem);
+    
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro ao restaurar o backup do grupo 💔");
+  }
+  break;
+  
   case 'imagine': case 'img':
   try {
     const modelos = [
