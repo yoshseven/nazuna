@@ -344,7 +344,7 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
  //FIM DAS EXECUÇÕES BB 🥵
  
  //ANTILINK DE GRUPOS :)
- if(isGroup && isAntiLinkGp && !isGroupAdmin && budy2.includes('chat.whatsapp.com') && isGroupAdmin) {
+ if(isGroup && isAntiLinkGp && !isGroupAdmin && budy2.includes('chat.whatsapp.com')) {
   if(isOwner) return;
   link_dgp = await nazu.groupInviteCode(from);
   if(budy2.match(link_dgp)) return;
