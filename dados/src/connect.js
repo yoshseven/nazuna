@@ -26,7 +26,7 @@ const ask = (question) => {
   return new Promise((resolve) => rl.question(question, (answer) => { rl.close(); resolve(answer.trim()); }));
 };
 
-const groupCache = new NodeCache({ stdTTL: 0, useClones: false, checkperiod: 0 });
+const groupCache = new NodeCache({ stdTTL: 300, useClones: false });
 const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
 
 async function startNazu() {
