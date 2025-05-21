@@ -1173,7 +1173,7 @@ case 'ytmp42':
     const comandosImpróprios = ['sexo', 'surubao', 'goza', 'gozar', 'mamar', 'mamada', 'beijob', 'beijarb', 'pirocudo', 'bucetuda'];
     let menuFiltrado = finalMenuContent;
     comandosImpróprios.forEach(cmd => {
-      const regex = new RegExp(`│  │  \`\\${prefix}${cmd}\`\\n`, 'g');
+      const regex = new RegExp(`││◕⁠➜ ${prefix}${cmd}\n`, 'g');
       menuFiltrado = menuFiltrado.replace(regex, '');
     });
     finalMenuContent = menuFiltrado;
