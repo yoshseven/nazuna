@@ -866,13 +866,13 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
     reply("📦 Criando backup do grupo, aguarde...");
     
     // Diretório de backup
-    const backupDir = path.join(__dirname, '..', 'database', 'backups');
+    const backupDir = pathz.join(__dirname, '..', 'database', 'backups');
     if (!fs.existsSync(backupDir)) {
       fs.mkdirSync(backupDir, { recursive: true });
     }
     
     // Verificar se o arquivo de grupo existe
-    const groupFile = path.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
+    const groupFile = pathz.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
     if (!fs.existsSync(groupFile)) {
       return reply("❌ Não há dados deste grupo para fazer backup!");
     }
@@ -980,21 +980,21 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
     }
     
     // Carregar os dados atuais do grupo
-    const groupFile = path.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
+    const groupFile = pathz.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
     let currentData = {};
     if (fs.existsSync(groupFile)) {
       currentData = JSON.parse(fs.readFileSync(groupFile, 'utf-8'));
     }
     
     // Criar um backup dos dados atuais antes de restaurar
-    const backupDir = path.join(__dirname, '..', 'database', 'backups');
+    const backupDir = pathz.join(__dirname, '..', 'database', 'backups');
     if (!fs.existsSync(backupDir)) {
       fs.mkdirSync(backupDir, { recursive: true });
     }
     
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const autoBackupFileName = `auto_${from.split('@')[0]}_${timestamp}.json`;
-    const autoBackupFilePath = path.join(backupDir, autoBackupFileName);
+    const autoBackupFilePath = pathz.join(backupDir, autoBackupFileName);
     
     // Obter informações do grupo atual para o backup automático
     const completeGroupInfo = await nazu.groupMetadata(from);
