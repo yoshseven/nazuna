@@ -913,7 +913,7 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
     // Nome do arquivo de backup
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupFileName = `${from.split('@')[0]}_${timestamp}.json`;
-    const backupFilePath = path.join(backupDir, backupFileName);
+    const backupFilePath = pathz.join(backupDir, backupFileName);
     
     // Salvar o backup
     fs.writeFileSync(backupFilePath, JSON.stringify(backup, null, 2));
