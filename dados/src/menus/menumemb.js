@@ -16,48 +16,48 @@ async function menuMembros(prefix, botName = "MeuBot", userName = "Usuário") {
 
 ╭═══ 🌟 *COMANDOS PARA MEMBROS* 🌟 ═══╮
 │
-│  ╭─▸ *Informações e Status:*
-│  │
-│  │  \`${prefix}perfil\`
-│  │    ↳ Ver seu perfil
-│  │  \`${prefix}dono\`
-│  │    ↳ Ver informações do dono
-│  │  \`${prefix}criador\`
-│  │    ↳ Ver informações do criador
-│  │  \`${prefix}ping\`
-│  │    ↳ Verificar status do bot
-│  │  \`${prefix}rvisu\`
-│  │    ↳ Revelar visualização única
-│  │  \`${prefix}totalcmd\`
-│  │    ↳ Total de comandos do bot
-│  │  \`${prefix}statusgp\`
-│  │    ↳ Ver estatísticas do grupo
-│  │  \`${prefix}statusbot\`
-│  │    ↳ Ver estatísticas globais do bot
-│  │  \`${prefix}meustatus\`
-│  │    ↳ Ver suas estatísticas pessoais
-│  │  \`${prefix}regras\`
-│  │    ↳ Ver regras do grupo
+│╭─▸ *Informações e Status:*
+││
+││◕⁠➜ ${prefix}perfil
+││    ↳ Ver seu perfil
+││◕⁠➜ ${prefix}dono
+││    ↳ Ver informações do dono
+││◕⁠➜ ${prefix}criador
+││    ↳ Ver informações do criador
+││◕⁠➜ ${prefix}ping
+││    ↳ Verificar status do bot
+││◕⁠➜ ${prefix}rvisu
+││    ↳ Revelar visualização única
+││◕⁠➜ ${prefix}totalcmd
+││    ↳ Total de comandos do bot
+││◕⁠➜ ${prefix}statusgp
+││    ↳ Ver estatísticas do grupo
+││◕⁠➜ ${prefix}statusbot
+││    ↳ Ver estatísticas globais do bot
+││◕⁠➜ ${prefix}meustatus
+││    ↳ Ver suas estatísticas pessoais
+││◕⁠➜ ${prefix}regras
+││    ↳ Ver regras do grupo
 │
-│  ╭─▸ *Configurações Pessoais:*
-│  │
-│  │  \`${prefix}mention\`
-│  │    ↳ Configurar menções
-│  │  \`${prefix}afk [motivo?]\`
-│  │    ↳ Definir status AFK
-│  │  \`${prefix}voltei\`
-│  │    ↳ Remover status AFK
+│╭─▸ *Configurações Pessoais:*
+││
+││◕⁠➜ ${prefix}mention
+││    ↳ Configurar menções
+││◕⁠➜ ${prefix}afk [motivo?]
+││    ↳ Definir status AFK
+││◕⁠➜ ${prefix}voltei
+││    ↳ Remover status AFK
 │
-│  ╭─▸ *Rankings:*
-│  │
-│  │  \`${prefix}rankativo\`
-│  │    ↳ Ver ranking de ativos do grupo
-│  │  \`${prefix}rankinativo\`
-│  │    ↳ Ver ranking de inativos do grupo
-│  │  \`${prefix}rankativog\`
-│  │    ↳ Ver ranking global de ativos
+│╭─▸ *Rankings:*
+││
+││◕⁠➜ ${prefix}rankativo
+││    ↳ Ver ranking de ativos do grupo
+││◕⁠➜ ${prefix}rankinativo
+││    ↳ Ver ranking de inativos do grupo
+││◕⁠➜ ${prefix}rankativog
+││    ↳ Ver ranking global de ativos
 │
-╰═════════════════════════════════╯
+╰══════════════════════╯
 `;
 }
 

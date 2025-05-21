@@ -14,39 +14,39 @@ async function menudown(prefix, botName = "MeuBot", userName = "Usuário") {
 
 ╭═══ 📥 *DOWNLOADS E PESQUISAS* 📥 ═══╮
 │
-│  ╭─▸ *Pesquisas de Mídia:*
-│  │
-│  │  \`${prefix}letra\`
-│  │    ↳ Buscar letras de musicas
-│  │  \`${prefix}play\`
-│  │    ↳ Baixar música do YouTube
-│  │  \`${prefix}play2\`
-│  │    ↳ Baixar música (alternativo)
-│  │  \`${prefix}playvid\`
-│  │    ↳ Baixar vídeo do YouTube
-│  │  \`${prefix}playvid2\`
-│  │    ↳ Baixar vídeo (alternativo)
-│  │  \`${prefix}assistir\`
-│  │    ↳ Pesquisar filmes para assistir
-│  │  \`${prefix}mcplugin\`
-│  │    ↳ Buscar plugins de Minecraft
-│  │  \`${prefix}apkmod\` / \`${prefix}mod\`
-│  │    ↳ Buscar APKs modificados
-│  │  \`${prefix}clima\`
-│  │    ↳ Pesquisar clima de uma cidade
+│╭─▸ *Pesquisas de Mídia:*
+││
+││◕⁠➜ ${prefix}letra
+││    ↳ Buscar letras de musicas
+││◕⁠➜ ${prefix}play
+││    ↳ Baixar música do YouTube
+││◕⁠➜ ${prefix}play2
+││    ↳ Baixar música (alternativo)
+││◕⁠➜ ${prefix}playvid
+││    ↳ Baixar vídeo do YouTube
+││◕⁠➜ ${prefix}playvid2
+││    ↳ Baixar vídeo (alternativo)
+││◕⁠➜ ${prefix}assistir
+││    ↳ Pesquisar filmes para assistir
+││◕⁠➜ ${prefix}mcplugin
+││    ↳ Buscar plugins de Minecraft
+││◕⁠➜ ${prefix}apkmod / ${prefix}mod
+││    ↳ Buscar APKs modificados
+││◕⁠➜ ${prefix}clima
+││    ↳ Pesquisar clima de uma cidade
 │
-│  ╭─▸ *Downloads Diretos:*
-│  │
-│  │  \`${prefix}tiktok\` / \`${prefix}ttk\`
-│  │    ↳ Baixar vídeos do TikTok
-│  │  \`${prefix}pinterest\` / \`${prefix}pin\`
-│  │    ↳ Baixar do Pinterest
-│  │  \`${prefix}instagram\` / \`${prefix}ig\`
-│  │    ↳ Baixar do Instagram
-│  │  \`${prefix}igstory\`
-│  │    ↳ Baixar story do Instagram
+│╭─▸ *Downloads Diretos:*
+││
+││◕⁠➜ ${prefix}tiktok / ${prefix}ttk
+││    ↳ Baixar vídeos do TikTok
+││◕⁠➜ ${prefix}pinterest / ${prefix}pin
+││    ↳ Baixar do Pinterest
+││◕⁠➜ ${prefix}instagram / ${prefix}ig
+││    ↳ Baixar do Instagram
+││◕⁠➜ ${prefix}igstory
+││    ↳ Baixar story do Instagram
 │
-╰═══════════════════════════════╯
+╰══════════════════════╯
 `;
 }
 

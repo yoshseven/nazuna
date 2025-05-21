@@ -16,21 +16,18 @@ async function menuFerramentas(prefix, botName = "MeuBot", userName = "Usuário"
 
 ╭═══ 🛠️ *FERRAMENTAS* 🛠️ ═══╮
 │
-│  ╭─▸ *Comandos:*
-│  │
-│  │  \`${prefix}gerarnick\` / \`${prefix}nick\`
-│  │    ↳ Criar nicks personalizados
-│  │
-│  │  \`${prefix}ssweb\`
-│  │    ↳ Capturar tela de sites
-│  │
-│  │  \`${prefix}upload\`
-│  │    ↳ Fazer upload de arquivos
-│  │
-│  │  \`${prefix}encurtalink\`
-│  │    ↳ Encurtar links
+│╭─▸ *Comandos:*
+││
+││◕⁠➜ ${prefix}gerarnick / ${prefix}nick
+││    ↳ Criar nicks personalizados
+││◕⁠➜ ${prefix}ssweb
+││    ↳ Capturar tela de sites
+││◕⁠➜ ${prefix}upload
+││    ↳ Fazer upload de arquivos
+││◕⁠➜ ${prefix}encurtalink
+││    ↳ Encurtar links
 │
-╰═════════════════════════╯
+╰══════════════════════╯
 `;
 }
 

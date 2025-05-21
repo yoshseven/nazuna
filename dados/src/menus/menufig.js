@@ -16,35 +16,35 @@ async function menuSticker(prefix, botName = "MeuBot", userName = "Usuário") {
 
 ╭═══ ✨ *FIGURINHAS* ✨ ═══╮
 │
-│  ╭─▸ *Criação de Figurinhas:*
-│  │
-│  │  \`${prefix}emojimix\`
-│  │    ↳ Combinar emojis em figurinhas
-│  │  \`${prefix}ttp\`
-│  │    ↳ Texto em figurinha
-│  │  \`${prefix}sticker\` / \`${prefix}s\`
-│  │    ↳ Criar figurinha de mídia
-│  │  \`${prefix}sticker2\` / \`${prefix}s2\`
-│  │    ↳ Criar figurinha (quadrado)
-│  │  \`${prefix}qc\`
-│  │    ↳ Criar figurinha com citação
-│  │  \`${prefix}brat\`
-│  │    ↳ Criar figurinha estilo brat
+│╭─▸ *Criação de Figurinhas:*
+││
+││◕⁠➜ ${prefix}emojimix
+││    ↳ Combinar emojis em figurinhas
+││◕⁠➜ ${prefix}ttp
+││    ↳ Texto em figurinha
+││◕⁠➜ ${prefix}sticker / ${prefix}s
+││    ↳ Criar figurinha de mídia
+││◕⁠➜ ${prefix}sticker2 / ${prefix}s2
+││    ↳ Criar figurinha (quadrado)
+││◕⁠➜ ${prefix}qc
+││    ↳ Criar figurinha com citação
+││◕⁠➜ ${prefix}brat
+││    ↳ Criar figurinha estilo brat
 │
-│  ╭─▸ *Outros Comandos de Figurinhas:*
-│  │
-│  │  \`${prefix}figualetoria\`
-│  │    ↳ Gerar figurinha aleatória
-│  │  \`${prefix}rename\`
-│  │    ↳ Renomear figurinha
-│  │  \`${prefix}rgtake\`
-│  │    ↳ Pegar figurinha registrada
-│  │  \`${prefix}take\`
-│  │    ↳ Roubar figurinha
-│  │  \`${prefix}toimg\`
-│  │    ↳ Converter figurinha em imagem
+│╭─▸ *Outros Comandos de Figurinhas:*
+││
+││◕⁠➜ ${prefix}figualetoria
+││    ↳ Gerar figurinha aleatória
+││◕⁠➜ ${prefix}rename
+││    ↳ Renomear figurinha
+││◕⁠➜ ${prefix}rgtake
+││    ↳ Pegar figurinha registrada
+││◕⁠➜ ${prefix}take
+││    ↳ Roubar figurinha
+││◕⁠➜ ${prefix}toimg
+││    ↳ Converter figurinha em imagem
 │
-╰══════════════════════════╯
+╰══════════════════════╯
 `;
 }
 

@@ -117,7 +117,7 @@ Você vai precisar de:
 | **WhatsApp**        | Um número dedicado pro bot (evite o principal pra não levar ban).             |
 | **Internet Estável**| Necessária pra configuração e funcionamento.                                  |
 | **Dispositivo**     | PC (Windows, Linux, macOS), Android com Termux, ou servidor (Pterodactyl).    |
-| **Recursos Mínimos**| 512MB de RAM e 512MB de armazenamento (1GB RAM e 2GB disco recomendados).     |
+| **Recursos Mínimos**| 256MB de RAM e 256MB de armazenamento (512MB RAM e 512MB disco recomendados).     |
 
 > ⚠️ **Atenção**: Use um número secundário pro bot pra proteger sua conta principal do WhatsApp.
 
@@ -333,7 +333,7 @@ Configure o **nazuna Bot** no Pterodactyl de duas formas:
      - **Prefixo do Bot**: Símbolo pros comandos (ex.: `/`).  
      - **Nome do Bot**: Nome no WhatsApp (ex.: `nazuna`).  
      - **Atualização Automática**: `Sim` pra updates automáticos ou `Não` pra manual.  
-   - Recursos mínimos: 512MB RAM e 512MB disco (1GB RAM e 2GB disco recomendados).
+   - Recursos mínimos: 256MB RAM e 256MB disco (512MB RAM e 512MB disco recomendados).
 
 3. **Iniciar o Servidor**  
    - Clique em **Iniciar** no painel.  
@@ -352,7 +352,7 @@ Configure o **nazuna Bot** no Pterodactyl de duas formas:
 1. **Criar o Servidor**  
    - Crie um servidor com o egg **Node.js** padrão.  
    - Defina o **Comando de Inicialização** como: `npm start`.  
-   - Recursos mínimos: 512MB RAM e 512MB disco (1GB RAM e 2GB disco recomendados).
+   - Recursos mínimos: 256MB RAM e 256MB disco (512MB RAM e 512MB disco recomendados).
 
 2. **Clonar o Repositório**  
    - No console do Pterodactyl:  
@@ -563,7 +563,7 @@ You’ll need:
 | **WhatsApp**       | A dedicated number for the bot (avoid your main number to prevent bans).      |
 | **Stable Internet**| Essential for setup and operation.                                            |
 | **Device**         | PC (Windows, Linux, macOS), Android with Termux, or server (Pterodactyl).     |
-| **Minimum Specs**  | 512MB RAM and 512MB storage (1GB RAM and 2GB storage recommended).            |
+| **Minimum Specs**  | 256MB RAM and 256MB storage (512MB RAM and 512MB storage recommended).            |
 
 > ⚠️ **Warning**: Use a secondary number for the bot to protect your main WhatsApp account.
 
@@ -779,7 +779,7 @@ Set up **nazuna Bot** on Pterodactyl in two ways:
      - **Bot Prefix**: Symbol for commands (e.g., `/`).  
      - **Bot Name**: Name shown in WhatsApp (e.g., `nazuna`).  
      - **Auto Update**: `Yes` for automatic updates or `No` for manual.  
-   - Minimum specs: 512MB RAM and 512MB storage (1GB RAM and 2GB storage recommended).
+   - Minimum specs: 256MB RAM and 256MB storage (512MB RAM and 512MB storage recommended).
 
 3. **Start the Server**  
    - Click **Start** in the panel.  
@@ -798,7 +798,7 @@ Set up **nazuna Bot** on Pterodactyl in two ways:
 1. **Create the Server**  
    - Create a server with the default **Node.js** egg.  
    - Set **Startup Command** to: `npm start`.  
-   - Minimum specs: 512MB RAM and 512MB storage (1GB RAM and 2GB storage recommended).
+   - Minimum specs: 256MB RAM and 256MB storage (512MB RAM and 512MB storage recommended).
 
 2. **Clone the Repository**  
    - In Pterodactyl console:  
@@ -1009,7 +1009,7 @@ Necesitarás:
 | **WhatsApp**       | Un número dedicado para el bot (evita tu número principal para prevenir bloqueos). |
 | **Internet Estable**| Esencial para configuración y operación.                                      |
 | **Dispositivo**    | PC (Windows, Linux, macOS), Android con Termux, o servidor (Pterodactyl).     |
-| **Especs Mínimas** | 512MB RAM y 512MB almacenamiento (1GB RAM y 2GB almacenamiento recomendados). |
+| **Especs Mínimas** | 256MB RAM y 256MB almacenamiento (512MB RAM y 512MB almacenamiento recomendados). |
 
 > ⚠️ **Advertencia**: Usa un número secundario para proteger tu cuenta principal de WhatsApp.
 
@@ -1225,7 +1225,7 @@ Configura **nazuna Bot** en Pterodactyl de dos formas:
      - **Prefijo del Bot**: Símbolo para comandos (ej.: `/`).  
      - **Nombre del Bot**: Nombre en WhatsApp (ej.: `nazuna`).  
      - **Actualización Automática**: `Sí` para updates automáticos o `No` para manuales.  
-   - Especs mínimas: 512MB RAM y 512MB almacenamiento (1GB RAM y 2GB almacenamiento recomendados).
+   - Especs mínimas: 256MB RAM y 256MB almacenamiento (512MB RAM y 512MB almacenamiento recomendados).
 
 3. **Iniciar el Servidor**  
    - Haz clic en **Iniciar** en el panel.  
@@ -1244,7 +1244,7 @@ Configura **nazuna Bot** en Pterodactyl de dos formas:
 1. **Crear el Servidor**  
    - Crea un servidor con el egg **Node.js** estándar.  
    - Configura **Comando de Inicio** como: `npm start`.  
-   - Especs mínimas: 512MB RAM y 512MB almacenamiento (1GB RAM y 2GB almacenamiento recomendados).
+   - Especs mínimas: 256MB RAM y 256MB almacenamiento (512MB RAM y 512MB almacenamiento recomendados).
 
 2. **Clonar el Repositorio**  
    - En la consola de Pterodactyl:  
@@ -1455,7 +1455,7 @@ Anda akan membutuhkan:
 | **WhatsApp**        | Nomor khusus untuk bot (hindari nomor utama untuk mencegah banned).           |
 | **Internet Stabil** | Diperlukan untuk pengaturan dan operasi.                                      |
 | **Perangkat**       | PC (Windows, Linux, macOS), Android dengan Termux, atau server (Pterodactyl). |
-| **Spesifikasi Minimum** | 512MB RAM dan 512MB penyimpanan (disarankan 1GB RAM dan 2GB penyimpanan).   |
+| **Spesifikasi Minimum** | 256MB RAM dan 256MB penyimpanan (disarankan 512MB RAM dan 512MB penyimpanan).   |
 
 > ⚠️ **Peringatan**: Gunakan nomor sekunder untuk bot guna melindungi akun WhatsApp utama Anda.
 
@@ -1671,7 +1671,7 @@ Siapkan **nazuna Bot** di Pterodactyl dengan dua cara:
      - **Awalan Bot**: Simbol untuk perintah (mis.: `/`).  
      - **Nama Bot**: Nama di WhatsApp (mis.: `nazuna`).  
      - **Pembaruan Otomatis**: `Ya` untuk otomatis atau `Tidak` untuk manual.  
-   - Spesifikasi minimum: 512MB RAM dan 512MB penyimpanan (disarankan 1GB RAM dan 2GB penyimpanan).
+   - Spesifikasi minimum: 256MB RAM dan 256MB penyimpanan (disarankan 512MB RAM dan 512MB penyimpanan).
 
 3. **Mulai Server**  
    - Klik **Start** di panel.  
@@ -1690,7 +1690,7 @@ Siapkan **nazuna Bot** di Pterodactyl dengan dua cara:
 1. **Buat Server**  
    - Buat server dengan egg **Node.js** standar.  
    - Atur **Perintah Startup** ke: `npm start`.  
-   - Spesifikasi minimum: 512MB RAM dan 512MB penyimpanan (disarankan 1GB RAM dan 2GB penyimpanan).
+   - Spesifikasi minimum: 256MB RAM dan 256MB penyimpanan (disarankan 512MB RAM dan 512MB penyimpanan).
 
 2. **Klon Repositori**  
    - Di konsol Pterodactyl:  

@@ -14,39 +14,30 @@ async function menu(prefix, botName = "MeuBot", userName = "Usuário") {
 
 ╭═══ 📖 *MENU PRINCIPAL* 📖 ═══╮
 │
-│  ╭─▸ *Submenus Disponíveis:*
-│  │
-│  │  🤖 \`${prefix}menuia\`
-│  │    ↳ Inteligência Artificial
-│  │
-│  │  📥 \`${prefix}menudown\`
-│  │    ↳ Baixar vídeos e músicas
-│  │
-│  │  🛠️ \`${prefix}menuadm\`
-│  │    ↳ Gerenciar o grupo
-│  │
-│  │  🎭 \`${prefix}menubn\`
-│  │    ↳ Jogos e brincadeiras
-│  │
-│  │  👑 \`${prefix}menudono\`
-│  │    ↳ Comandos do dono
-│  │
-│  │  🌟 \`${prefix}menumemb\`
-│  │    ↳ Para todos os membros
-│  │
-│  │  ⚒️ \`${prefix}ferramentas\`
-│  │    ↳ Ferramentas úteis
-│  │
-│  │  💫 \`${prefix}menufig\`
-│  │    ↳ Criar figurinhas
-│  │
-│  │  🎵 \`${prefix}alteradores\` (Novo!)
-│  │    ↳ Efeitos Audio/Video
-│  │
-│  │  💡 \`${prefix}menurpg\` (Novo!)
-│  │    ↳ Aventura e diversão RPG
+│╭─▸ *Submenus Disponíveis:*
+││
+││🤖 ${prefix}menuia
+││  ↳ Inteligência Artificial
+││📥 ${prefix}menudown
+││  ↳ Baixar vídeos e músicas
+││🛠️ ${prefix}menuadm
+││  ↳ Gerenciar o grupo
+││🎭 ${prefix}menubn
+││  ↳ Jogos e brincadeiras
+││👑 ${prefix}menudono
+││  ↳ Comandos do dono
+││🌟 ${prefix}menumemb
+││  ↳ Para todos os membros
+││⚒️ ${prefix}ferramentas
+││  ↳ Ferramentas úteis
+││💫 ${prefix}menufig
+││  ↳ Criar figurinhas
+││🎵 ${prefix}alteradores (Novo!)
+││  ↳ Efeitos Audio/Video
+││💡 ${prefix}menurpg (Novo!)
+││  ↳ Aventura e diversão RPG
 │
-╰═══════════════════════════╯
+╰══════════════════════╯
 `;
 }
 
