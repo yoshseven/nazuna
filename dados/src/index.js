@@ -11,7 +11,7 @@ const pathz = require('path');
 const fs = require('fs');
 const os = require('os');
 
-const { version: botVersion } = JSON.parse(fs.readFileSync(pathz.join(__dirname, '..', '..', 'package.json'))); // Added botVersion
+const { version: botVersion } = JSON.parse(fs.readFileSync(pathz.join(__dirname, '..', '..', 'package.json')));
 
 const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuRpg, menuAlterador } = require(`${__dirname}/menus/index.js`);
 const { numerodono, nomedono, nomebot, prefixo, prefixo: prefix, debug } = JSON.parse(fs.readFileSync(__dirname+'/config.json'));
@@ -57,8 +57,16 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
   if (fs.existsSync(__dirname + '/../database/botState.json')) {
     botState = JSON.parse(fs.readFileSync(__dirname + '/../database/botState.json'));
   }
+  
+  // Carrega ou inicializa o arquivo modolite.json
+  let modoLiteGlobal = { status: false };
+  if (fs.existsSync(__dirname + '/../database/modolite.json')) {
+    modoLiteGlobal = JSON.parse(fs.readFileSync(__dirname + '/../database/modolite.json'));
+  } else {
+    fs.writeFileSync(__dirname + '/../database/modolite.json', JSON.stringify(modoLiteGlobal, null, 2));
+  }
 
-  global.autoStickerMode = global.autoStickerMode || 'default'; // Initialize if not already set
+  global.autoStickerMode = global.autoStickerMode || 'default';
 
 try {
  const from = info.key.remoteJid;
@@ -137,6 +145,11 @@ try {
   const isMuted = (groupData.mutedUsers && groupData.mutedUsers[sender]) ? true : false;
   const isAntiLinkGp = groupData.antilinkgp ? true : false;
   const isModoRpg = isGroup && groupData.modorpg ? true : false;
+  
+  const isModoLiteGlobal = modoLiteGlobal.status || false;
+  const isModoLiteGrupo = isGroup && groupData.modolite ? true : false;
+  const isModoLite = (isModoLiteGrupo && !modoLiteGlobal.hasOwnProperty('forceOff')) || (isModoLiteGlobal && !groupData.hasOwnProperty('modoliteOff'));
+  
   if(isGroup && !isGroupAdmin && isOnlyAdmin) return;
   if(isGroup && !isGroupAdmin && isCmd && groupData.blockedCommands && groupData.blockedCommands[command]) return reply('Este comando foi bloqueado pelos administradores do grupo.');
   
@@ -1153,7 +1166,19 @@ case 'ytmp42':
   nazu.sendMessage(from, {[fs.existsSync(__dirname + '/../midias/menu.mp4') ? 'video' : 'image']: fs.readFileSync(fs.existsSync(__dirname+'/../midias/menu.mp4')?__dirname+'/../midias/menu.mp4':__dirname+'/../midias/menu.jpg'), caption: await menuIa(prefix, nomebot, pushname), gifPlayback: fs.existsSync(__dirname+'/../midias/menu.mp4'), mimetype: fs.existsSync(__dirname+'/../midias/menu.mp4')?'video/mp4':'image/jpeg'}, {quoted: info});
   break;
   case 'menubn': case 'menubrincadeira': case 'menubrincadeiras':
-  nazu.sendMessage(from, {[fs.existsSync(__dirname + '/../midias/menu.mp4') ? 'video' : 'image']: fs.readFileSync(fs.existsSync(__dirname+'/../midias/menu.mp4')?__dirname+'/../midias/menu.mp4':__dirname+'/../midias/menu.jpg'), caption: await menubn(prefix, nomebot, pushname), gifPlayback: fs.existsSync(__dirname+'/../midias/menu.mp4'), mimetype: fs.existsSync(__dirname+'/../midias/menu.mp4')?'video/mp4':'image/jpeg'}, {quoted: info});
+  const menuContent = await menubn(prefix, nomebot, pushname);
+  let finalMenuContent = menuContent;
+  if (isModoLite) {
+    finalMenuContent = menuContent.replace(/│╭─▸ \*Interações "Hot" 🔥:\*[\s\S]*?│(\n|$)/g, '│$1');
+    const comandosImpróprios = ['sexo', 'surubao', 'goza', 'gozar', 'mamar', 'mamada', 'beijob', 'beijarb', 'pirocudo', 'bucetuda'];
+    let menuFiltrado = finalMenuContent;
+    comandosImpróprios.forEach(cmd => {
+      const regex = new RegExp(`│  │  \`\\${prefix}${cmd}\`\\n`, 'g');
+      menuFiltrado = menuFiltrado.replace(regex, '');
+    });
+    finalMenuContent = menuFiltrado;
+  };
+  nazu.sendMessage(from, {[fs.existsSync(__dirname + '/../midias/menu.mp4') ? 'video' : 'image']: fs.readFileSync(fs.existsSync(__dirname+'/../midias/menu.mp4')?__dirname+'/../midias/menu.mp4':__dirname+'/../midias/menu.jpg'), caption: finalMenuContent, gifPlayback: fs.existsSync(__dirname+'/../midias/menu.mp4'), mimetype: fs.existsSync(__dirname+'/../midias/menu.mp4')?'video/mp4':'image/jpeg'}, {quoted: info});
   break;
   case 'menudown': case 'menudownload': case 'menudownloads':
   nazu.sendMessage(from, {[fs.existsSync(__dirname + '/../midias/menu.mp4') ? 'video' : 'image']: fs.readFileSync(fs.existsSync(__dirname+'/../midias/menu.mp4')?__dirname+'/../midias/menu.mp4':__dirname+'/../midias/menu.jpg'), caption: await menudown(prefix, nomebot, pushname), gifPlayback: fs.existsSync(__dirname+'/../midias/menu.mp4'), mimetype: fs.existsSync(__dirname+'/../midias/menu.mp4')?'video/mp4':'image/jpeg'}, {quoted: info});
@@ -1204,7 +1229,7 @@ case 'ytmp42':
   case 'antipv':
   try {
     if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-    antipvData.mode = antipvData.mode === 'antipv' ? null : 'antipv'; // Update in-memory variable
+    antipvData.mode = antipvData.mode === 'antipv' ? null : 'antipv';
     fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify(antipvData, null, 2));
     await reply(`✅ Antipv ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'ignora mensagens no privado' : 'responde normalmente no privado'}.`);
     nazu.react('🔒');
@@ -2856,6 +2881,67 @@ case 'listadv':
     };
     break;
     
+    case 'modolite': try {
+      if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+      if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
+      
+      const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
+      
+      if (!groupData.modolite) {
+          groupData.modolite = true;
+          if (groupData.hasOwnProperty('modoliteOff')) {
+              delete groupData.modoliteOff;
+          }
+      } else {
+          groupData.modolite = !groupData.modolite;
+          if (!groupData.modolite) {
+              groupData.modoliteOff = true;
+          } else if (groupData.hasOwnProperty('modoliteOff')) {
+              delete groupData.modoliteOff;
+          }
+      }
+      
+      fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+      
+      if (groupData.modolite) {
+          await reply('👶 *Modo Lite ativado!* O conteúdo inapropriado para crianças será filtrado neste grupo.');
+      } else {
+          await reply('🔞 *Modo Lite desativado!* O conteúdo do menu de brincadeiras será exibido completamente.');
+      }
+      await nazu.react('🔄');
+    } catch(e) {
+      console.error(e);
+      await reply("Ocorreu um erro 💔");
+    }
+    break;
+    
+    case 'modoliteglobal': try {
+      if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
+      
+      const modoLiteFile = __dirname + '/../database/modolite.json';
+      
+      modoLiteGlobal.status = !modoLiteGlobal.status;
+
+      if (!modoLiteGlobal.status) {
+        modoLiteGlobal.forceOff = true;
+      } else if (modoLiteGlobal.hasOwnProperty('forceOff')) {
+        delete modoLiteGlobal.forceOff;
+      }
+      
+      fs.writeFileSync(modoLiteFile, JSON.stringify(modoLiteGlobal, null, 2));
+      
+      if (modoLiteGlobal.status) {
+        await reply('👶 *Modo Lite ativado globalmente!* O conteúdo inapropriado para crianças será filtrado em todos os grupos (a menos que seja explicitamente desativado em algum grupo).');
+      } else {
+        await reply('🔞 *Modo Lite desativado globalmente!* O conteúdo do menu de brincadeiras será exibido completamente (a menos que seja explicitamente ativado em algum grupo).');
+      }
+      await nazu.react('🔄');
+    } catch(e) {
+      console.error(e);
+      await reply("Ocorreu um erro 💔");
+    }
+    break;
+    
     case 'antilinkgp':
     try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
@@ -3244,6 +3330,7 @@ case 'listadv':
    break
    
    case 'surubao': case 'suruba': try {
+   if (isModoLite) return nazu.react('❌');
    if(!isGroup) return reply(`Apenas em grupos`);
    if(!isModoBn) return reply('O modo brincadeira nao esta ativo no grupo')
    if (!q) return reply(`Eita, coloque o número de pessoas após o comando.`)
@@ -3284,6 +3371,7 @@ await reply(`*Ainda bem que morreu, não aguentava mais essa praga kkkkkk*`)
   break;
 
    case 'gay': case 'burro': case 'inteligente': case 'otaku': case 'fiel': case 'infiel': case 'corno':  case 'gado': case 'gostoso': case 'feio': case 'rico': case 'pobre': case 'pirocudo': case 'pirokudo': case 'nazista': case 'ladrao': case 'safado': case 'vesgo': case 'bebado': case 'machista': case 'homofobico': case 'racista': case 'chato': case 'sortudo': case 'azarado': case 'forte': case 'fraco': case 'pegador': case 'otario': case 'macho': case 'bobo': case 'nerd': case 'preguicoso': case 'trabalhador': case 'brabo': case 'lindo': case 'malandro': case 'simpatico': case 'engracado': case 'charmoso': case 'misterioso': case 'carinhoso': case 'desumilde': case 'humilde': case 'ciumento': case 'corajoso': case 'covarde': case 'esperto': case 'talarico': case 'chorao': case 'brincalhao': case 'bolsonarista': case 'petista': case 'comunista': case 'lulista': case 'traidor': case 'bandido': case 'cachorro': case 'vagabundo': case 'pilantra': case 'mito': case 'padrao': case 'comedia': case 'psicopata': case 'fortao': case 'magrelo': case 'bombado': case 'chefe': case 'presidente': case 'rei': case 'patrao': case 'playboy': case 'zueiro': case 'gamer': case 'programador': case 'visionario': case 'billionario': case 'poderoso': case 'vencedor': case 'senhor': try {
+    if (isModoLite && (command === 'pirocudo' || command === 'pirokudo')) return nazu.react('❌');
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isModoBn) return reply('❌ O modo brincadeira não esta ativo nesse grupo');
     let gamesData = fs.existsSync(__dirname + '/funcs/json/games.json') ? JSON.parse(fs.readFileSync(__dirname + '/funcs/json/games.json')) : { games: {} };
@@ -3307,6 +3395,7 @@ await reply("ocorreu um erro 💔");
 break;
 
    case 'lesbica': case 'burra': case 'inteligente': case 'otaku': case 'fiel': case 'infiel': case 'corna': case 'gado': case 'gostosa': case 'feia': case 'rica': case 'pobre': case 'bucetuda': case 'nazista': case 'ladra': case 'safada': case 'vesga': case 'bebada': case 'machista': case 'homofobica': case 'racista': case 'chata': case 'sortuda': case 'azarada': case 'forte': case 'fraca': case 'pegadora': case 'otaria': case 'boba': case 'nerd': case 'preguicosa': case 'trabalhadora': case 'braba': case 'linda': case 'malandra': case 'simpatica': case 'engracada': case 'charmosa': case 'misteriosa': case 'carinhosa': case 'desumilde': case 'humilde': case 'ciumenta': case 'corajosa': case 'covarde': case 'esperta': case 'talarica': case 'chorona': case 'brincalhona': case 'bolsonarista': case 'petista': case 'comunista': case 'lulista': case 'traidora': case 'bandida': case 'cachorra': case 'vagabunda': case 'pilantra': case 'mito': case 'padrao': case 'comedia': case 'psicopata': case 'fortona': case 'magrela': case 'bombada': case 'chefe': case 'presidenta': case 'rainha': case 'patroa': case 'playboy': case 'zueira': case 'gamer': case 'programadora': case 'visionaria': case 'bilionaria': case 'poderosa': case 'vencedora': case 'senhora': try {
+    if (isModoLite && (command === 'bucetuda' || command === 'cachorra' || command === 'vagabunda')) return nazu.react('❌');
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isModoBn) return reply('❌ O modo brincadeira não esta ativo nesse grupo');
     let gamesData = fs.existsSync(__dirname + '/funcs/json/games.json') ? JSON.parse(fs.readFileSync(__dirname + '/funcs/json/games.json')) : { games: {} };
@@ -3388,6 +3477,9 @@ await reply("ocorreu um erro 💔");
 break;
 
 case 'chute': case 'chutar': case 'tapa': case 'soco': case 'socar': case 'beijo': case 'beijar': case 'beijob': case 'beijarb': case 'abraco': case 'abracar': case 'mata': case 'matar': case 'tapar': case 'goza': case 'gozar': case 'mamar': case 'mamada': case 'cafune': case 'morder': case 'mordida': case 'lamber': case 'lambida': case 'explodir': case 'sexo': try {
+    const comandosImpróprios = ['sexo', 'surubao', 'goza', 'gozar', 'mamar', 'mamada', 'beijob', 'beijarb', 'tapar'];
+    if (isModoLite && comandosImpróprios.includes(command)) return nazu.react('❌');
+    
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
     if(!menc_os2) return reply('Marque um usuário.');

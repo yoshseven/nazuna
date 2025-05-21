@@ -102,6 +102,8 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 ││    ↳ Bloquear todo tipo de links
 ││◕⁠➜ ${prefix}antiporn
 ││    ↳ Bloquear conteúdo adulto
+││◕⁠➜ ${prefix}modolite
+││    ↳ Filtrar conteudo para crianças
 ││◕⁠➜ ${prefix}bemvindo / ${prefix}bv
 ││    ↳ Ativar boas-vindas
 ││◕⁠➜ ${prefix}saida

@@ -69,6 +69,8 @@ async function menuDono(prefix, botName = "MeuBot", userName = "Usuário") {
 ││    ↳ Desbloquear usuário globalmente
 ││◕⁠➜ ${prefix}listblocks
 ││    ↳ Listar bloqueios globais
+││◕⁠➜ ${prefix}modoliteglobal
+││    ↳ Filtrar conteudo para crianças
 │
 ╰══════════════════════╯
 `;
