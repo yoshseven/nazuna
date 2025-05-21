@@ -700,6 +700,25 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   }
   break;
   
+  case 'qrcode':
+  try {
+    if (!q) return reply("Por favor, forneça o texto ou link para gerar o QR Code.");
+    
+    nazu.react('📲');
+
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(q)}`;
+    
+    await nazu.sendMessage(from, { 
+      image: { url: qrUrl },
+      caption: `🔍 *QR Code gerado*\n\nConteúdo: ${q.substring(0, 100)}${q.length > 100 ? '...' : ''}`
+    }, { quoted: info });
+    
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro ao gerar o QR Code 💔");
+  }
+  break;
+  
   case 'imagine': case 'img':
   try {
     const modelos = [
