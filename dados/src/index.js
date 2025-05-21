@@ -650,6 +650,56 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   }
   break;
   
+  case 'resumir':
+  try {
+    if (!q) return reply("Por favor, forneça o texto que deseja resumir.");
+    nazu.react('📝');
+    
+    const prompt = `Resumo do seguinte texto em poucos parágrafos, mantendo as informações mais importantes:\n\n${q}`;
+    
+    bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
+      message: prompt, 
+      chat_id: `resumo_${sender.split('@')[0]}`, 
+      model_name: "cognimai"  // Usando o modelo Cognima para resumos
+    })).data;
+    
+    await reply(`📃 *RESUMO*\n\n${bahz.reply}`);
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro ao resumir o texto 💔");
+  }
+  break;
+  
+  case 'tradutor':
+  try {
+    if (!q) return reply("Por favor, forneça o texto que deseja traduzir no formato: idioma | texto\nExemplo: inglês | Olá, como vai você?");
+    
+    nazu.react('🌍');
+    
+    const partes = q.split('|');
+    
+    if (partes.length < 2) {
+      return reply("Formato incorreto. Use: idioma | texto\nExemplo: inglês | Olá, como vai você?");
+    }
+    
+    const idioma = partes[0].trim();
+    const texto = partes.slice(1).join('|').trim();
+    
+    const prompt = `Traduza o seguinte texto para ${idioma}:\n\n${texto}\n\nForneça apenas a tradução, sem explicações adicionais.`;
+    
+    bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
+      message: prompt, 
+      chat_id: `tradutor_${sender.split('@')[0]}`, 
+      model_name: "cognimai"
+    })).data;
+    
+    await reply(`🌐 *TRADUÇÃO PARA ${idioma.toUpperCase()}*\n\n${bahz.reply}`);
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro ao traduzir o texto 💔");
+  }
+  break;
+  
   case 'imagine': case 'img':
   try {
     const modelos = [
