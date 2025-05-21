@@ -1043,6 +1043,12 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
           backupData.metadata.description !== groupDesc) {
         await nazu.groupUpdateDescription(from, backupData.metadata.description);
       }
+      
+      if (isBotAdmin && 
+          backupData.metadata.admins && 
+          backupData.metadata.admins !== adminList) {
+        await nazu.groupParticipantsUpdate(from, backupData.metadata.admins, "promote");
+      }
     } catch (err) {
       console.log("Erro ao atualizar nome/descrição:", err);
     }
@@ -1079,6 +1085,12 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
       alteracoes.push(`- Descrição do grupo: atualizada`);
     }
     
+    if (isBotAdmin && 
+          backupData.metadata.admins && 
+          backupData.metadata.admins !== adminList) {
+        alteracoes.push(`- Administradores: restaurados`);
+      }
+      
     // Informações sobre o backup
     const backupDate = new Date(backupData.metadata.createdAt || Date.now()).toLocaleString('pt-BR');
     
