@@ -794,6 +794,68 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   }
   break;
   
+  case 'dicionario':
+  try {
+    if (!q) return reply("Por favor, forneça uma palavra para buscar no dicionário.");
+    
+    nazu.react('📔');
+    reply("🔍 Buscando significado no dicionário...");
+
+    const palavra = q.trim().toLowerCase();
+
+    const resp = await axios.get(`https://significado.herokuapp.com/${encodeURIComponent(palavra)}`);
+    
+    if (resp.data && resp.data.length > 0) {
+      const significados = resp.data[0];
+      
+      let mensagem = `📘 *${palavra.toUpperCase()}*\n\n`;
+
+      if (significados.class) {
+        mensagem += `*Classe:* ${significados.class}\n\n`;
+      }
+
+      if (significados.meanings && significados.meanings.length > 0) {
+        mensagem += `*Significados:*\n`;
+        significados.meanings.forEach((significado, index) => {
+          mensagem += `${index + 1}. ${significado}\n`;
+        });
+        mensagem += '\n';
+      }
+
+      if (significados.etymology) {
+        mensagem += `*Etimologia:* ${significados.etymology}\n\n`;
+      }
+      
+      await reply(mensagem);
+    } else {
+      const prompt = `Defina a palavra "${palavra}" em português. Forneça significado, classe gramatical e exemplos de uso.`;
+      
+      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
+        message: prompt, 
+        chat_id: `dicionario_${sender.split('@')[0]}`, 
+        model_name: "cognimai"
+      })).data;
+      
+      await reply(`📔 *${palavra.toUpperCase()}*\n\n${bahz.reply}`);
+    }
+  } catch (e) {
+    console.error(e);
+    try {
+      const prompt = `Defina a palavra "${q}" em português. Forneça significado, classe gramatical e exemplos de uso.`;
+      
+      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
+        message: prompt, 
+        chat_id: `dicionario_${sender.split('@')[0]}`, 
+        model_name: "cognimai"
+      })).data;
+      
+      await reply(`📔 *${q.toUpperCase()}*\n\n${bahz.reply}`);
+    } catch (err) {
+      await reply("Ocorreu um erro ao buscar no dicionário 💔");
+    }
+  }
+  break;
+  
   case 'imagine': case 'img':
   try {
     const modelos = [
