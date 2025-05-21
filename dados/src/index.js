@@ -3343,7 +3343,7 @@ case 'listadv':
    let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
    context = frasekk[Math.floor(Math.random() * frasekk.length)]  
    ABC = `${emojis2} @${sender.split('@')[0]} ${context}\n\n`
-   mencts = [];
+   mencts = [sender];
    for (var i = 0; i < q; i++) {
    menb = membros[Math.floor(Math.random() * membros.length)];
    ABC += `@${menb.split("@")[0]}\n`;
