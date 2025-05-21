@@ -1049,7 +1049,7 @@ var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
           backupData.metadata.admins !== adminList) {
           for(user of backupData.metadata.admins) {
           if(!adminList.includes(user)) {
-        await nazu.groupParticipantsUpdate(from, [user], "promote");
+        await nazu.groupParticipantsUpdate(from, [user.id], "promote");
         }}
       }
     } catch (err) {
