@@ -72,6 +72,27 @@ function formatUptime(seconds, longFormat = false, showZero = false) {
     : (longFormat ? '0 segundos' : '0s');
 }
 
+ /**
+  * Normaliza um texto removendo acentos
+  * @param {string} texto - Texto a ser normalizado
+  * @returns {string} - Texto normalizado
+  */
+ /**
+ * Normaliza um texto removendo acentos e convertendo para minúsculas
+ * @param {string} texto - Texto a ser normalizado
+ * @param {boolean} [keepCase=false] - Se true, mantém maiúsculas/minúsculas
+ * @returns {string} - Texto normalizado
+ */
+const normalizar = (texto, keepCase = false) => {
+  if (!texto || typeof texto !== 'string') return '';
+  
+  // Remove acentos
+  const normalizedText = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  
+  // Converte para minúsculas se necessário
+  return keepCase ? normalizedText : normalizedText.toLowerCase();
+};
+
 /**
  * Garante que um diretório existe, criando-o se necessário
  * @param {string} dirPath - Caminho do diretório
@@ -664,27 +685,6 @@ try {
      throw error;
    }
  }
- 
- /**
-  * Normaliza um texto removendo acentos
-  * @param {string} texto - Texto a ser normalizado
-  * @returns {string} - Texto normalizado
-  */
- /**
- * Normaliza um texto removendo acentos e convertendo para minúsculas
- * @param {string} texto - Texto a ser normalizado
- * @param {boolean} [keepCase=false] - Se true, mantém maiúsculas/minúsculas
- * @returns {string} - Texto normalizado
- */
-const normalizar = (texto, keepCase = false) => {
-  if (!texto || typeof texto !== 'string') return '';
-  
-  // Remove acentos
-  const normalizedText = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  
-  // Converte para minúsculas se necessário
-  return keepCase ? normalizedText : normalizedText.toLowerCase();
-};
  //FIM FUNÇÕES BASICAS
 
  // SISTEMA AFK: NOTIFICAR MENÇÕES
