@@ -3412,7 +3412,7 @@ case 'ping':
     const totalGrupos = Object.keys(getGroups).length;
 
     // Informações de disco
-    const diskSpace = getDiskSpaceInfo();
+    const diskSpace = await getDiskSpaceInfo();
     const diskUsedPercentage = parseFloat(diskSpace.percentUsed);
     const diskBarra = criarBarra(diskUsedPercentage);
     
@@ -3460,7 +3460,7 @@ case 'ping':
 │ 📊 *Recursos*
 │ ├ ${ramBarra} RAM: *${ramSistemaUsadaGb}/${ramTotalGb} GB (${ramUsadaPorcentagem}%)*
 │ ├ 💾 RAM Bot: *${ramBotProcessoMb} MB*
-│ ├ ${diskBarra} Disco: *${diskSpace.used}/${diskSpace.total} GB (${diskSpace.percentUsed})*
+│ ├ ${diskBarra} Disco: *${diskSpace.usedGb}/${diskSpace.totalGb} GB (${diskSpace.percentUsed})*
 │ ╰ 🔄 Node.js: *${nodeVersao}*
 │
 ╰━━━「 ${nomebot} 」━━━
