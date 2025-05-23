@@ -79,20 +79,16 @@ const downloadModuleUrls = {
   FilmesDL: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/filmes.js',
   apkMod: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/apkmod.js',
   tictactoe: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/tictactoe.js',
-  rpg: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/rpg.js'
+  rpg: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/rpg.js',
+  styleText: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/gerarnick.js'
 };
 
 // Carregamento dos outros módulos
 const reportError = loadModule(path.join(utilsDir, 'debug.js'), 'reportError');
-const styleText = loadModule(path.join(utilsDir, 'gerarnick.js'), 'styleText');
 const emojiMix = loadModule(path.join(utilsDir, 'emojimix.js'), 'emojiMix');
 const upload = loadModule(path.join(utilsDir, 'upload.js'), 'upload');
 const sendSticker = loadModule(path.join(utilsDir, 'sticker.js'), 'sendSticker').sendSticker;
 const clearMemory = loadModule(path.join(utilsDir, 'clear.js'), 'clearMemory');
-
-// Jogos
-const tictactoe = loadModule(path.join(gamesDir, 'tictactoe.js'), 'tictactoe');
-const rpg = loadModule(path.join(gamesDir, 'rpg.js'), 'rpg');
 
 // Inicialização
 module.exports = (async () => {
@@ -105,7 +101,10 @@ module.exports = (async () => {
     igdl: undefined,
     mcPlugin: undefined,
     FilmesDL: undefined,
-    apkMod: undefined
+    apkMod: undefined,
+    styleText: undefined,
+    tictactoe: undefined,
+    rpg: undefined
   };
 
   try {
