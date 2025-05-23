@@ -26,6 +26,8 @@ async function menuFerramentas(prefix, botName = "MeuBot", userName = "Usuário"
 ││    ↳ Fazer upload de arquivos
 ││◕⁠➜ ${prefix}encurtalink
 ││    ↳ Encurtar links
+││◕⁠➜ ${prefix}qrcode
+││    ↳ Gerar qr-code
 │
 ╰══════════════════════╯
 `;

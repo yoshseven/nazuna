@@ -34,6 +34,8 @@ async function menuIa(prefix, botName = "MeuBot", userName = "Usuário") {
 ││    ↳ Usar Gemma
 ││◕⁠➜ ${prefix}gecko
 ││    ↳ Usar Gecko
+││◕⁠➜ ${prefix}resumir
+││    ↳ Resumir Textos
 │
 │╭─▸ *IAs de Imagem:*
 ││
