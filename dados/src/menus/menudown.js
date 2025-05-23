@@ -34,6 +34,10 @@ async function menudown(prefix, botName = "MeuBot", userName = "Usuário") {
 ││    ↳ Buscar APKs modificados
 ││◕⁠➜ ${prefix}clima
 ││    ↳ Pesquisar clima de uma cidade
+││◕⁠➜ ${prefix}dicionario
+││    ↳ Significado de uma palavra
+││◕⁠➜ ${prefix}wikipedia
+││    ↳ Fazer pesquisa no wikipedia
 │
 │╭─▸ *Downloads Diretos:*
 ││

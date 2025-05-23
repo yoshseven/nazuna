@@ -28,6 +28,10 @@ async function menuFerramentas(prefix, botName = "MeuBot", userName = "Usuário"
 ││    ↳ Encurtar links
 ││◕⁠➜ ${prefix}qrcode
 ││    ↳ Gerar qr-code
+││◕⁠➜ ${prefix}tradutor
+││    ↳ Traduzir textos
+││◕⁠➜ ${prefix}dicionario
+││    ↳ Significado de uma palavra
 │
 ╰══════════════════════╯
 `;
