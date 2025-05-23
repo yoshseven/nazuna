@@ -2676,11 +2676,7 @@ case 'ytmp42':
       'Menu não disponível';
     
     // Adicionar informações extras ao menu
-    const enhancedMenuText = `${menuText}\n\n` +
-      `📱 *Versão*: ${botVersion}\n` +
-      `👑 *Dono*: ${nomedono}\n` +
-      `⏱️ *Online desde*: ${formatUptime(process.uptime())}\n` +
-      `🤖 *Feito por*: Hiudy`;
+    const enhancedMenuText = `${menuText}`
     
     // Enviar o menu com a mídia apropriada
     await nazu.sendMessage(from, {
