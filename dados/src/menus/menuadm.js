@@ -67,6 +67,10 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 ││    ↳ Adicionar regra ao grupo
 ││◕⁠➜ ${prefix}delregra [número]
 ││    ↳ Remover regra do grupo
+││◕⁠➜ ${prefix}backupgp
+││    ↳ Fazer backup do grupo
+││◕⁠➜ ${prefix}restaurargp
+││    ↳ Restaurar backup do grupo
 │
 │╭─▸ *Controle de Comandos do Grupo:*
 ││
