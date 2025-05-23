@@ -131,7 +131,6 @@ module.exports = (async () => {
       reportError,
       ...modules,
       sendSticker,
-      styleText,
       emojiMix,
       upload,
       toolsJson: () => toolsJson,
