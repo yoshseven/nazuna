@@ -80,7 +80,8 @@ const downloadModuleUrls = {
   apkMod: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/apkmod.js',
   tictactoe: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/tictactoe.js',
   rpg: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/rpg.js',
-  styleText: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/gerarnick.js'
+  styleText: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/gerarnick.js',
+  imageCustom: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/logos.js',
 };
 
 // Carregamento dos outros módulos
@@ -104,7 +105,8 @@ module.exports = (async () => {
     apkMod: undefined,
     styleText: undefined,
     tictactoe: undefined,
-    rpg: undefined
+    rpg: undefined,
+    imageCustom: undefined
   };
 
   try {

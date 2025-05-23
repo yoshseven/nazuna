@@ -23,7 +23,8 @@ const menus = {
   menuFerramentas: require('./ferramentas'),
   menuSticker: require('./menufig'),
   menuIa: require('./menuia'),
-  menuRpg: require('./menurpg')
+  menuRpg: require('./menurpg'),
+  menuLogos: require('./menulogos')
 };
 
 /**

@@ -32,10 +32,12 @@ async function menu(prefix, botName = "MeuBot", userName = "Usuário") {
 ││  ↳ Ferramentas úteis
 ││💫 ${prefix}menufig
 ││  ↳ Criar figurinhas
-││🎵 ${prefix}alteradores (Novo!)
+││🎵 ${prefix}alteradores
 ││  ↳ Efeitos Audio/Video
-││💡 ${prefix}menurpg (Novo!)
+││💡 ${prefix}menurpg
 ││  ↳ Aventura e diversão RPG
+││🎨 ${prefix}menulogos (Novo!)
+││  ↳ Logos e efeitos de texto
 │
 ╰══════════════════════╯
 `;
