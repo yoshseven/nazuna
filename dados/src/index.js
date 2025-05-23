@@ -300,9 +300,9 @@ try {
   const isBotAdmin = !isGroup ? false : groupAdmins.includes(botNumber);
   
   // Carrega ou cria arquivo de dados do grupo
+  const groupFile = pathz.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
   let groupData = {};
   if (isGroup) {
-    const groupFile = `${GRUPOS_DIR}/${from}.json`;
     
     // Cria arquivo de grupo se não existir
     if (!fs.existsSync(groupFile)) {
@@ -375,9 +375,7 @@ try {
       
       // Remove o status AFK
     delete groupData.afkUsers[sender];
-      
-      // Salva o arquivo do grupo
-      const groupFile = `${GRUPOS_DIR}/${from}.json`;
+
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       
       // Notifica o usuário
@@ -415,9 +413,7 @@ try {
       
       // Remove o status de mutado
  delete groupData.mutedUsers[sender];
-      
-      // Salva o arquivo do grupo
-      const groupFile = `${GRUPOS_DIR}/${from}.json`;
+
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       
       return; // Encerra o processamento para este usuário
@@ -468,9 +464,7 @@ try {
          lastActivity: new Date().toISOString()
        });
      }
-     
-     // Salva os dados atualizados
-     const groupFile = `${GRUPOS_DIR}/${from}.json`;
+
      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
    } catch (error) {
      console.error("Erro no sistema de contagem de mensagens:", error);
@@ -1655,9 +1649,7 @@ if (budy2 === "rpz." && !isGroup) {
     if (!fs.existsSync(backupDir)) {
       fs.mkdirSync(backupDir, { recursive: true });
     }
-    
-    // Verificar se o arquivo de grupo existe
-    const groupFile = pathz.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
+
     if (!fs.existsSync(groupFile)) {
       return reply("❌ Não há dados deste grupo para fazer backup!");
     }
@@ -1764,8 +1756,6 @@ if (budy2 === "rpz." && !isGroup) {
       // Você pode adicionar uma confirmação aqui se quiser
     }
     
-    // Carregar os dados atuais do grupo
-    const groupFile = pathz.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
     let currentData = {};
     if (fs.existsSync(groupFile)) {
       currentData = JSON.parse(fs.readFileSync(groupFile, 'utf-8'));
