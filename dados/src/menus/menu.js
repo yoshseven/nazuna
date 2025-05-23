@@ -36,8 +36,6 @@ async function menu(prefix, botName = "MeuBot", userName = "Usuário") {
 ││  ↳ Efeitos Audio/Video
 ││💡 ${prefix}menurpg
 ││  ↳ Aventura e diversão RPG
-││🎨 ${prefix}menulogos (Novo!)
-││  ↳ Logos e efeitos de texto
 │
 ╰══════════════════════╯
 `;
