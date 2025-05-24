@@ -30,6 +30,10 @@ async function menuMembros(prefix, botName = "MeuBot", userName = "Usuário") {
 ││    ↳ Revelar visualização única
 ││◕⁠➜ ${prefix}totalcmd
 ││    ↳ Total de comandos do bot
+││◕⁠➜ ${prefix}topcmd
+││    ↳ Ver comandos mais usados
+││◕⁠➜ ${prefix}cmdinfo [comando]
+││    ↳ Ver estatísticas de um comando
 ││◕⁠➜ ${prefix}statusgp
 ││    ↳ Ver estatísticas do grupo
 ││◕⁠➜ ${prefix}statusbot

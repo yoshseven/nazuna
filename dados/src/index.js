@@ -16,7 +16,7 @@ const os = require('os');
 const { version: botVersion } = JSON.parse(fs.readFileSync(pathz.join(__dirname, '..', '..', 'package.json')));
 
 // Importa os menus
-const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuRpg, menuAlterador, menuLogos } = require(`${__dirname}/menus/index.js`);
+const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuRpg, menuAlterador, menuLogos, menuTopCmd } = require(`${__dirname}/menus/index.js`);
 
 // Carrega as configurações do bot
 const config = JSON.parse(fs.readFileSync(__dirname+'/config.json'));
@@ -154,7 +154,8 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
   const { 
     reportError, youtube, tiktok, pinterest, igdl, sendSticker, 
     FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, 
-    rpg, toolsJson, vabJson, apkMod, google, Lyrics, imageCustom
+    rpg, toolsJson, vabJson, apkMod, google, Lyrics, imageCustom,
+    commandStats
   } = await require(__dirname+'/funcs/exports.js');
   
   // Carrega dados de configuração
@@ -1220,6 +1221,11 @@ if (budy2 === "rpz." && !isGroup) {
     console.error("Erro ao recuperar mídia:", error);
     await reply("❌ Ocorreu um erro ao tentar recuperar a mídia.");
   }
+  }
+  
+  // Registra o uso do comando para estatísticas globais
+  if (isCmd && commandStats && commandStats.trackCommandUsage) {
+    commandStats.trackCommandUsage(command, sender);
   }
   
  switch(command) {
@@ -3293,6 +3299,72 @@ break;
     console.error(e);
     await reply("ocorreu um erro 💔");
   };
+  break;
+  
+  case 'topcmd':
+  case 'topcmds':
+  case 'comandosmaisusados':
+  try {
+    await nazu.react('📊');
+    
+    // Obtém os comandos mais usados
+    const topCommands = commandStats.getMostUsedCommands(10);
+    
+    // Gera o menu com os comandos mais usados
+    const menu = await menuTopCmd(prefix, nomebot, pushname, topCommands);
+    
+    // Envia o menu
+    await reply(menu);
+  } catch (e) {
+    console.error(e);
+    await reply("ocorreu um erro 💔");
+  }
+  break;
+  
+  case 'cmdinfo':
+  case 'comandoinfo':
+  try {
+    if (!q) return reply(`Por favor, especifique um comando para ver suas estatísticas.\nExemplo: ${prefix}cmdinfo menu`);
+    
+    // Remove o prefixo se o usuário incluiu
+    const cmdName = q.startsWith(prefix) ? q.slice(prefix.length) : q;
+    
+    // Obtém as estatísticas do comando
+    const stats = commandStats.getCommandStats(cmdName);
+    
+    if (!stats) {
+      return reply(`❌ Comando *${cmdName}* não encontrado ou nunca foi usado.`);
+    }
+    
+    // Formata os usuários que mais usaram o comando
+    const topUsersText = stats.topUsers.length > 0 
+      ? stats.topUsers.map((user, index) => {
+          return `${index + 1}º @${user.userId.split('@')[0]} - ${user.count} usos`;
+        }).join('\n')
+      : 'Nenhum usuário registrado';
+    
+    // Formata a data da última utilização
+    const lastUsed = new Date(stats.lastUsed).toLocaleString('pt-BR');
+    
+    // Monta a mensagem
+    const infoMessage = `📊 *Estatísticas do Comando: ${prefix}${stats.name}* 📊\n\n` +
+      `📈 *Total de Usos*: ${stats.count}\n` +
+      `👥 *Usuários Únicos*: ${stats.uniqueUsers}\n` +
+      `🕒 *Último Uso*: ${lastUsed}\n\n` +
+      `🏆 *Top Usuários*:\n${topUsersText}\n\n` +
+      `✨ *Bot*: ${nomebot} by ${nomedono} ✨`;
+    
+    // Envia a mensagem com menções aos usuários
+    await nazu.sendMessage(from, { 
+      text: infoMessage, 
+      mentions: stats.topUsers.map(u => u.userId)
+    }, { quoted: info });
+    
+    await nazu.react('📈');
+  } catch (e) {
+    console.error(e);
+    await reply("ocorreu um erro 💔");
+  }
   break;
   
   case 'statusgp': case 'dadosgp': try {
