@@ -527,13 +527,13 @@ try {
   
   // Verificação de dono do bot
   const nmrdn = numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net';
-  const isOwner = (nmrdn === sender) || info.key.fromMe;
   
   // Carrega a lista de subdonos (usando a função auxiliar)
   const subDonoList = loadSubdonos();
   // Verifica se o remetente é subdono
   const isSubOwner = isSubdono(sender);
   // Verifica se é Dono OU Subdono
+  const isOwner = (nmrdn === sender) || info.key.fromMe || isSubOwner;
   const isOwnerOrSub = isOwner || isSubOwner;
  
  // Obtém o tipo de conteúdo da mensagem
@@ -1973,7 +1973,7 @@ ${bahz.reply}`);
 
   // --- Comandos de Gerenciamento de Subdonos ---
   case 'addsubdono':
-    if (!isOwner) return reply("🚫 Apenas o Dono principal pode adicionar subdonos!");
+    if (!isOwner || (isOwner && isSubOwner)) return reply("🚫 Apenas o Dono principal pode adicionar subdonos!");
     try {
       const targetUserJid = menc_jid2 && menc_jid2.length > 0 ? menc_jid2[0] : (q.includes('@') ? q.split(' ')[0].replace('@', '') + '@s.whatsapp.net' : null);
       
@@ -1993,7 +1993,7 @@ ${bahz.reply}`);
     break;
 
   case 'remsubdono': case 'rmsubdono':
-    if (!isOwner) return reply("🚫 Apenas o Dono principal pode remover subdonos!");
+    if (!isOwner || (isOwner && isSubOwner)) return reply("🚫 Apenas o Dono principal pode remover subdonos!");
     try {
       const targetUserJid = menc_jid2 && menc_jid2.length > 0 ? menc_jid2[0] : (q.includes('@') ? q.split(' ')[0].replace('@', '') + '@s.whatsapp.net' : null);
       
@@ -2047,7 +2047,7 @@ ${bahz.reply}`);
 
   // --- Comandos de Gerenciamento de Aluguel ---
   case 'modoaluguel':
-    if (!isOwner) return reply("🚫 Apenas o Dono principal pode gerenciar o modo de aluguel!");
+    if (!isOwner || (isOwner && isSubOwner)) return reply("🚫 Apenas o Dono principal pode gerenciar o modo de aluguel!");
     try {
       const action = q.toLowerCase().trim();
       if (action === 'on' || action === 'ativar') {
