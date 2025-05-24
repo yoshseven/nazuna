@@ -135,6 +135,15 @@ function ensureJsonFileExists(filePath, defaultContent = {}) {
   }
 }
 
+const loadJsonFile = (path, defaultValue = {}) => {
+    try {
+      return fs.existsSync(path) ? JSON.parse(fs.readFileSync(path, 'utf-8')) : defaultValue;
+    } catch (error) {
+      console.error(`Erro ao carregar arquivo ${path}:`, error);
+      return defaultValue;
+    }
+  };
+
 // Cria diretórios necessários
 ensureDirectoryExists(GRUPOS_DIR);
 ensureDirectoryExists(USERS_DIR);
@@ -472,16 +481,6 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
     rpg, toolsJson, vabJson, apkMod, google, Lyrics, imageCustom,
     commandStats
   } = await require(__dirname+'/funcs/exports.js');
-  
-  // Carrega dados de configuração
-  const loadJsonFile = (path, defaultValue = {}) => {
-    try {
-      return fs.existsSync(path) ? JSON.parse(fs.readFileSync(path, 'utf-8')) : defaultValue;
-    } catch (error) {
-      console.error(`Erro ao carregar arquivo ${path}:`, error);
-      return defaultValue;
-    }
-  };
   
   // Carrega arquivos de configuração
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
