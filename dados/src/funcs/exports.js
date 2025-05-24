@@ -90,6 +90,7 @@ const emojiMix = loadModule(path.join(utilsDir, 'emojimix.js'), 'emojiMix');
 const upload = loadModule(path.join(utilsDir, 'upload.js'), 'upload');
 const sendSticker = loadModule(path.join(utilsDir, 'sticker.js'), 'sendSticker').sendSticker;
 const clearMemory = loadModule(path.join(utilsDir, 'clear.js'), 'clearMemory');
+const commandStats = loadModule(path.join(utilsDir, 'commandStats.js'), 'commandStats');
 
 // Inicialização
 module.exports = (async () => {
@@ -136,7 +137,8 @@ module.exports = (async () => {
       emojiMix,
       upload,
       toolsJson: () => toolsJson,
-      vabJson: () => vabJson
+      vabJson: () => vabJson,
+      commandStats
     };
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Erro na inicialização:`, error.message);
@@ -158,7 +160,8 @@ module.exports = (async () => {
       rpg,
       toolsJson: () => undefined,
       vabJson: () => undefined,
-      Lyrics: () => undefined
+      Lyrics: () => undefined,
+      commandStats
     };
   }
 })();
