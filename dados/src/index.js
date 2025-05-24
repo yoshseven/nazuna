@@ -149,6 +149,321 @@ ensureJsonFileExists(DONO_DIR + '/bangp.json');
 ensureJsonFileExists(DATABASE_DIR + '/globalBlocks.json', { commands: {}, users: {} });
 ensureJsonFileExists(DATABASE_DIR + '/botState.json', { status: 'on' });
 
+// --- Funções para Gerenciamento de Subdonos ---
+
+// Caminho para o arquivo de subdonos
+const SUBDONOS_FILE = pathz.join(DONO_DIR, 'subdonos.json');
+
+// Garante que o arquivo de subdonos exista
+ensureJsonFileExists(SUBDONOS_FILE, { subdonos: [] }); // Inicializa com uma lista vazia
+
+// Função para carregar a lista de subdonos
+const loadSubdonos = () => {
+  // Usa a função loadJsonFile já definida
+  return loadJsonFile(SUBDONOS_FILE, { subdonos: [] }).subdonos || [];
+};
+
+// Função para salvar a lista de subdonos
+const saveSubdonos = (subdonoList) => {
+  try {
+    // Garante que o diretório DONO_DIR exista antes de salvar
+    ensureDirectoryExists(DONO_DIR); 
+    fs.writeFileSync(SUBDONOS_FILE, JSON.stringify({ subdonos: subdonoList }, null, 2));
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao salvar subdonos:', error);
+    return false;
+  }
+};
+
+// Função para verificar se um usuário é subdono
+const isSubdono = (userId) => {
+  // Recarrega a lista do arquivo para garantir que está atualizada
+  const currentSubdonos = loadSubdonos(); 
+  return currentSubdonos.includes(userId);
+};
+
+// Função para adicionar um subdono
+const addSubdono = (userId) => {
+  if (!userId || typeof userId !== 'string' || !userId.includes('@s.whatsapp.net')) {
+      return { success: false, message: 'ID de usuário inválido. Use o formato completo (ex: 1234567890@s.whatsapp.net) ou marque o usuário.' };
+  }
+  let currentSubdonos = loadSubdonos();
+  if (currentSubdonos.includes(userId)) {
+      return { success: false, message: 'Este usuário já é um subdono. ✨' };
+  }
+  
+  // Verifica se o usuário a ser adicionado é o dono principal
+  const nmrdn_check = numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net'; // Renomeado para evitar conflito de escopo
+  if (userId === nmrdn_check) {
+      return { success: false, message: 'O dono principal não pode ser adicionado como subdono. 🤔' };
+  }
+
+  currentSubdonos.push(userId);
+  if (saveSubdonos(currentSubdonos)) {
+    return { success: true, message: 'Subdono adicionado com sucesso! 🎉' };
+  } else {
+    return { success: false, message: 'Erro ao salvar a lista de subdonos. 😥' };
+  }
+};
+
+// Função para remover um subdono
+const removeSubdono = (userId) => {
+  if (!userId || typeof userId !== 'string' || !userId.includes('@s.whatsapp.net')) {
+      return { success: false, message: 'ID de usuário inválido. Use o formato completo (ex: 1234567890@s.whatsapp.net) ou marque o usuário.' };
+  }
+  let currentSubdonos = loadSubdonos();
+  if (!currentSubdonos.includes(userId)) {
+      return { success: false, message: 'Este usuário não é um subdono. 🤔' };
+  }
+
+  const initialLength = currentSubdonos.length;
+  currentSubdonos = currentSubdonos.filter(id => id !== userId);
+
+  if (currentSubdonos.length === initialLength) {
+      return { success: false, message: 'Usuário não encontrado na lista (erro inesperado). 🤷' };
+  }
+
+  if (saveSubdonos(currentSubdonos)) {
+    return { success: true, message: 'Subdono removido com sucesso! 👋' };
+  } else {
+    return { success: false, message: 'Erro ao salvar a lista de subdonos após remoção. 😥' };
+  }
+};
+
+// Função para obter a lista de subdonos
+const getSubdonos = () => {
+  return [...loadSubdonos()]; // Retorna uma cópia atualizada
+};
+
+// --- Fim Funções Subdonos ---
+
+// --- Funções para Gerenciamento de Aluguel ---
+
+// Caminhos para os arquivos de dados
+const ALUGUEIS_FILE = pathz.join(DONO_DIR, 'alugueis.json');
+const CODIGOS_ALUGUEL_FILE = pathz.join(DONO_DIR, 'codigos_aluguel.json');
+
+// Garante que os arquivos existam
+ensureJsonFileExists(ALUGUEIS_FILE, { globalMode: false, groups: {} }); // globalMode: false (desativado por padrão), groups: { groupId: { expiresAt: null | 'permanent' | ISOString } }
+ensureJsonFileExists(CODIGOS_ALUGUEL_FILE, { codes: {} }); // codes: { code: { duration: number | 'permanent', targetGroup: null | string, used: false, usedBy: null, usedAt: null } }
+
+// Função para carregar dados de aluguel
+const loadRentalData = () => {
+  return loadJsonFile(ALUGUEIS_FILE, { globalMode: false, groups: {} });
+};
+
+// Função para salvar dados de aluguel
+const saveRentalData = (data) => {
+  try {
+    ensureDirectoryExists(DONO_DIR);
+    fs.writeFileSync(ALUGUEIS_FILE, JSON.stringify(data, null, 2));
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao salvar dados de aluguel:', error);
+    return false;
+  }
+};
+
+// Função para verificar se o modo de aluguel global está ativo
+const isRentalModeActive = () => {
+  const rentalData = loadRentalData();
+  return rentalData.globalMode === true;
+};
+
+// Função para definir o modo de aluguel global
+const setRentalMode = (isActive) => {
+  let rentalData = loadRentalData();
+  rentalData.globalMode = !!isActive; // Garante que seja booleano
+  return saveRentalData(rentalData);
+};
+
+// Função para verificar o status de aluguel de um grupo
+const getGroupRentalStatus = (groupId) => {
+  const rentalData = loadRentalData();
+  const groupInfo = rentalData.groups[groupId];
+
+  if (!groupInfo) {
+    return { active: false, expiresAt: null, permanent: false }; // Grupo não tem aluguel registrado
+  }
+
+  if (groupInfo.expiresAt === 'permanent') {
+    return { active: true, expiresAt: 'permanent', permanent: true }; // Aluguel permanente
+  }
+
+  if (groupInfo.expiresAt) {
+    const expirationDate = new Date(groupInfo.expiresAt);
+    if (expirationDate > new Date()) {
+      return { active: true, expiresAt: groupInfo.expiresAt, permanent: false }; // Aluguel ativo e dentro do prazo
+    } else {
+      // Aluguel expirado - opcionalmente, remover do registro aqui ou deixar para uma limpeza futura
+      // delete rentalData.groups[groupId];
+      // saveRentalData(rentalData); 
+      return { active: false, expiresAt: groupInfo.expiresAt, permanent: false }; // Aluguel expirado
+    }
+  }
+
+  return { active: false, expiresAt: null, permanent: false }; // Caso inválido ou sem data de expiração definida
+};
+
+// Função para definir/atualizar o aluguel de um grupo
+const setGroupRental = (groupId, durationDays) => {
+  if (!groupId || typeof groupId !== 'string' || !groupId.endsWith('@g.us')) {
+    return { success: false, message: 'ID de grupo inválido.' };
+  }
+
+  let rentalData = loadRentalData();
+  let expiresAt = null;
+  let message = '';
+
+  if (durationDays === 'permanent') {
+    expiresAt = 'permanent';
+    message = `✅ Aluguel permanente ativado para o grupo ${groupId}!`;
+  } else if (typeof durationDays === 'number' && durationDays > 0) {
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + durationDays);
+    expiresAt = expirationDate.toISOString();
+    message = `✅ Aluguel ativado para o grupo ${groupId} por ${durationDays} dias! Expira em: ${expirationDate.toLocaleDateString('pt-BR')}.`;
+  } else {
+    return { success: false, message: 'Duração inválida. Use um número de dias ou a palavra "permanente".' };
+  }
+
+  // Atualiza ou adiciona a informação do grupo
+  rentalData.groups[groupId] = { expiresAt };
+
+  if (saveRentalData(rentalData)) {
+    return { success: true, message: message };
+  } else {
+    return { success: false, message: '❌ Erro ao salvar o status de aluguel do grupo.' };
+  }
+};
+
+// Função para carregar códigos de ativação
+const loadActivationCodes = () => {
+  return loadJsonFile(CODIGOS_ALUGUEL_FILE, { codes: {} });
+};
+
+// Função para salvar códigos de ativação
+const saveActivationCodes = (data) => {
+  try {
+    ensureDirectoryExists(DONO_DIR);
+    fs.writeFileSync(CODIGOS_ALUGUEL_FILE, JSON.stringify(data, null, 2));
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao salvar códigos de ativação:', error);
+    return false;
+  }
+};
+
+// Função para gerar um código de ativação único
+const generateActivationCode = (durationDays, targetGroupId = null) => {
+  const crypto = require('crypto');
+  let code = '';
+  let codesData = loadActivationCodes();
+  
+  // Gera códigos até encontrar um único
+  do {
+    code = crypto.randomBytes(4).toString('hex').toUpperCase(); // Gera código de 8 caracteres
+  } while (codesData.codes[code]); // Garante unicidade
+
+  if (durationDays !== 'permanent' && (typeof durationDays !== 'number' || durationDays <= 0)) {
+      return { success: false, message: 'Duração inválida para o código. Use um número de dias ou "permanente".' };
+  }
+  
+  if (targetGroupId && (typeof targetGroupId !== 'string' || !targetGroupId.endsWith('@g.us'))) {
+      // Permite targetGroupId nulo, mas se fornecido, deve ser válido
+      // return { success: false, message: 'ID de grupo alvo inválido para o código.' };
+      // Vamos permitir códigos sem grupo alvo específico por enquanto
+      console.warn(`Gerando código ${code} sem grupo alvo específico, embora um ID inválido (${targetGroupId}) tenha sido fornecido.`);
+      targetGroupId = null; // Ignora ID inválido
+  }
+
+  codesData.codes[code] = {
+    duration: durationDays, // 'permanent' ou número de dias
+    targetGroup: targetGroupId, // null ou ID do grupo
+    used: false,
+    usedBy: null,
+    usedAt: null,
+    createdAt: new Date().toISOString()
+  };
+
+  if (saveActivationCodes(codesData)) {
+    let message = `🔑 Código de ativação gerado: 
+
+*${code}*
+
+`;
+    if (durationDays === 'permanent') {
+        message += `Duração: Permanente ✨\n`;
+    } else {
+        message += `Duração: ${durationDays} dias ⏳\n`;
+    }
+    if (targetGroupId) {
+        message += `Grupo Alvo: ${targetGroupId} 🎯\n`;
+    }
+    message += `\nEnvie este código no grupo para ativar o aluguel.`;
+    return { success: true, message: message, code: code };
+  } else {
+    return { success: false, message: '❌ Erro ao salvar o novo código de ativação.' };
+  }
+};
+
+// Função para validar e obter informações de um código
+const validateActivationCode = (code) => {
+  const codesData = loadActivationCodes();
+  const codeInfo = codesData.codes[code?.toUpperCase()]; // Compara em maiúsculas
+
+  if (!codeInfo) {
+    return { valid: false, message: 'Código inválido. 🤷' };
+  }
+  if (codeInfo.used) {
+    return { valid: false, message: `Este código já foi usado em ${new Date(codeInfo.usedAt).toLocaleDateString('pt-BR')} por ${codeInfo.usedBy?.split('@')[0] || 'alguém'}. 😕` };
+  }
+  
+  // Código válido e não usado
+  return { valid: true, ...codeInfo };
+};
+
+// Função para marcar um código como usado e ativar o aluguel
+const useActivationCode = (code, groupId, userId) => {
+  const validation = validateActivationCode(code);
+  if (!validation.valid) {
+    return { success: false, message: validation.message };
+  }
+
+  const codeInfo = validation;
+  code = code.toUpperCase(); // Garante que estamos usando a chave correta
+
+  // Verifica se o código é para um grupo específico e se corresponde
+  if (codeInfo.targetGroup && codeInfo.targetGroup !== groupId) {
+    return { success: false, message: 'Este código é destinado a outro grupo. 🔒' };
+  }
+
+  // Ativa o aluguel para o grupo atual
+  const rentalResult = setGroupRental(groupId, codeInfo.duration);
+  if (!rentalResult.success) {
+    return { success: false, message: `Erro ao ativar o aluguel com o código: ${rentalResult.message}` };
+  }
+
+  // Marca o código como usado
+  let codesData = loadActivationCodes();
+  codesData.codes[code].used = true;
+  codesData.codes[code].usedBy = userId;
+  codesData.codes[code].usedAt = new Date().toISOString();
+  codesData.codes[code].activatedGroup = groupId; // Guarda qual grupo ativou
+
+  if (saveActivationCodes(codesData)) {
+    return { success: true, message: `🎉 Código *${code}* ativado com sucesso! ${rentalResult.message}` };
+  } else {
+    // Tenta reverter a ativação do aluguel se falhar ao salvar o código (melhor esforço)
+    // Idealmente, isso seria uma transação, mas é complexo aqui.
+    console.error(`Falha CRÍTICA ao marcar código ${code} como usado após ativar aluguel para ${groupId}.`);
+    return { success: false, message: 'Erro CRÍTICO ao marcar o código como usado após ativar o aluguel. Contate o suporte.' };
+  }
+};
+
+// --- Fim Funções Aluguel ---
+
 async function NazuninhaBotExec(nazu, info, store, groupCache) {
   // Importa funções utilitárias
   const { 
@@ -214,6 +529,13 @@ try {
   // Verificação de dono do bot
   const nmrdn = numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net';
   const isOwner = (nmrdn === sender) || info.key.fromMe;
+  
+  // Carrega a lista de subdonos (usando a função auxiliar)
+  const subDonoList = loadSubdonos();
+  // Verifica se o remetente é subdono
+  const isSubOwner = isSubdono(sender);
+  // Verifica se é Dono OU Subdono
+  const isOwnerOrSub = isOwner || isSubOwner;
  
  // Obtém o tipo de conteúdo da mensagem
  const baileys = require('baileys');
@@ -424,6 +746,54 @@ try {
   }
  //FIM
  
+ // --- Verificação de Aluguel (Modo Global e Status do Grupo) ---
+ const rentalModeOn = isRentalModeActive();
+ let groupHasActiveRental = false;
+ let rentalStatusChecked = false; // Flag para evitar checagem dupla
+
+ if (isGroup && rentalModeOn) {
+    const rentalStatus = getGroupRentalStatus(from);
+    groupHasActiveRental = rentalStatus.active;
+    rentalStatusChecked = true;
+    
+    // Se o modo aluguel está ativo e o grupo não tem aluguel ativo,
+    // bloqueia a execução, exceto para comandos de dono/subdono e de ativação/gerenciamento de aluguel.
+    const allowedCommandsBypass = [
+        // Comandos de Aluguel
+        'modoaluguel',
+        'addaluguel',
+        'gerarcodigo',
+        // Comandos de Subdono
+        'addsubdono',
+        'remsubdono',
+        'listasubdonos'
+    ];
+
+    if (!groupHasActiveRental && isCmd && !isOwnerOrSub && !allowedCommandsBypass.includes(command)) {
+        await reply("Este grupo não possui um aluguel ativo. Use um código de ativação ou contate o dono.");
+        return; // Impede o processamento de outros comandos
+    }
+ }
+ // --- Fim Verificação Aluguel ---
+
+ // --- Verificação de Código de Ativação de Aluguel ---
+ if (isGroup && !isCmd && body && /\b[A-F0-9]{8}\b/.test(body.toUpperCase())) {
+    const potentialCode = body.match(/\b[A-F0-9]{8}\b/)[0].toUpperCase();
+    const validation = validateActivationCode(potentialCode); // Valida sem tentar usar ainda
+    if (validation.valid) {
+        try {
+            const activationResult = useActivationCode(potentialCode, from, sender);
+            await reply(activationResult.message);
+            if (activationResult.success) {
+                return; 
+            }
+        } catch (e) {
+            console.error(`Erro ao tentar usar código de ativação ${potentialCode} no grupo ${from}:`, e);
+        }
+    } 
+ }
+ // --- Fim Verificação Código Aluguel ---
+
  // SISTEMA DE CONTAGEM DE MENSAGENS - Registra estatísticas de uso por usuário
  if (isGroup) {
    try {
@@ -1348,300 +1718,434 @@ if (budy2 === "rpz." && !isGroup) {
   //INTELIGENCIA ARTIFICIAL
   
   case 'nazu': case 'nazuna': case 'ai': 
-  try {
-    if (!q) return reply("Falta digitar o prompt 🤔");
-    nazu.react('💞');
-    bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { message: q, chat_id: `nazuninha_${sender.split('@')[0]}`, model_name: "nazuninha", })).data;
-    await reply(bahz.reply);
-  } catch (e) {
-    console.error(e);
-    await reply("ocorreu um erro 💔");
-  }
+    if (!q) return reply("Hmm, parece que você esqueceu de me dizer o que pensar! 🤔 Por favor, digite sua pergunta ou comando depois de `ai`, tá bom? ✨");
+    nazu.react('💖'); // Reação fofinha!
+    try {
+      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { message: q, chat_id: `nazuninha_${sender.split('@')[0]}`, model_name: "nazuninha", })).data;
+      await reply(`🌸 Nazuninha responde:
+
+${bahz.reply}`);
+    } catch (e) {
+      console.error("Erro na API Nazuninha:", e);
+      await reply("Oh não! 🥺 Tive um probleminha para conectar com minha inteligência... Tente de novo daqui a pouquinho, por favorzinho! 💔");
+    }
   break;
   
   case 'gpt': case 'gpt4': case 'chatgpt':
-  try {
-    if (!q) return reply("Falta digitar o prompt 🤔");
-    nazu.react('🧠');
-    bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { message: q, chat_id: `gpt_${sender.split('@')[0]}`, model_name: "gpt", })).data;
-    await reply(bahz.reply);
-  } catch (e) {
-    console.error(e);
-    await reply("ocorreu um erro 💔");
-  }
-  break;
+    if (!q) return reply("O que você gostaria de perguntar ao GPT? 🤔 Me diga o prompt, por favorzinho! ✨");
+    nazu.react("🧠"); // Reação inteligente!
+    try {      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { message: q, chat_id: `gpt_${sender.split('@')[0]}`, model_name: "gpt", })).data;      await reply(`💡 Resposta do GPT:
+
+${bahz.reply}`);
+    } catch (e) {
+      console.error("Erro na API GPT:", e);
+      await reply("Puxa! 🥺 Parece que o GPT está tirando uma sonequinha... Tente novamente em instantes, tá? 💔");
+    }reak;
   
   case 'llama': case 'llama3': case 'llamachat':
-  try {
-    if (!q) return reply("Falta digitar o prompt 🤔");
-    nazu.react('🧠');
-    bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-      message: q, 
-      chat_id: `llama_${sender.split('@')[0]}`, 
-      model_name: "llama" 
-    })).data;
-    await reply(bahz.reply);
-  } catch (e) {
-    console.error(e);
-    await reply("ocorreu um erro 💔");
-  }
+    if (!q) return reply("Qual a sua pergunta para o Llama? 🤔 Me conta o que você quer saber! ✨");
+    nazu.react("🦙"); // Reação de Llama!
+    try {
+      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
+        message: q, 
+        chat_id: `llama_${sender.split('@')[0]}`, 
+        model_name: "llama" 
+      })).data;
+      await reply(`🦙 O Llama respondeu:
+
+${bahz.reply}`);
+    } catch (e) {
+      console.error("Erro na API Llama:", e);
+      await reply("Ai, ai... 🥺 O Llama parece estar pastando em outro lugar agora... Tente chamá-lo de novo daqui a pouquinho, tá? 💔");
+    }
   break;
   
   case 'cognimai': case 'cog-base':
-  try {
-    if (!q) return reply("Falta digitar o prompt 🤔");
-    nazu.react('🤖');
-    bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-      message: q, 
-      chat_id: `cognimai_${sender.split('@')[0]}`, 
-      model_name: "cognimai" 
-    })).data;
-    await reply(bahz.reply);
-  } catch (e) {
-    console.error(e);
-    await reply("ocorreu um erro 💔");
-  }
+    if (!q) return reply("O que você quer perguntar para a Cognima AI? 🤔 Me diga o prompt, por favorzinho! ✨");
+    nazu.react("🤖"); // Reação robótica fofa!
+    try {
+      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
+        message: q, 
+        chat_id: `cognimai_${sender.split('@')[0]}`, 
+        model_name: "cognimai" 
+      })).data;
+      await reply(`🤖 A Cognima AI responde:\n\n${bahz.reply}`);
+    } catch (e) {
+      console.error("Erro na API Cognima AI:", e);
+      await reply("Ops! 🥺 A Cognima AI parece estar processando outras coisas... Tente de novo daqui a pouquinho, tá? 💔");
+    }
   break;
   
   case 'qwen': case 'qwen2': case 'qwenchat':
-  try {
-    if (!q) return reply("Falta digitar o prompt 🤔");
-    nazu.react('🌠');
-    bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-      message: q, 
-      chat_id: `qwen_${sender.split('@')[0]}`, 
-      model_name: "qwen"
-    })).data;
-    await reply(bahz.reply);
-  } catch (e) {
-    console.error(e);
-    await reply("ocorreu um erro 💔");
-  }
+    if (!q) return reply("O que você gostaria de perguntar ao Qwen? 🤔 Me diga o prompt, por favorzinho! ✨");
+    nazu.react("🌠"); // Reação estelar!
+    try {
+      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
+        message: q, 
+        chat_id: `qwen_${sender.split('@')[0]}`, 
+        model_name: "qwen"
+      })).data;
+      await reply(`🌠 Resposta do Qwen:\n\n${bahz.reply}`);
+    } catch (e) {
+      console.error("Erro na API Qwen:", e);
+      await reply("Xi... 🥺 O Qwen parece estar viajando por outras galáxias agora... Tente chamá-lo de novo daqui a pouquinho, tá? 💔");
+    }
   break;
   
   case 'gemma': case 'gemma2': case 'gecko':
-  try {
-    if (!q) return reply("Falta digitar o prompt 🤔");
-    nazu.react('💎');
-    bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-      message: q, 
-      chat_id: `gemma_${sender.split('@')[0]}`, 
-      model_name: "gemma"
-    })).data;
-    await reply(bahz.reply);
-  } catch (e) {
-    console.error(e);
-    await reply("ocorreu um erro 💔");
-  }
+    if (!q) return reply("O que você quer perguntar para o Gemma? 🤔 Me diga o prompt, por favorzinho! ✨");
+    nazu.react("💎"); // Reação preciosa!
+    try {
+      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
+        message: q, 
+        chat_id: `gemma_${sender.split('@')[0]}`, 
+        model_name: "gemma"
+      })).data;
+      await reply(`💎 Resposta do Gemma:\n\n${bahz.reply}`);
+    } catch (e) {
+      console.error("Erro na API Gemma:", e);
+      await reply("Ah, que pena! 🥺 O Gemma parece estar brilhando em outro lugar agora... Tente chamá-lo de novo daqui a pouquinho, tá? 💔");
+    }
   break;
   
   case 'resumir':
-  try {
-    if (!q) return reply("Por favor, forneça o texto que deseja resumir.");
-    nazu.react('📝');
-    
-    const prompt = `Resumo do seguinte texto em poucos parágrafos, mantendo as informações mais importantes:\n\n${q}`;
-    
-    bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-      message: prompt, 
-      chat_id: `resumo_${sender.split('@')[0]}`, 
-      model_name: "cognimai"  // Usando o modelo Cognima para resumos
-    })).data;
-    
-    await reply(`📃 *RESUMO*\n\n${bahz.reply}`);
-  } catch (e) {
-    console.error(e);
-    await reply("Ocorreu um erro ao resumir o texto 💔");
-  }
+    if (!q) return reply("O que você gostaria que eu resumisse? 🤔 Me envie o texto, por favorzinho! ✨");
+    nazu.react('📝'); // Reação de resumo!
+    try {
+      const prompt = `Resuma o seguinte texto em poucos parágrafos, de forma clara e fofa, mantendo as informações mais importantes:\n\n${q}`;
+      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
+        message: prompt, 
+        chat_id: `resumo_${sender.split('@')[0]}`, 
+        model_name: "cognimai"  // Usando o modelo Cognima para resumos
+      })).data;
+      await reply(`📃✨ *Aqui está o resuminho fofo que preparei para você:*\n\n${bahz.reply}`);
+    } catch (e) {
+      console.error("Erro ao resumir texto:", e);
+      await reply("Puxa vida! 🥺 Tive um probleminha para fazer o resumo... Poderia tentar de novo? 💔");
+    }
   break;
   
   case 'tradutor':
-  try {
-    if (!q) return reply("Por favor, forneça o texto que deseja traduzir no formato: idioma | texto\nExemplo: inglês | Olá, como vai você?");
-    
-    nazu.react('🌍');
-    
-    const partes = q.split('|');
-    
-    if (partes.length < 2) {
-      return reply("Formato incorreto. Use: idioma | texto\nExemplo: inglês | Olá, como vai você?");
+    if (!q) return reply("Para qual idioma e qual texto você quer a tradução? 🤔 Me diga assim: `idioma | texto`\nExemplo: `inglês | Olá, como vai você?` ✨");
+    nazu.react('🌍'); // Reação de tradução!
+    try {
+      const partes = q.split('|');
+      if (partes.length < 2) {
+        return reply("Formato incorreto, meu anjo! 🥺 Use: `idioma | texto`\nExemplo: `inglês | Olá, como vai você?`");
+      }
+      const idioma = partes[0].trim();
+      const texto = partes.slice(1).join('|').trim();
+      const prompt = `Traduza o seguinte texto para ${idioma}:\n\n${texto}\n\nForneça apenas a tradução, sem explicações adicionais.`;
+      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
+        message: prompt, 
+        chat_id: `tradutor_${sender.split('@')[0]}`, 
+        model_name: "cognimai"
+      })).data;
+      await reply(`🌐✨ *Prontinho! Sua tradução para ${idioma.toUpperCase()} está aqui:*\n\n${bahz.reply}`);
+    } catch (e) {
+      console.error("Erro ao traduzir texto:", e);
+      await reply("Awnn... 🥺 Não consegui fazer a tradução agora... Poderia tentar de novo, por favorzinho? 💔");
     }
-    
-    const idioma = partes[0].trim();
-    const texto = partes.slice(1).join('|').trim();
-    
-    const prompt = `Traduza o seguinte texto para ${idioma}:\n\n${texto}\n\nForneça apenas a tradução, sem explicações adicionais.`;
-    
-    bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-      message: prompt, 
-      chat_id: `tradutor_${sender.split('@')[0]}`, 
-      model_name: "cognimai"
-    })).data;
-    
-    await reply(`🌐 *TRADUÇÃO PARA ${idioma.toUpperCase()}*\n\n${bahz.reply}`);
-  } catch (e) {
-    console.error(e);
-    await reply("Ocorreu um erro ao traduzir o texto 💔");
-  }
   break;
-  
-  case 'qrcode':
-  try {
-    if (!q) return reply("Por favor, forneça o texto ou link para gerar o QR Code.");
-    
-    nazu.react('📲');
-
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(q)}`;
-    
-    await nazu.sendMessage(from, { 
-      image: { url: qrUrl },
-      caption: `🔍 *QR Code gerado*\n\nConteúdo: ${q.substring(0, 100)}${q.length > 100 ? '...' : ''}`
-    }, { quoted: info });
-    
-  } catch (e) {
-    console.error(e);
-    await reply("Ocorreu um erro ao gerar o QR Code 💔");
-  }
-  break;
+   case 'qrcode':
+    if (!q) return reply("O que você quer transformar em QR Code? 🤔 Me envie o texto ou link, por favorzinho! ✨");
+    nazu.react('📲'); // Reação de QR Code!
+    try {
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(q)}`;
+      await nazu.sendMessage(from, { 
+        image: { url: qrUrl },
+        caption: `📱✨ *Seu QR Code super fofo está pronto!*\n\nConteúdo: ${q.substring(0, 100)}${q.length > 100 ? '...' : ''}`
+      }, { quoted: info });
+    } catch (e) {
+      console.error("Erro ao gerar QR Code:", e);
+      await reply("Oh céus! 🥺 Tive um probleminha para gerar seu QR Code... Poderia tentar de novo? 💔");
+    }
+    break;
   
   case 'wikipedia':
-  try {
-    if (!q) return reply("Por favor, forneça um termo para buscar na Wikipédia.");
-    
-    nazu.react('📚');
-    reply("🔍 Buscando informações na Wikipédia...");
-
+    if (!q) return reply("O que você gostaria de pesquisar na Wikipédia? 🤔 Me diga o termo, por favorzinho! ✨");
+    nazu.react('📚'); // Reação de livrinho!
+    reply("Buscando na Wikipédia pra você... ⏳ Um momentinho!");
     try {
-      const respPT = await axios.get(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`);
-      
-      if (respPT.data && respPT.data.extract) {
-        const titulo = respPT.data.title || q;
-        const descricao = respPT.data.extract;
-        const link = respPT.data.content_urls?.desktop?.page || '';
-        const thumbnail = respPT.data.thumbnail?.source || '';
-        
-        let mensagem = `📖 *${titulo}*\n\n${descricao}\n\n`;
-        
-        if (link) {
-          mensagem += `🔗 *Link:* ${link}\n`;
+      let found = false;
+      // Tenta buscar em Português primeiro
+      try {
+        const respPT = await axios.get(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`);
+        if (respPT.data && respPT.data.extract) {
+          const { title, extract, content_urls, thumbnail } = respPT.data;
+          const link = content_urls?.desktop?.page || '';
+          const thumbUrl = thumbnail?.source || '';
+          let mensagem = `📖✨ *Encontrei isso na Wikipédia (PT):*\n\n*${title || q}*\n\n${extract}\n\n`;
+          if (link) mensagem += `🔗 *Saiba mais:* ${link}\n`;
+          if (thumbUrl) {
+            await nazu.sendMessage(from, { image: { url: thumbUrl }, caption: mensagem }, { quoted: info });
+          } else {
+            await reply(mensagem);
+          }
+          found = true;
         }
-        
-        if (thumbnail) {
-          await nazu.sendMessage(from, { 
-            image: { url: thumbnail },
-            caption: mensagem
-          }, { quoted: info });
-        } else {
-          await reply(mensagem);
-        }
-        
-        return;
+      } catch (err) {
+        console.log("Busca PT falhou, tentando EN...");
       }
-    } catch (err) {
-      console.log("Erro na busca PT Wikipedia, tentando EN:", err.message);
-    }
 
-    try {
-      const respEN = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`);
-      
-      if (respEN.data && respEN.data.extract) {
-        const titulo = respEN.data.title || q;
-        const descricao = respEN.data.extract;
-        const link = respEN.data.content_urls?.desktop?.page || '';
-        const thumbnail = respEN.data.thumbnail?.source || '';
-        
-        let mensagem = `📖 *${titulo}* (Inglês)\n\n${descricao}\n\n`;
-        
-        if (link) {
-          mensagem += `🔗 *Link:* ${link}\n`;
+      // Se não encontrou em PT, tenta em Inglês
+      if (!found) {
+        try {
+          const respEN = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`);
+          if (respEN.data && respEN.data.extract) {
+            const { title, extract, content_urls, thumbnail } = respEN.data;
+            const link = content_urls?.desktop?.page || '';
+            const thumbUrl = thumbnail?.source || '';
+            let mensagem = `📖✨ *Encontrei isso na Wikipédia (EN):*\n\n*${title || q}*\n\n${extract}\n\n`;
+            if (link) mensagem += `🔗 *Saiba mais:* ${link}\n`;
+            if (thumbUrl) {
+              await nazu.sendMessage(from, { image: { url: thumbUrl }, caption: mensagem }, { quoted: info });
+            } else {
+              await reply(mensagem);
+            }
+            found = true;
+          }
+        } catch (err) {
+          console.log("Busca EN também falhou.");
         }
-        
-        if (thumbnail) {
-          await nazu.sendMessage(from, { 
-            image: { url: thumbnail },
-            caption: mensagem
-          }, { quoted: info });
-        } else {
-          await reply(mensagem);
-        }
-        
-        return;
       }
-    } catch (err) {
-      console.log("Erro na busca EN Wikipedia:", err.message);
-    }
 
-    await reply("❌ Não foi possível encontrar informações sobre esse termo na Wikipédia. Tente usar palavras-chave diferentes.");
-    
-  } catch (e) {
-    console.error(e);
-    await reply("Ocorreu um erro ao buscar na Wikipédia 💔");
-  }
+      if (!found) {
+        await reply("Awnn... 🥺 Não consegui encontrar nada sobre isso na Wikipédia... Tente uma palavra diferente, talvez? 💔");
+      }
+
+    } catch (e) {
+      console.error("Erro ao buscar na Wikipédia:", e);
+      await reply("Oh não! 🥺 Tive um probleminha para pesquisar na Wikipédia... Tente de novo daqui a pouquinho, por favorzinho! 💔");
+    }
   break;
   
   case 'dicionario':
-  try {
-    if (!q) return reply("Por favor, forneça uma palavra para buscar no dicionário.");
-    
-    nazu.react('📔');
-    reply("🔍 Buscando significado no dicionário...");
-
-    const palavra = q.trim().toLowerCase();
-
-    const resp = await axios.get(`https://significado.herokuapp.com/${encodeURIComponent(palavra)}`);
-    
-    if (resp.data && resp.data.length > 0) {
-      const significados = resp.data[0];
-      
-      let mensagem = `📘 *${palavra.toUpperCase()}*\n\n`;
-
-      if (significados.class) {
-        mensagem += `*Classe:* ${significados.class}\n\n`;
-      }
-
-      if (significados.meanings && significados.meanings.length > 0) {
-        mensagem += `*Significados:*\n`;
-        significados.meanings.forEach((significado, index) => {
-          mensagem += `${index + 1}. ${significado}\n`;
-        });
-        mensagem += '\n';
-      }
-
-      if (significados.etymology) {
-        mensagem += `*Etimologia:* ${significados.etymology}\n\n`;
-      }
-      
-      await reply(mensagem);
-    } else {
-      const prompt = `Defina a palavra "${palavra}" em português. Forneça significado, classe gramatical e exemplos de uso.`;
-      
-      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-        message: prompt, 
-        chat_id: `dicionario_${sender.split('@')[0]}`, 
-        model_name: "cognimai"
-      })).data;
-      
-      await reply(`📔 *${palavra.toUpperCase()}*\n\n${bahz.reply}`);
-    }
-  } catch (e) {
-    console.error(e);
+    if (!q) return reply("Qual palavrinha você quer que eu procure no dicionário? 🤔 Me diga, por favorzinho! ✨");
+    nazu.react('📔'); // Reação de dicionário!
+    reply("Consultando meu dicionário mágico... ⏳ Um segundinho!");
     try {
-      const prompt = `Defina a palavra "${q}" em português. Forneça significado, classe gramatical e exemplos de uso.`;
-      
-      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-        message: prompt, 
-        chat_id: `dicionario_${sender.split('@')[0]}`, 
-        model_name: "cognimai"
-      })).data;
-      
-      await reply(`📔 *${q.toUpperCase()}*\n\n${bahz.reply}`);
-    } catch (err) {
-      await reply("Ocorreu um erro ao buscar no dicionário 💔");
+      const palavra = q.trim().toLowerCase();
+      let definicaoEncontrada = false;
+
+      // Tenta a API primária
+      try {
+        const resp = await axios.get(`https://significado.herokuapp.com/${encodeURIComponent(palavra)}`);
+        if (resp.data && resp.data.length > 0 && resp.data[0].meanings) {
+          const significados = resp.data[0];
+          let mensagem = `📘✨ *Significado de "${palavra.toUpperCase()}":*\n\n`;
+          if (significados.class) {
+            mensagem += `*Classe:* ${significados.class}\n\n`;
+          }
+          if (significados.meanings && significados.meanings.length > 0) {
+            mensagem += `*Significados:*\n`;
+            significados.meanings.forEach((significado, index) => {
+              mensagem += `${index + 1}. ${significado}\n`;
+            });
+            mensagem += '\n';
+          }
+          if (significados.etymology) {
+            mensagem += `*Etimologia:* ${significados.etymology}\n\n`;
+          }
+          await reply(mensagem);
+          definicaoEncontrada = true;
+        }
+      } catch (apiError) {
+        console.log("API primária do dicionário falhou, tentando IA...");
+      }
+
+      // Se a API primária falhar ou não retornar significados, usa a IA como fallback
+      if (!definicaoEncontrada) {
+        const prompt = `Defina a palavra "${palavra}" em português de forma completa e fofa. Inclua a classe gramatical, os principais significados e um exemplo de uso em uma frase curta e bonitinha.`;
+        const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
+          message: prompt, 
+          chat_id: `dicionario_fallback_${sender.split('@')[0]}`, 
+          model_name: "cognimai"
+        })).data;
+        await reply(`🧠✨ *Não achei na API, mas a IA me ajudou com "${palavra.toUpperCase()}":*\n\n${bahz.reply}`);
+        definicaoEncontrada = true; // Considera encontrado via IA
+      }
+
+    } catch (e) {
+      console.error("Erro geral ao buscar no dicionário:", e);
+      await reply("Awnn... 🥺 Tive um probleminha para encontrar essa palavra... Poderia tentar de novo? 💔");
     }
-  }
-  break;
-  
-  
+    break;
+
+  // --- Comandos de Gerenciamento de Subdonos ---
+  case 'addsubdono':
+    if (!isOwner) return reply("🚫 Apenas o Dono principal pode adicionar subdonos!");
+    try {
+      const targetUserJid = menc_jid2 && menc_jid2.length > 0 ? menc_jid2[0] : (q.includes('@') ? q.split(' ')[0].replace('@', '') + '@s.whatsapp.net' : null);
+      
+      if (!targetUserJid) {
+        return reply("🤔 Você precisa marcar o usuário ou fornecer o número completo (ex: 5511999998888) para adicionar como subdono.");
+      }
+
+      const normalizedJid = targetUserJid.includes('@') ? targetUserJid : targetUserJid.replace(/\D/g, '') + '@s.whatsapp.net';
+
+      const result = addSubdono(normalizedJid);
+      await reply(result.message);
+      
+    } catch (e) {
+      console.error("Erro ao adicionar subdono:", e);
+      await reply("❌ Ocorreu um erro inesperado ao tentar adicionar o subdono.");
+    }
+    break;
+
+  case 'remsubdono': case 'rmsubdono':
+    if (!isOwner) return reply("🚫 Apenas o Dono principal pode remover subdonos!");
+    try {
+      const targetUserJid = menc_jid2 && menc_jid2.length > 0 ? menc_jid2[0] : (q.includes('@') ? q.split(' ')[0].replace('@', '') + '@s.whatsapp.net' : null);
+      
+      if (!targetUserJid) {
+        return reply("🤔 Você precisa marcar o usuário ou fornecer o número completo (ex: 5511999998888) para remover como subdono.");
+      }
+      
+      const normalizedJid = targetUserJid.includes('@') ? targetUserJid : targetUserJid.replace(/\D/g, '') + '@s.whatsapp.net';
+
+      const result = removeSubdono(normalizedJid);
+      await reply(result.message);
+      
+    } catch (e) {
+      console.error("Erro ao remover subdono:", e);
+      await reply("❌ Ocorreu um erro inesperado ao tentar remover o subdono.");
+    }
+    break;
+
+  case 'listasubdonos':
+    if (!isOwnerOrSub) return reply("🚫 Apenas o Dono e Subdonos podem ver a lista!");
+    try {
+      const subdonos = getSubdonos();
+      if (subdonos.length === 0) {
+        return reply("✨ Nenhum subdono cadastrado no momento.");
+      }
+      
+      let listaMsg = "👑 *Lista de Subdonos Atuais:*\n\n";
+      const mentions = [];
+      
+      let participantsInfo = {};
+      if (isGroup && groupMetadata.participants) {
+          groupMetadata.participants.forEach(p => {
+              participantsInfo[p.id] = p.pushname || p.id.split('@')[0];
+          });
+      }
+      
+      subdonos.forEach((jid, index) => {
+          const nameOrNumber = participantsInfo[jid] || jid.split('@')[0];
+          listaMsg += `${index + 1}. @${jid.split('@')[0]} (${nameOrNumber})\n`;
+          mentions.push(jid);
+      });
+      
+      await reply(listaMsg.trim(), { mentions });
+      
+    } catch (e) {
+      console.error("Erro ao listar subdonos:", e);
+      await reply("❌ Ocorreu um erro inesperado ao tentar listar os subdonos.");
+    }
+    break;
+  // --- Fim Comandos Subdonos ---
+
+  // --- Comandos de Gerenciamento de Aluguel ---
+  case 'modoaluguel':
+    if (!isOwner) return reply("🚫 Apenas o Dono principal pode gerenciar o modo de aluguel!");
+    try {
+      const action = q.toLowerCase().trim();
+      if (action === 'on' || action === 'ativar') {
+        if (setRentalMode(true)) {
+          await reply("✅ Modo de aluguel global ATIVADO! O bot agora só responderá em grupos com aluguel ativo.");
+        } else {
+          await reply("❌ Erro ao ativar o modo de aluguel global.");
+        }
+      } else if (action === 'off' || action === 'desativar') {
+        if (setRentalMode(false)) {
+          await reply("✅ Modo de aluguel global DESATIVADO! O bot responderá em todos os grupos permitidos.");
+        } else {
+          await reply("❌ Erro ao desativar o modo de aluguel global.");
+        }
+      } else {
+        const currentStatus = isRentalModeActive() ? 'ATIVADO' : 'DESATIVADO';
+        await reply(`🤔 Uso: ${prefix}modoaluguel on|off\nStatus atual: ${currentStatus}`);
+      }
+    } catch (e) {
+      console.error("Erro no comando modoaluguel:", e);
+      await reply("❌ Ocorreu um erro inesperado.");
+    }
+    break;
+
+  case 'addaluguel':
+    if (!isOwner) return reply("🚫 Apenas o Dono principal pode adicionar aluguel!");
+    if (!isGroup) return reply("Este comando só pode ser usado em grupos.");
+    try {
+      const parts = q.toLowerCase().trim().split(' ');
+      const durationArg = parts[0];
+      let durationDays = null;
+
+      if (durationArg === 'permanente') {
+        durationDays = 'permanent';
+      } else if (!isNaN(parseInt(durationArg)) && parseInt(durationArg) > 0) {
+        durationDays = parseInt(durationArg);
+      } else {
+        return reply(`🤔 Duração inválida. Use um número de dias (ex: 30) ou a palavra "permanente".\nExemplo: ${prefix}addaluguel 30`);
+      }
+
+      const result = setGroupRental(from, durationDays);
+      await reply(result.message);
+
+    } catch (e) {
+      console.error("Erro no comando addaluguel:", e);
+      await reply("❌ Ocorreu um erro inesperado ao adicionar o aluguel.");
+    }
+    break;
+
+  case 'gerarcodigo':
+    if (!isOwner) return reply("🚫 Apenas o Dono principal pode gerar códigos!");
+    try {
+      const parts = q.trim().split(' ');
+      const durationArg = parts[0]?.toLowerCase();
+      const targetGroupArg = parts[1]; // Pode ser undefined
+      let durationDays = null;
+      let targetGroupId = null;
+
+      if (!durationArg) {
+          return reply(`🤔 Uso: ${prefix}gerarcodigo <dias|permanente> [id_do_grupo_opcional]`);
+      }
+
+      if (durationArg === 'permanente') {
+        durationDays = 'permanent';
+      } else if (!isNaN(parseInt(durationArg)) && parseInt(durationArg) > 0) {
+        durationDays = parseInt(durationArg);
+      } else {
+        return reply('🤔 Duração inválida. Use um número de dias (ex: 7) ou a palavra "permanente".');
+      }
+
+      // Valida o ID do grupo se fornecido
+      if (targetGroupArg) {
+          if (targetGroupArg.includes('@g.us')) {
+              targetGroupId = targetGroupArg;
+          } else if (/^\d+$/.test(targetGroupArg)) { // Se for só número, adiciona o sufixo
+              targetGroupId = targetGroupArg + '@g.us';
+          } else {
+              // Tenta verificar se é uma menção (embora não seja o ideal aqui)
+              const mentionedJid = info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+              if (mentionedJid && mentionedJid.endsWith('@g.us')) {
+                  targetGroupId = mentionedJid;
+              } else {
+                  return reply('🤔 ID do grupo alvo inválido. Forneça o ID completo (numero@g.us) ou deixe em branco para um código genérico.');
+              }
+          }
+      }
+
+      const result = generateActivationCode(durationDays, targetGroupId);
+      await reply(result.message); // Envia a mensagem com o código gerado
+
+    } catch (e) {
+      console.error("Erro no comando gerarcodigo:", e);
+      await reply("❌ Ocorreu um erro inesperado ao gerar o código.");
+    }
+    break;
+  // --- Fim Comandos Aluguel ---
+
   case 'backupgp':
   try {
     if (!isGroup) return reply("Este comando só pode ser usado em grupos!");
