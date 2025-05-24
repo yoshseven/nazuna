@@ -1224,7 +1224,7 @@ if (budy2 === "rpz." && !isGroup) {
   }
   
   // Registra o uso do comando para estatísticas globais
-  if (isCmd && commandStats && commandStats.trackCommandUsage) {
+  if (isCmd && commandStats && commandStats.trackCommandUsage && command && command.length>0) {
     commandStats.trackCommandUsage(command, sender);
   }
   
