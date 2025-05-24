@@ -168,9 +168,9 @@ async function copyDirectoryAsync(source, destination) {
     const sourcePath = path.join(source, file);
     const destPath = path.join(destination, file);
     
-    const stats = await fs.stat(sourcePath);
+    const statsz = await fs.stat(sourcePath);
     
-    if (stats.isDirectory()) {
+    if (statsz.isDirectory()) {
       await copyDirectoryAsync(sourcePath, destPath);
     } else {
       await fs.copyFile(sourcePath, destPath);
@@ -472,9 +472,9 @@ async function applySmartUpdate() {
       const targetRelativePath = path.join(relativePath, entry);
       const targetPath = path.join(process.cwd(), targetRelativePath);
       
-      const stats = await fs.stat(entryPath);
+      const statsz = await fs.stat(entryPath);
       
-      if (stats.isDirectory()) {
+      if (statsz.isDirectory()) {
         // Create directory if it doesn't exist
         if (!fsSync.existsSync(targetPath)) {
           await fs.mkdir(targetPath, { recursive: true });

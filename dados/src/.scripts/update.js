@@ -453,9 +453,6 @@ async function cleanup() {
   
   try {
     if (fsSync.existsSync(BACKUP_DIR)) {
-      const keepBackup = await promptYesNo("Deseja manter o backup para segurança?", "s");
-      
-      if (!keepBackup) {
         printDetail("↳ Removendo diretório de backup...");
         if (isWindows) {
           execSync(`rmdir /s /q "${BACKUP_DIR}"`, { stdio: 'ignore' });
@@ -463,9 +460,6 @@ async function cleanup() {
           await fs.rm(BACKUP_DIR, { recursive: true, force: true });
         }
         printDetail("✓ Backup removido");
-      } else {
-        printInfo(`ℹ️ Backup mantido em: ${BACKUP_DIR}`);
-      }
     }
   } catch (error) {
     printWarning(`❌ Erro ao limpar arquivos temporários: ${error.message}`);
