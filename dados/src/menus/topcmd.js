@@ -15,7 +15,7 @@ async function menuTopCmd(prefix, botName = "MeuBot", userName = "Usuário", top
 │ Olá, *${userName}*!
 ╰══════════════════════╯
 
-╭═══ 📊 *COMANDOS MAIS USADOS* 📊 ═══╮
+╭═ 📊 *COMANDOS MAIS USADOS* 📊 ═╮
 │
 │ Nenhum comando foi registrado ainda.
 │ Use ${prefix}comandos para ver a lista
