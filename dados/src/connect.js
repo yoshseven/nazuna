@@ -2,7 +2,7 @@
 ═════════════════════════════
   Nazuna - Conexão WhatsApp
   Autor: Hiudy
-  Revisão: 20/05/2025
+  Revisão: 24/05/2025
 ═════════════════════════════
 */
 
@@ -167,6 +167,7 @@ async function startNazu() {
           const message = { text: welcomeText, mentions: [sender] };
           if (jsonGp.welcome?.image) {
             message.image = { url: jsonGp.welcome.image };
+            delete message.text;
             message.caption = welcomeText;
           }
           await nazu.sendMessage(from, message);
