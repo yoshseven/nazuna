@@ -4,14 +4,11 @@
   "description": "Bot de whatsapp criado por hiudy e otimizado",
   "main": "app.js",
   "scripts": {
-    "start": "npm run start:silent --silent",
-    "start:silent": "bash dados/src/.scripts/.start.sh",
-    "config": "npm run config:silent --silent",
-    "config:silent": "bash dados/src/.scripts/.config.sh",
-    "config:install": "npm run config:install:silent --silent",
-    "config:install:silent": "bash dados/src/.scripts/.config.sh --install",
-    "update": "npm run update:silent --silent",
-    "update:silent": "bash dados/src/.scripts/.update.sh"
+    "start": "node dados/src/.scripts/start.js",
+    "config": "node dados/src/.scripts/config.js",
+    "config:install": "node dados/src/.scripts/config.js --install",
+    "update": "node dados/src/.scripts/update.js",
+    "update-pro": "node dados/src/.scripts/update-pro.js"
   },
   "repository": {
     "type": "git",
