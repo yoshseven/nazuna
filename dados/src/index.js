@@ -29,15 +29,7 @@ const GRUPOS_DIR = DATABASE_DIR + '/grupos';
 const USERS_DIR = DATABASE_DIR + '/users';
 const DONO_DIR = DATABASE_DIR + '/dono';
 
-/**
- * Formata o tempo de atividade em uma string legível
- * @param {number} seconds - Tempo em segundos
- * @param {boolean} [longFormat=false] - Se true, usa formato longo (ex: "2 dias, 5 horas")
- * @param {boolean} [showZero=false] - Se true, mostra unidades zeradas
- * @returns {string} - Tempo formatado (ex: "2d 5h 30m 10s" ou "2 dias, 5 horas, 30 minutos, 10 segundos")
- */
 function formatUptime(seconds, longFormat = false, showZero = false) {
-  // Calcula as unidades de tempo
   const d = Math.floor(seconds / (24 * 3600));
   const h = Math.floor((seconds % (24 * 3600)) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -72,32 +64,14 @@ function formatUptime(seconds, longFormat = false, showZero = false) {
     : (longFormat ? '0 segundos' : '0s');
 }
 
- /**
-  * Normaliza um texto removendo acentos
-  * @param {string} texto - Texto a ser normalizado
-  * @returns {string} - Texto normalizado
-  */
- /**
- * Normaliza um texto removendo acentos e convertendo para minúsculas
- * @param {string} texto - Texto a ser normalizado
- * @param {boolean} [keepCase=false] - Se true, mantém maiúsculas/minúsculas
- * @returns {string} - Texto normalizado
- */
 const normalizar = (texto, keepCase = false) => {
   if (!texto || typeof texto !== 'string') return '';
   
-  // Remove acentos
   const normalizedText = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   
-  // Converte para minúsculas se necessário
   return keepCase ? normalizedText : normalizedText.toLowerCase();
 };
 
-/**
- * Garante que um diretório existe, criando-o se necessário
- * @param {string} dirPath - Caminho do diretório
- * @returns {boolean} - true se o diretório já existia ou foi criado com sucesso
- */
 function ensureDirectoryExists(dirPath) {
   try {
     if (!fs.existsSync(dirPath)) {
@@ -111,20 +85,12 @@ function ensureDirectoryExists(dirPath) {
   }
 }
 
-/**
- * Garante que um arquivo JSON existe, criando-o com conteúdo padrão se necessário
- * @param {string} filePath - Caminho do arquivo JSON
- * @param {object} defaultContent - Conteúdo padrão caso o arquivo precise ser criado
- * @returns {boolean} - true se o arquivo já existia ou foi criado com sucesso
- */
 function ensureJsonFileExists(filePath, defaultContent = {}) {
   try {
     if (!fs.existsSync(filePath)) {
-      // Garante que o diretório pai existe
       const dirPath = pathz.dirname(filePath);
       ensureDirectoryExists(dirPath);
       
-      // Cria o arquivo com conteúdo padrão
       fs.writeFileSync(filePath, JSON.stringify(defaultContent, null, 2));
       console.log(`✅ Arquivo JSON criado: ${filePath}`);
     }
@@ -158,7 +124,7 @@ ensureJsonFileExists(DONO_DIR + '/bangp.json');
 ensureJsonFileExists(DATABASE_DIR + '/globalBlocks.json', { commands: {}, users: {} });
 ensureJsonFileExists(DATABASE_DIR + '/botState.json', { status: 'on' });
 
-// --- Funções para Gerenciamento de Subdonos ---
+// Funções para Gerenciamento de Subdonos
 
 // Caminho para o arquivo de subdonos
 const SUBDONOS_FILE = pathz.join(DONO_DIR, 'subdonos.json');
@@ -168,7 +134,6 @@ ensureJsonFileExists(SUBDONOS_FILE, { subdonos: [] }); // Inicializa com uma lis
 
 // Função para carregar a lista de subdonos
 const loadSubdonos = () => {
-  // Usa a função loadJsonFile já definida
   return loadJsonFile(SUBDONOS_FILE, { subdonos: [] }).subdonos || [];
 };
 
@@ -187,7 +152,6 @@ const saveSubdonos = (subdonoList) => {
 
 // Função para verificar se um usuário é subdono
 const isSubdono = (userId) => {
-  // Recarrega a lista do arquivo para garantir que está atualizada
   const currentSubdonos = loadSubdonos(); 
   return currentSubdonos.includes(userId);
 };
@@ -245,9 +209,9 @@ const getSubdonos = () => {
   return [...loadSubdonos()]; // Retorna uma cópia atualizada
 };
 
-// --- Fim Funções Subdonos ---
+// Fim Funções Subdonos
 
-// --- Funções para Gerenciamento de Aluguel ---
+// Funções para Gerenciamento de Aluguel
 
 // Caminhos para os arquivos de dados
 const ALUGUEIS_FILE = pathz.join(DONO_DIR, 'alugueis.json');
@@ -305,7 +269,6 @@ const getGroupRentalStatus = (groupId) => {
     if (expirationDate > new Date()) {
       return { active: true, expiresAt: groupInfo.expiresAt, permanent: false }; // Aluguel ativo e dentro do prazo
     } else {
-      // Aluguel expirado - opcionalmente, remover do registro aqui ou deixar para uma limpeza futura
       // delete rentalData.groups[groupId];
       // saveRentalData(rentalData); 
       return { active: false, expiresAt: groupInfo.expiresAt, permanent: false }; // Aluguel expirado
@@ -337,7 +300,6 @@ const setGroupRental = (groupId, durationDays) => {
     return { success: false, message: 'Duração inválida. Use um número de dias ou a palavra "permanente".' };
   }
 
-  // Atualiza ou adiciona a informação do grupo
   rentalData.groups[groupId] = { expiresAt };
 
   if (saveRentalData(rentalData)) {
@@ -370,7 +332,6 @@ const generateActivationCode = (durationDays, targetGroupId = null) => {
   let code = '';
   let codesData = loadActivationCodes();
   
-  // Gera códigos até encontrar um único
   do {
     code = crypto.randomBytes(4).toString('hex').toUpperCase(); // Gera código de 8 caracteres
   } while (codesData.codes[code]); // Garante unicidade
@@ -429,7 +390,6 @@ const validateActivationCode = (code) => {
     return { valid: false, message: `Este código já foi usado em ${new Date(codeInfo.usedAt).toLocaleDateString('pt-BR')} por ${codeInfo.usedBy?.split('@')[0] || 'alguém'}. 😕` };
   }
   
-  // Código válido e não usado
   return { valid: true, ...codeInfo };
 };
 
@@ -443,18 +403,15 @@ const useActivationCode = (code, groupId, userId) => {
   const codeInfo = validation;
   code = code.toUpperCase(); // Garante que estamos usando a chave correta
 
-  // Verifica se o código é para um grupo específico e se corresponde
   if (codeInfo.targetGroup && codeInfo.targetGroup !== groupId) {
     return { success: false, message: 'Este código é destinado a outro grupo. 🔒' };
   }
 
-  // Ativa o aluguel para o grupo atual
   const rentalResult = setGroupRental(groupId, codeInfo.duration);
   if (!rentalResult.success) {
     return { success: false, message: `Erro ao ativar o aluguel com o código: ${rentalResult.message}` };
   }
 
-  // Marca o código como usado
   let codesData = loadActivationCodes();
   codesData.codes[code].used = true;
   codesData.codes[code].usedBy = userId;
@@ -464,17 +421,14 @@ const useActivationCode = (code, groupId, userId) => {
   if (saveActivationCodes(codesData)) {
     return { success: true, message: `🎉 Código *${code}* ativado com sucesso! ${rentalResult.message}` };
   } else {
-    // Tenta reverter a ativação do aluguel se falhar ao salvar o código (melhor esforço)
-    // Idealmente, isso seria uma transação, mas é complexo aqui.
     console.error(`Falha CRÍTICA ao marcar código ${code} como usado após ativar aluguel para ${groupId}.`);
     return { success: false, message: 'Erro CRÍTICO ao marcar o código como usado após ativar o aluguel. Contate o suporte.' };
   }
 };
 
-// --- Fim Funções Aluguel ---
+// Fim Funções Aluguel
 
 async function NazuninhaBotExec(nazu, info, store, groupCache) {
-  // Importa funções utilitárias
   const { 
     reportError, youtube, tiktok, pinterest, igdl, sendSticker, 
     FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, 
@@ -482,7 +436,6 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
     commandStats
   } = await require(__dirname+'/funcs/exports.js');
   
-  // Carrega arquivos de configuração
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
   const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json');
   const banGpIds = loadJsonFile(DONO_DIR + '/bangp.json');
@@ -491,11 +444,9 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
   const globalBlocks = loadJsonFile(DATABASE_DIR + '/globalBlocks.json', { commands: {}, users: {} });
   const botState = loadJsonFile(DATABASE_DIR + '/botState.json', { status: 'on' });
   
-  // Carrega ou inicializa o arquivo modolite.json
   const modoLiteFile = DATABASE_DIR + '/modolite.json';
   let modoLiteGlobal = loadJsonFile(modoLiteFile, { status: false });
   
-  // Garante que o arquivo modolite.json existe
   if (!fs.existsSync(modoLiteFile)) {
     fs.writeFileSync(modoLiteFile, JSON.stringify(modoLiteGlobal, null, 2));
   }
@@ -503,54 +454,41 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
   global.autoStickerMode = global.autoStickerMode || 'default';
 
 try {
-  // Informações básicas da mensagem
  const from = info.key.remoteJid;
   
-  // Debug especial para grupo específico (apenas para desenvolvimento)
   if(from === "120363399806601633@g.us" && debug) {
     await nazu.sendMessage(from, {text: JSON.stringify(info, null, 2) });
   }
   
-  // Verificações de segurança
   const isGroup = from?.endsWith('@g.us') || false;
  if(!info.key.participant && !info.key.remoteJid) return;
   
-  // Identificação do remetente
   const sender = isGroup 
     ? (info.key.participant?.includes(':') 
        ? info.key.participant.split(':')[0] + '@s.whatsapp.net'
        : info.key.participant)
     : info.key.remoteJid;
   
-  // Verificação de status broadcast
   const isStatus = from?.endsWith('@broadcast') || false;
   
-  // Verificação de dono do bot
   const nmrdn = numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net';
   
-  // Carrega a lista de subdonos (usando a função auxiliar)
   const subDonoList = loadSubdonos();
-  // Verifica se o remetente é subdono
   const isSubOwner = isSubdono(sender);
-  // Verifica se é Dono OU Subdono
   const isOwner = (nmrdn === sender) || info.key.fromMe || isSubOwner;
   const isOwnerOrSub = isOwner || isSubOwner;
  
- // Obtém o tipo de conteúdo da mensagem
  const baileys = require('baileys');
  const type = baileys.getContentType(info.message);
  
- // Flags para tipos de mídia
  const isMedia = (type === "imageMessage" || type === "videoMessage" || type === "audioMessage");
  const isImage = type === 'imageMessage';
  const isVideo = type === 'videoMessage';
  const isVisuU2 = type === 'viewOnceMessageV2';
  const isVisuU = type === 'viewOnceMessage';
  
- // Nome do usuário
  const pushname = info.pushName || '';
  
- // Extrai o corpo da mensagem de vários tipos possíveis
  const body = info.message?.conversation || 
              info.message?.viewOnceMessageV2?.message?.imageMessage?.caption || 
              info.message?.viewOnceMessageV2?.message?.videoMessage?.caption || 
@@ -564,36 +502,29 @@ try {
              info.message?.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption || 
              info?.text || '';
  
- // Processamento do texto da mensagem
  const args = body.trim().split(/ +/).slice(1);
  const q = args.join(' ');
  const budy2 = normalizar(body);
  
- // Informações de menção
  const menc_prt = info.message?.extendedTextMessage?.contextInfo?.participant;
  const menc_jid = args.join(" ").replace("@", "") + "@s.whatsapp.net";
  const menc_jid2 = info.message?.extendedTextMessage?.contextInfo?.mentionedJid;
  const menc_os2 = q.includes("@") ? menc_jid : menc_prt;
  const sender_ou_n = q.includes("@") ? menc_jid : (menc_prt || sender);
 
- // Verificação de comando e extração do comando
  const isCmd = body.trim().startsWith(prefix);
  const command = isCmd ? budy2.trim().slice(1).split(/ +/).shift().trim().replace(/\s+/g, '') : null;
  
- // SISTEMA DE ANTIPV - Controle de uso do bot em conversas privadas
  if (!isGroup) {
-   // Modo antipv: ignora completamente mensagens privadas
    if (antipvData.mode === 'antipv' && !isOwner) {
      return;
    }
    
-   // Modo antipv2: permite mensagens privadas, mas não comandos
    if (antipvData.mode === 'antipv2' && isCmd && !isOwner) {
      await reply('🚫 Este comando só funciona em grupos!');
      return;
    }
    
-   // Modo antipv3: bloqueia usuários que tentam usar comandos no privado
    if (antipvData.mode === 'antipv3' && isCmd && !isOwner) {
   await nazu.updateBlockStatus(sender, 'block');
      await reply('🚫 Você foi bloqueado por usar comandos no privado!');
@@ -601,32 +532,24 @@ try {
    }
  }
 
-   // SISTEMA DE PREMIUM - Verifica se o usuário ou grupo tem status premium
  const isPremium = !!premiumListaZinha[sender] || !!premiumListaZinha[from] || isOwner;
  
-  // SISTEMA DE BAN DE GRUPOS - Verifica se o grupo está banido
   if (isGroup && !!banGpIds[from] && !isOwner && !isPremium) {
-    // Grupo banido e usuário não é premium nem dono
     return;
   }
  
-   // INFORMAÇÕES DE GRUPO
-  // Carrega metadados do grupo se estiver em um grupo
   const groupMetadata = !isGroup ? {} : await nazu.groupMetadata(from).catch(() => ({}));
   const groupName = isGroup && groupMetadata.subject ? groupMetadata.subject : '';
   const AllgroupMembers = !isGroup ? [] : groupMetadata.participants?.map(p => p.id) || [];
   const groupAdmins = !isGroup ? [] : groupMetadata.participants?.filter(p => p.admin).map(p => p.id) || [];
   
-  // Informações do bot
   const botNumber = nazu.user.id.split(':')[0] + '@s.whatsapp.net';
   const isBotAdmin = !isGroup ? false : groupAdmins.includes(botNumber);
   
-  // Carrega ou cria arquivo de dados do grupo
   const groupFile = pathz.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
   let groupData = {};
   if (isGroup) {
     
-    // Cria arquivo de grupo se não existir
     if (!fs.existsSync(groupFile)) {
       fs.writeFileSync(groupFile, JSON.stringify({ 
         mark: {},
@@ -635,7 +558,6 @@ try {
       }, null, 2));
     }
     
-    // Carrega dados do grupo
     try {
       groupData = JSON.parse(fs.readFileSync(groupFile));
     } catch (error) {
@@ -643,25 +565,21 @@ try {
       groupData = { mark: {} };
     }
     
-    // Garante que campos importantes existam
   groupData.moderators = groupData.moderators || [];
   groupData.allowedModCommands = groupData.allowedModCommands || [];
     groupData.mutedUsers = groupData.mutedUsers || {};
     
-    // Atualiza o nome do grupo se mudou
     if (groupName && groupData.groupName !== groupName) {
       groupData.groupName = groupName;
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
     }
   }
   
-  // Status do usuário no grupo
   const isGroupAdmin = !isGroup ? false : 
     groupAdmins.includes(sender) || 
     isOwner || 
     (groupData.moderators?.includes(sender) && groupData.allowedModCommands?.includes(command));
   
-  // Configurações do grupo
   const isModoBn = !!groupData.modobrincadeira;
   const isOnlyAdmin = !!groupData.soadm;
   const isAntiPorn = !!groupData.antiporn;
@@ -669,54 +587,43 @@ try {
   const isAntiLinkGp = !!groupData.antilinkgp;
   const isModoRpg = isGroup && !!groupData.modorpg;
   
-  // SISTEMA MODO LITE - Controle de conteúdo sensível
   const isModoLiteGlobal = modoLiteGlobal.status || false;
   const isModoLiteGrupo = isGroup && !!groupData.modolite;
   const isModoLite = (isModoLiteGrupo && !modoLiteGlobal.hasOwnProperty('forceOff')) || 
                     (isModoLiteGlobal && !groupData.hasOwnProperty('modoliteOff'));
   
-  // VERIFICAÇÕES DE PERMISSÃO
-  // Verifica se o grupo está em modo "apenas administradores"
   if (isGroup && isOnlyAdmin && !isGroupAdmin) {
     return; // Silenciosamente ignora mensagens de não-admins quando soadm está ativo
   }
   
-  // Verifica se o comando está bloqueado para este grupo
   if (isGroup && isCmd && !isGroupAdmin && 
       groupData.blockedCommands && groupData.blockedCommands[command]) {
     await reply('⛔ Este comando foi bloqueado pelos administradores do grupo.');
     return;
   }
   
-  // SISTEMA AFK: Limpa status AFK quando o usuário envia uma mensagem
   if (isGroup && groupData.afkUsers && groupData.afkUsers[sender]) {
     try {
-      // Obtém a razão do AFK para possível uso na mensagem
     const afkReason = groupData.afkUsers[sender].reason;
       const afkSince = new Date(groupData.afkUsers[sender].since || Date.now()).toLocaleString('pt-BR');
       
-      // Remove o status AFK
     delete groupData.afkUsers[sender];
 
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       
-      // Notifica o usuário
       await reply(`👋 *Bem-vindo(a) de volta!*\nSeu status AFK foi removido.\nVocê estava ausente desde: ${afkSince}`);
     } catch (error) {
       console.error("Erro ao processar remoção de AFK:", error);
     }
   }
 
-  // SISTEMA DE USUÁRIOS MUTADOS: Remove usuários que falam quando estão mutados
   if (isGroup && isMuted) {
     try {
-      // Notifica o grupo
       await nazu.sendMessage(from, {
         text: `🤫 *Usuário mutado detectado*\n\n@${sender.split("@")[0]}, você está tentando falar enquanto está mutado neste grupo. Você será removido conforme as regras.`, 
         mentions: [sender]
       }, {quoted: info});
       
-      // Apaga a mensagem do usuário
       await nazu.sendMessage(from, {
         delete: {
           remoteJid: from, 
@@ -726,14 +633,12 @@ try {
         }
       });
       
-      // Remove o usuário do grupo
       if (isBotAdmin) {
  await nazu.groupParticipantsUpdate(from, [sender], 'remove');
       } else {
         await reply("⚠️ Não posso remover o usuário porque não sou administrador.");
       }
       
-      // Remove o status de mutado
  delete groupData.mutedUsers[sender];
 
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
@@ -745,7 +650,6 @@ try {
   }
  //FIM
  
- // --- Verificação de Aluguel (Modo Global e Status do Grupo) ---
  const rentalModeOn = isRentalModeActive();
  let groupHasActiveRental = false;
  let rentalStatusChecked = false; // Flag para evitar checagem dupla
@@ -755,8 +659,6 @@ try {
     groupHasActiveRental = rentalStatus.active;
     rentalStatusChecked = true;
     
-    // Se o modo aluguel está ativo e o grupo não tem aluguel ativo,
-    // bloqueia a execução, exceto para comandos de dono/subdono e de ativação/gerenciamento de aluguel.
     const allowedCommandsBypass = [
         // Comandos de Aluguel
         'modoaluguel',
@@ -773,9 +675,7 @@ try {
         return; // Impede o processamento de outros comandos
     }
  }
- // --- Fim Verificação Aluguel ---
 
- // --- Verificação de Código de Ativação de Aluguel ---
  if (isGroup && !isCmd && body && /\b[A-F0-9]{8}\b/.test(body.toUpperCase())) {
     const potentialCode = body.match(/\b[A-F0-9]{8}\b/)[0].toUpperCase();
     const validation = validateActivationCode(potentialCode); // Valida sem tentar usar ainda
@@ -791,22 +691,16 @@ try {
         }
     } 
  }
- // --- Fim Verificação Código Aluguel ---
 
- // SISTEMA DE CONTAGEM DE MENSAGENS - Registra estatísticas de uso por usuário
  if (isGroup) {
    try {
-     // Inicializa o contador se não existir
      groupData.contador = groupData.contador || [];
      
-     // Busca o usuário no contador
      const userIndex = groupData.contador.findIndex(user => user.id === sender);
      
      if (userIndex !== -1) {
-       // Usuário já existe no contador
        const userData = groupData.contador[userIndex];
        
-       // Incrementa os contadores apropriados
        if (isCmd) {
          userData.cmd = (userData.cmd || 0) + 1;
        } else if (type === "stickerMessage") {
@@ -815,15 +709,12 @@ try {
          userData.msg = (userData.msg || 0) + 1;
        }
        
-       // Atualiza o nome se mudou
        if (pushname && userData.pushname !== pushname) {
          userData.pushname = pushname;
        }
        
-       // Atualiza a data da última atividade
        userData.lastActivity = new Date().toISOString();
      } else {
-       // Adiciona novo usuário ao contador
        groupData.contador.push({
          id: sender,
          msg: isCmd ? 0 : 1,
@@ -842,21 +733,8 @@ try {
  }
  // FIM DO CONTADOR
  
- // FUNÇÕES BÁSICAS
- 
- /**
-  * Envia uma mensagem de resposta
-  * @param {string} text - Texto da mensagem
-  * @param {Object} options - Opções adicionais
-  * @param {Array} options.mentions - Menções na mensagem
-  * @param {boolean} options.noForward - Se true, não adiciona metadados de encaminhamento
-  * @param {boolean} options.noQuote - Se true, não cita a mensagem original
-  * @param {Object} options.buttons - Botões para adicionar à mensagem
-  * @returns {Promise<Object>} - Resultado do envio
-  */
  async function reply(text, options = {}) {
    try {
-     // Valores padrão para opções
      const { 
        mentions = [], 
        noForward = false, 
@@ -864,24 +742,20 @@ try {
        buttons = null
      } = options;
      
-     // Configuração básica da mensagem
      const messageContent = {
        text: text.trim(),
        mentions: mentions
      };
      
-     // Adiciona botões se fornecidos
      if (buttons) {
        messageContent.buttons = buttons;
        messageContent.headerType = 1;
      }
      
-     // Configurações de envio
      const sendOptions = {
        sendEphemeral: true
      };
      
-     // Adiciona metadados de encaminhamento se não desativado
      if (!noForward) {
        sendOptions.contextInfo = { 
          forwardingScore: 50, 
@@ -892,12 +766,10 @@ try {
        };
      }
      
-     // Adiciona citação se não desativado
      if (!noQuote) {
        sendOptions.quoted = info;
      }
      
-     // Envia a mensagem
      const result = await nazu.sendMessage(from, messageContent, sendOptions);
      return result;
    } catch (error) {
@@ -907,29 +779,17 @@ try {
  }
  nazu.reply = reply;
  
- /**
-  * Reage a uma mensagem com emoji(s)
-  * @param {string|Array} emj - Emoji único ou array de emojis
-  * @param {Object} options - Opções adicionais
-  * @param {Object} options.key - Chave da mensagem para reagir (padrão: info.key)
-  * @param {number} options.delay - Atraso entre reações em ms (padrão: 500)
-  * @returns {Promise<boolean>} - true se bem-sucedido, false caso contrário
-  */
  const reagir = async (emj, options = {}) => {
    try {
-     // Opções padrão
      const messageKey = options.key || info.key;
      const delay = options.delay || 500;
      
-     // Verifica se a mensagem existe
      if (!messageKey) {
        console.error("Chave de mensagem inválida para reação");
        return false;
      }
      
-     // Reage com um único emoji
      if (typeof emj === 'string') {
-       // Verifica se o emoji é válido (entre 1 e 5 caracteres)
        if (emj.length < 1 || emj.length > 5) {
          console.warn("Emoji inválido para reação:", emj);
          return false;
@@ -944,16 +804,13 @@ try {
        
        return true;
      } 
-     // Reage com múltiplos emojis em sequência
      else if (Array.isArray(emj) && emj.length > 0) {
        for (const emoji of emj) {
-         // Pula emojis inválidos
          if (typeof emoji !== 'string' || emoji.length < 1 || emoji.length > 5) {
            console.warn("Emoji inválido na sequência:", emoji);
            continue;
          }
          
-         // Envia a reação
          await nazu.sendMessage(from, { 
            react: { 
              text: emoji, 
@@ -961,7 +818,6 @@ try {
            } 
          });
          
-         // Aguarda o delay entre reações
          if (delay > 0 && emj.indexOf(emoji) < emj.length - 1) {
            await new Promise(resolve => setTimeout(resolve, delay));
          }
@@ -978,51 +834,33 @@ try {
  }
  nazu.react = reagir;
  
- /**
-  * Obtém o buffer de um arquivo de mídia
-  * @param {Object} mediakey - Chave da mídia
-  * @param {string} mediaType - Tipo de mídia (image, video, audio, document, etc)
-  * @param {Object} options - Opções adicionais
-  * @param {boolean} options.saveToTemp - Se true, salva o buffer em um arquivo temporário
-  * @param {string} options.fileName - Nome do arquivo temporário (opcional)
-  * @returns {Promise<Buffer|string>} - Buffer do arquivo ou caminho do arquivo temporário
-  */
  const getFileBuffer = async (mediakey, mediaType, options = {}) => {
    try {
-     // Verifica se a mediakey é válida
      if (!mediakey) {
        throw new Error('Chave de mídia inválida');
      }
      
-     // Baixa o conteúdo da mensagem
      const stream = await downloadContentFromMessage(mediakey, mediaType);
      
-     // Inicializa o buffer
      let buffer = Buffer.from([]);
      
-     // Tamanho máximo de buffer (50MB)
      const MAX_BUFFER_SIZE = 50 * 1024 * 1024;
      let totalSize = 0;
      
-     // Processa o stream em chunks
      for await (const chunk of stream) {
        buffer = Buffer.concat([buffer, chunk]);
        totalSize += chunk.length;
        
-       // Verifica se o tamanho máximo foi excedido
        if (totalSize > MAX_BUFFER_SIZE) {
          throw new Error(`Tamanho máximo de buffer excedido (${MAX_BUFFER_SIZE / (1024 * 1024)}MB)`);
        }
      }
      
-     // Salva em arquivo temporário se solicitado
      if (options.saveToTemp) {
        try {
-         // Cria diretório temporário se não existir
          const tempDir = pathz.join(__dirname, '..', 'database', 'tmp');
          ensureDirectoryExists(tempDir);
          
-         // Gera nome de arquivo aleatório ou usa o fornecido
          const fileName = options.fileName || `${Date.now()}_${Math.floor(Math.random() * 10000)}`;
          const extension = mediaType === 'image' ? '.jpg' : 
                           mediaType === 'video' ? '.mp4' : 
@@ -1031,18 +869,14 @@ try {
          
          const filePath = pathz.join(tempDir, fileName + extension);
          
-         // Salva o buffer no arquivo
          fs.writeFileSync(filePath, buffer);
          
-         // Retorna o caminho do arquivo
          return filePath;
        } catch (fileError) {
          console.error('Erro ao salvar arquivo temporário:', fileError);
-         // Continua e retorna o buffer em caso de erro
        }
      }
      
-     // Retorna o buffer
      return buffer;
    } catch (error) {
      console.error(`Erro ao obter buffer de ${mediaType}:`, error);
@@ -1051,7 +885,6 @@ try {
  }
  //FIM FUNÇÕES BASICAS
 
- // SISTEMA AFK: NOTIFICAR MENÇÕES
  if (isGroup && info.message?.extendedTextMessage?.contextInfo?.mentionedJid) {
     const mentioned = info.message.extendedTextMessage.contextInfo.mentionedJid;
     if (groupData.afkUsers) {
@@ -1070,10 +903,8 @@ Motivo: ${afkData.reason}`;
     }
   }
 
- // SISTEMA ANTI PORNOGRAFIA - Detecta e remove conteúdo adulto
  if (isGroup && isAntiPorn && (isImage || isVisuU || isVisuU2)) {
    try {
-     // Identifica a mídia na mensagem
      const midiaz = info.message?.imageMessage || 
                    info.message?.viewOnceMessageV2?.message?.imageMessage || 
                    info.message?.viewOnceMessage?.message?.imageMessage || 
@@ -1083,37 +914,28 @@ Motivo: ${afkData.reason}`;
                    info.message?.viewOnceMessage?.message?.videoMessage;
      
      if (midiaz) {
-       // Obtém o buffer da imagem
        const stream = await getFileBuffer(midiaz, "image");
        
-       // Faz upload da imagem para análise
        const mediaURL = await upload(stream, true);
        
        if (mediaURL) {
-         // Chama a API de classificação NSFW
          const apiResponse = await axios.get(`https://nsfw-demo.sashido.io/api/image/classify?url=${mediaURL}`);
          
-         // Extrai as probabilidades de conteúdo adulto
          const { Porn, Hentai } = apiResponse.data.reduce((acc, item) => ({
            ...acc,
            [item.className]: item.probability
          }), {});
          
-         // Verifica se é conteúdo adulto (probabilidade > 80%)
          if (Porn > 0.80 || Hentai > 0.80) {
-           // Apaga a mensagem em qualquer caso
            await nazu.sendMessage(from, { delete: info.key });
            
-           // Define o tipo de conteúdo detectado
            const contentType = Porn > Hentai ? 'Pornografia' : 'Hentai';
            const probability = (Porn > Hentai ? Porn : Hentai).toFixed(2);
            
            if (!isGroupAdmin) {
-             // Usuário normal: remove do grupo
              if (isBotAdmin) {
                await nazu.groupParticipantsUpdate(from, [sender], "remove");
                
-               // Notifica o grupo
                const userMessage = `🚫 *Conteúdo impróprio detectado*\n\n@${sender.split('@')[0]} foi removido por compartilhar conteúdo impróprio.\n\n📊 *Detecção*: ${contentType} (${probability} de probabilidade)`;
                await nazu.sendMessage(from, { 
                  text: userMessage, 
@@ -1123,7 +945,6 @@ Motivo: ${afkData.reason}`;
                await reply(`⚠️ Conteúdo adulto detectado de @${sender.split('@')[0]}, mas não posso remover o usuário porque não sou administrador.`, { mentions: [sender] });
              }
            } else {
-             // Administrador: apenas avisa
              await reply(`⚠️ Conteúdo adulto detectado (${contentType}, ${probability}), mas como você é administrador, não será removido do grupo.`);
            }
          }
@@ -1133,16 +954,13 @@ Motivo: ${afkData.reason}`;
      console.error("Erro no sistema anti-pornografia:", error);
    }
  };
- //FIM 🤫
 
- //SISTEMA DE ANTILOC
 if (isGroup && groupData.antiloc && !isGroupAdmin && type === 'locationMessage') {
   await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
   await nazu.groupParticipantsUpdate(from, [sender], 'remove');
   await reply(`🚫 @${sender.split('@')[0]} foi removido por enviar uma localização!`, { mentions: [sender] });
 };
 
- //SISTEMA DE ANTIFLOOD
 if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
   antifloodData[from].users = antifloodData[from].users || {};
   const now = Date.now();
@@ -1155,14 +973,12 @@ if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
   fs.writeFileSync(__dirname + '/../database/antiflood.json', JSON.stringify(antifloodData, null, 2));
 };
 
- //SISTEMA DE ANTI DOCUMENTO
 if (isGroup && groupData.antidoc && !isGroupAdmin && (type === 'documentMessage' || type === 'documentWithCaptionMessage')) {
   await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
   await nazu.groupParticipantsUpdate(from, [sender], 'remove');
   await reply(`🚫 @${sender.split('@')[0]} foi removido por enviar um documento!`, { mentions: [sender] });
 };
 
- //SISTEMA DE LIMITAR COMANDOS
 if (isGroup && cmdLimitData[from]?.enabled && isCmd && !isGroupAdmin) {
   cmdLimitData[from].users = cmdLimitData[from].users || {};
   const today = new Date().toISOString().split('T')[0];
@@ -1177,7 +993,6 @@ if (isGroup && cmdLimitData[from]?.enabled && isCmd && !isGroupAdmin) {
   fs.writeFileSync(__dirname + '/../database/cmdlimit.json', JSON.stringify(cmdLimitData, null, 2));
 }
 
- //SISTEMA DE AUTO DOWNLOAD
 if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
   const urlMatch = body.match(/(https?:\/\/[^\s]+)/g);
   if (urlMatch) {
@@ -1206,10 +1021,8 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
   }
 }
 
- // SISTEMA DE AUTO FIGURINHAS
  if (isGroup && groupData.autoSticker && !info.key.fromMe) {
    try {
-     // Detecta imagem ou vídeo em mensagens normais ou visualização única
      const mediaImage = info.message?.imageMessage || 
                       info.message?.viewOnceMessageV2?.message?.imageMessage || 
                       info.message?.viewOnceMessage?.message?.imageMessage;
@@ -1221,13 +1034,10 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
      if (mediaImage || mediaVideo) {
        const isVideo = !!mediaVideo;
        
-       // Verifica a duração do vídeo (limite de 10 segundos)
        if (isVideo && mediaVideo.seconds > 9.9) {
-         // Vídeo muito longo para figurinha, ignorar
          return;
        }
        
-       // Obtém o buffer da mídia
        const buffer = await getFileBuffer(
          isVideo ? mediaVideo : mediaImage, 
          isVideo ? 'video' : 'image'
@@ -1283,7 +1093,6 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
    }
  };
 
-  
  //DEFINIÇÕES DE ISQUOTED
  // const content = JSON.stringify(info.message);
  let quotedMessageContent = null;
@@ -1504,7 +1313,6 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
       console.error("Erro no sistema de jogo da velha:", error);
     }
   }
-
 
 //VERIFICAR USUÁRIOS BLOQUEADOS (GRUPO)
 if (isGroup && groupData.blockedUsers && (groupData.blockedUsers[sender] || groupData.blockedUsers[sender.split('@')[0]]) && isCmd) {
@@ -2503,7 +2311,6 @@ ${bahz.reply}`);
   }
   break;
   
-  
   //FERRAMENTAS
   case 'encurtalink': case 'tinyurl': try {
   if(!q) return reply(`❌️ *Forma incorreta, use está como exemplo:* ${prefix + command} https://instagram.com/hiudyyy_`);
@@ -2559,7 +2366,6 @@ ${bahz.reply}`);
   }
   break
 
-  
   //DOWNLOADS
   case 'assistir': try {
   if(!q) return reply('Cadê o nome do filme ou episódio de série? 🤔');
@@ -2965,7 +2771,6 @@ case 'ytmp42':
    }
    break;
    
-   
    // MENUS DO BOT
   case 'menu': case 'help':
     try {
@@ -3195,7 +3000,6 @@ case 'ytmp42':
       mimetype: useVideo ? 'video/mp4' : 'image/jpeg'
     }, { quoted: info });
   }
-   
    
   //COMANDOS DE DONO BB
   case 'antipv3':
@@ -3592,7 +3396,6 @@ break;
   }
   break;
   
-  
   //COMANDOS GERAIS
   case 'rvisu':case 'open':case 'revelar': try {
   await nazu.react("👀");
@@ -3857,7 +3660,6 @@ break;
       `🏆 *Top Usuários*:\n${topUsersText}\n\n` +
       `✨ *Bot*: ${nomebot} by ${nomedono} ✨`;
     
-    // Envia a mensagem com menções aos usuários
     await nazu.sendMessage(from, { 
       text: infoMessage, 
       mentions: stats.topUsers.map(u => u.userId)
@@ -4043,7 +3845,6 @@ case 'ping':
   };
   break;
   
-  
   //COMANDOS DE FIGURINHAS
   case 'toimg':
   if(!isQuotedSticker) return reply('Por favor, *mencione um sticker* para executar o comando.');
@@ -4184,7 +3985,6 @@ case 'ping':
   break;
   
   //FIM COMANDOS DE FIGURINHAS
-  
   
   case 'mention':
   try {
@@ -5208,7 +5008,6 @@ case 'listadv':
   }
   break;
     
-    
     //JOGO DA VELHA
     case 'ttt': case 'jogodavelha': {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
@@ -5588,11 +5387,6 @@ console.error(e);
 await reply("ocorreu um erro 💔");
 };
    break;
-
-
-
-
-
 
 //SITEMA DE RPG EM TESTE
     case 'registrar':
@@ -6534,7 +6328,6 @@ ${weatherEmoji} *${weatherDescription}*`;
  if(isCmd) await nazu.react('❌');
  };
  
- 
   } catch(error) {
     // Log detalhado do erro para facilitar debugging
     console.error('==== ERRO NO PROCESSAMENTO DA MENSAGEM ====');
@@ -6578,10 +6371,6 @@ ${weatherEmoji} *${weatherDescription}*`;
   };
 };
 
-/**
- * Obtém informações sobre o espaço em disco
- * @returns {Object} Informações de disco em GB (total, livre, usado)
- */
 function getDiskSpaceInfo() {
   try {
     const platform = os.platform();
