@@ -21,6 +21,8 @@ const DATABASE_DIR = path.join(__dirname, '..', 'database', 'grupos');
 const msgRetryCounterCache = new Map();
 const { prefixo, nomebot, nomedono, numerodono } = require('./config.json');
 
+const indexModule = require(path.join(__dirname, 'index.js'));
+
 const ask = (question) => {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   return new Promise((resolve) => rl.question(question, (answer) => { rl.close(); resolve(answer.trim()); }));
@@ -204,7 +206,11 @@ async function startNazu() {
     nazu.ev.on('messages.upsert', async (m) => {
       if (!m.messages || !Array.isArray(m.messages) || m.type !== 'notify') return;
       try {
+        if (typeof indexModule === 'function') {
           await indexModule(nazu, m, store, groupCache);
+        } else {
+          console.error('O módulo index.js não exporta uma função válida.');
+        }
       } catch (err) {
         console.error('Erro ao chamar o módulo index.js:', err);
       }
