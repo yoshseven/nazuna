@@ -430,14 +430,19 @@ const useActivationCode = (code, groupId, userId) => {
 
 // Fim Funções Aluguel
 
-async function NazuninhaBotExec(nazu, info, store, groupCache) {
+async function NazuninhaBotExec(nazu, m, store, groupCache) {
   const { 
     reportError, youtube, tiktok, pinterest, igdl, sendSticker, 
     FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, 
     rpg, toolsJson, vabJson, apkMod, google, Lyrics, imageCustom,
     commandStats
   } = await require(__dirname+'/funcs/exports.js');
+  for (const info of m.messages) {
   
+    if (!info.message || !info.key.remoteJid) {
+        continue;
+    }
+    
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
   const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json');
   const banGpIds = loadJsonFile(DONO_DIR + '/bangp.json');
@@ -6366,6 +6371,7 @@ ${weatherEmoji} *${weatherDescription}*`;
       }
     }
   };
+ };
 };
 
 function getDiskSpaceInfo() {
