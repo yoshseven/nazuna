@@ -204,11 +204,7 @@ async function startNazu() {
     nazu.ev.on('messages.upsert', async (m) => {
       if (!m.messages || !Array.isArray(m.messages) || m.type !== 'notify') return;
       try {
-        if (typeof indexModule === 'function') {
           await indexModule(nazu, m, store, groupCache);
-        } else {
-          console.error('O módulo index.js não exporta uma função válida.');
-        }
       } catch (err) {
         console.error('Erro ao chamar o módulo index.js:', err);
       }
