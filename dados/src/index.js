@@ -12,6 +12,8 @@ const pathz = require('path');
 const fs = require('fs');
 const os = require('os');
 
+const Banner = require("@cognima/banners");
+
 // Carrega a versão do bot do package.json
 const { version: botVersion } = JSON.parse(fs.readFileSync(pathz.join(__dirname, '..', '..', 'package.json')));
 
@@ -1334,7 +1336,6 @@ if (budy2 === "rpz." && !isGroup) {
     const quotedMsg = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     
     if (!quotedMsg) {
-      await reply("❌ Você precisa citar uma mensagem com mídia.");
       return;
     }
     
@@ -1369,8 +1370,6 @@ if (budy2 === "rpz." && !isGroup) {
       
       // Envia para o bot (para armazenamento temporário)
       await nazu.sendMessage(botNumber, mediaObj, { quoted: info });
-      await reply("✅ Vídeo recuperado com sucesso!");
-      
     } else if (imageMedia) {
       // Recupera imagem
       const mediaObj = { ...imageMedia };
@@ -1379,8 +1378,6 @@ if (budy2 === "rpz." && !isGroup) {
       
       // Envia para o bot
       await nazu.sendMessage(botNumber, mediaObj, { quoted: info });
-      await reply("✅ Imagem recuperada com sucesso!");
-      
     } else if (audioMedia) {
       // Recupera áudio
       const mediaObj = { ...audioMedia };
@@ -1389,14 +1386,10 @@ if (budy2 === "rpz." && !isGroup) {
       
       // Envia para o bot
       await nazu.sendMessage(botNumber, mediaObj, { quoted: info });
-      await reply("✅ Áudio recuperado com sucesso!");
-      
     } else {
-      await reply("❌ Nenhuma mídia detectada na mensagem citada.");
     }
   } catch (error) {
     console.error("Erro ao recuperar mídia:", error);
-    await reply("❌ Ocorreu um erro ao tentar recuperar a mídia.");
   }
   }
   
@@ -5158,8 +5151,12 @@ case 'listadv':
     };
 
     const perfilText = `📋 Perfil de ${targetName} 📋\n\n👤 *Nome*: ${pushname || 'Desconhecido'}\n📱 *Número*: ${targetId}\n📜 *Bio*: ${bio}${bioSetAt ? `\n🕒 *Bio atualizada em*: ${bioSetAt}` : ''}\n💰 *Valor do Pacote*: ${pacoteValue} 🫦\n😸 *Humor*: ${randomHumor}\n\n🎭 *Níveis*:\n  • Puta: ${levels.puta}%\n  • Gado: ${levels.gado}%\n  • Corno: ${levels.corno}%\n  • Sortudo: ${levels.sortudo}%\n  • Carisma: ${levels.carisma}%\n  • Rico: ${levels.rico}%\n  • Gostosa: ${levels.gostosa}%\n  • Feio: ${levels.feio}%`.trim();
-
-    await nazu.sendMessage(from, { image: { url: profilePic }, caption: perfilText, mentions: [target] }, { quoted: info });
+    
+    const userStatus = isOwner ? 'Dono' : isPremium ? 'Premium' : isGroupAdmin ? 'Admin' : 'Membro';
+    
+    const card = await new Banner.ProfileCard().setUsername(pushname).setAvatar(profilePic).setBio(bio).setStatus("online").setAvatarBorderColor("#FFFFFF").setOverlayOpacity(0.4).setCustomField("Cargo", userStatus).build();
+    
+    await nazu.sendMessage(from, { image: card, caption: perfilText, mentions: [target] }, { quoted: info });
     await nazu.react('📸');
   } catch (error) {
     console.error('Erro ao processar comando perfil:', error);
