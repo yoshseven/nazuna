@@ -3490,7 +3490,11 @@ break;
   case 'rankinativos': 
   case 'rankinativo': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    blue67 = groupData.contador.sort((a, b) => (a.msg + a.cmd) - (b.msg + b.cmd));
+    blue67 = groupData.contador.sort((a, b) => {
+  const totalA = (a.figu ?? 0) + a.msg + a.cmd;
+  const totalB = (b.figu ?? 0) + b.msg + b.cmd;
+  return totalA - totalB;
+});
     menc = [];
     blad = `*🗑️ Rank dos ${blue67.length < 10 ? blue67.length : 10} mais inativos do grupo:*\n`;
     for (i6 = 0; i6 < (blue67.length < 10 ? blue67.length : 10); i6++) {
