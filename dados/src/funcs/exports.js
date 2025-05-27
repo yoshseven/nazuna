@@ -3,7 +3,7 @@
 */
 // Sistema Principal de Exportação de Módulos
 // Criador: Hiudy
-// Versão: 0.0.1
+// Versão: 1.3.0
 // Esse arquivo contém direitos autorais. Caso meus créditos sejam removidos, poderei tomar medidas jurídicas.
 
 const fs = require('fs').promises;
@@ -60,9 +60,7 @@ async function loadRemoteModuleWithRetry(url, moduleName, maxRetries = 5, retryI
 }
 
 // Diretórios base
-const downloadsDir = path.join(__dirname, 'downloads');
 const utilsDir = path.join(__dirname, 'utils');
-const gamesDir = path.join(__dirname, 'games');
 const jsonDir = path.join(__dirname, 'json');
 
 // Importar requireRemote
@@ -80,16 +78,13 @@ const downloadModuleUrls = {
   apkMod: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/apkmod.js',
   tictactoe: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/tictactoe.js',
   rpg: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/rpg.js',
-  styleText: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/gerarnick.js',
-  imageCustom: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/logos.js',
+  styleText: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/gerarnick.js'
 };
 
 // Carregamento dos outros módulos
-const reportError = loadModule(path.join(utilsDir, 'debug.js'), 'reportError');
 const emojiMix = loadModule(path.join(utilsDir, 'emojimix.js'), 'emojiMix');
 const upload = loadModule(path.join(utilsDir, 'upload.js'), 'upload');
 const sendSticker = loadModule(path.join(utilsDir, 'sticker.js'), 'sendSticker').sendSticker;
-const clearMemory = loadModule(path.join(utilsDir, 'clear.js'), 'clearMemory');
 const commandStats = loadModule(path.join(utilsDir, 'commandStats.js'), 'commandStats');
 
 // Inicialização
@@ -107,7 +102,6 @@ module.exports = (async () => {
     styleText: undefined,
     tictactoe: undefined,
     rpg: undefined,
-    imageCustom: undefined
   };
 
   try {
@@ -131,7 +125,6 @@ module.exports = (async () => {
     const vabJson = (await jsonPromises[1]).vabJson;
 
     return {
-      reportError,
       ...modules,
       sendSticker,
       emojiMix,
@@ -143,25 +136,6 @@ module.exports = (async () => {
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Erro na inicialização:`, error.message);
     console.log(`[${new Date().toISOString()}] Retornando valores padrão após falha`);
-    return {
-      reportError,
-      youtube: {},
-      tiktok: {},
-      pinterest: {},
-      igdl: {},
-      mcPlugin: {},
-      FilmesDL: {},
-      apkMod: {},
-      sendSticker,
-      styleText,
-      emojiMix,
-      upload,
-      tictactoe,
-      rpg,
-      toolsJson: () => undefined,
-      vabJson: () => undefined,
-      Lyrics: () => undefined,
-      commandStats
-    };
+    process.exit(0);
   }
 })();

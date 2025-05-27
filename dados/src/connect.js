@@ -2,12 +2,12 @@
 ═════════════════════════════
   Nazuna - Conexão WhatsApp
   Autor: Hiudy
-  Revisão: 25/05/2025
+  Revisão: 27/05/2025
 ═════════════════════════════
 */
 
 const { Boom } = require('@hapi/boom');
-const { makeWASocket, useMultiFileAuthState, makeCacheableSignalKeyStore, DisconnectReason, proto, makeInMemoryStore } = require('baileys');
+const { makeWASocket, useMultiFileAuthState, DisconnectReason, proto, makeInMemoryStore } = require('baileys');
 const NodeCache = require('node-cache');
 const readline = require('readline');
 const { execSync } = require('child_process');
@@ -17,8 +17,13 @@ const path = require('path');
 
 const logger = pino({ level: 'silent' });
 const AUTH_DIR = path.join(__dirname, '..', 'database', 'qr-code');
+const STORE_FILE = path.join(__dirname, '..', 'database', 'store_B.json');
 const DATABASE_DIR = path.join(__dirname, '..', 'database', 'grupos');
 const msgRetryCounterCache = new Map();
+const mediaCache = new Map();
+const userDevicesCache = new Map();
+const callOfferCache = new Map();
+const placeholderResendCache = new Map();
 const { prefixo, nomebot, nomedono, numerodono } = require('./config.json');
 
 const indexModule = require(path.join(__dirname, 'index.js'));
@@ -30,40 +35,52 @@ const ask = (question) => {
 
 const groupCache = new NodeCache({ stdTTL: 300, useClones: false });
 const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
+store.readFromFile(STORE_FILE);
+setInterval(() => {
+    store.writeToFile(STORE_FILE);
+}, 10000);
 
 async function startNazu() {
   try {
     await fs.mkdir(DATABASE_DIR, { recursive: true });
     const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
 
-    async function getMessage(key) {
-      if (!store) return proto.Message.fromObject({});
-      const msg = await store.loadMessage(key.remoteJid, key.id).catch(() => null);
-      return msg?.message || proto.Message.fromObject({});
-    };
-
     const nazu = makeWASocket({
-      auth: { 
-        creds: state.creds, 
-        keys: makeCacheableSignalKeyStore(state.keys, logger) 
+      // true/false
+      appStateMacVerification: {
+        patch: true,
+        snapshot: true,
       },
-      printQRInTerminal: !process.argv.includes('--code'),
       syncFullHistory: true,
       emitOwnEvents: true,
-      markOnlineOnConnect: true,
-      fireInitQueriesEarly: true,
+      markOnlineOnConnect: false,
       fireInitQueries: true,
-      msgRetryCounterCache,
-      connectTimeoutMs: 180000,
-      defaultQueryTimeoutMs: 30000,
-      keepAliveIntervalMs: 10000,
-      retryRequestDelayMs: 500,
       generateHighQualityLinkPreview: true,
-      logger,
-      getMessage,
       shouldSyncHistoryMessage: () => true,
-      cachedGroupMetadata: (jid) => groupCache.get(jid) || null,
-      browser: ['Ubuntu', 'Edge', '110.0.1587.56']
+      // delays
+      connectTimeoutMs: 180000,
+      keepAliveIntervalMs: 5000,
+      retryRequestDelayMs: 500,
+      defaultQueryTimeoutMs: undefined,
+      // caches
+      msgRetryCounterCache,
+      mediaCache,
+      userDevicesCache,
+      callOfferCache,
+      placeholderResendCache,
+      // auth
+      countryCode: 'BR',
+      auth: state,
+      printQRInTerminal: !process.argv.includes('--code'),
+      logger: logger,
+      browser: ['Mac OS', 'Safari', '14.4.1'],
+      // funções
+      getMessage: (key) => {
+        if (!store) return proto.Message.fromObject({});
+        const msg = await store.loadMessage(key.remoteJid, key.id).catch(() => null);
+        return msg?.message || proto.Message.fromObject({});
+      },
+      cachedGroupMetadata: (jid) => groupCache.get(jid) || null
     });
 
     if (process.argv.includes('--code') && !nazu.authState.creds.registered) {
@@ -73,9 +90,9 @@ async function startNazu() {
         console.log('❌ Número inválido! Deve ter entre 10 e 15 dígitos.');
         process.exit(1);
       }
-      const code = await nazu.requestPairingCode(phoneNumber, 'N4ZUN4V2');
+      const code = await nazu.requestPairingCode(phoneNumber, 'N4ZUN4V3');
       console.log(`🔢 Seu código de pareamento: ${code}`);
-      console.log('📲 No WhatsApp, vá em "Aparelhos Conectados" -> "Conectar com Número de Telefone" e insira o código.');
+      console.log('📲 No WhatsApp, vá em "Aparelhos Conectados" -> "Conectar com Número de Telefone" e insira o código.\n');
     }
 
     store.bind(nazu.ev);

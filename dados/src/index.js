@@ -432,9 +432,9 @@ const useActivationCode = (code, groupId, userId) => {
 
 async function NazuninhaBotExec(nazu, m, store, groupCache) {
   const { 
-    reportError, youtube, tiktok, pinterest, igdl, sendSticker, 
+    youtube, tiktok, pinterest, igdl, sendSticker, 
     FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, 
-    rpg, toolsJson, vabJson, apkMod, google, Lyrics, imageCustom,
+    rpg, toolsJson, vabJson, apkMod, google, Lyrics,
     commandStats
   } = await require(__dirname+'/funcs/exports.js');
   for (const info of m.messages) {
@@ -6345,30 +6345,6 @@ ${weatherEmoji} *${weatherDescription}*`;
       console.error('Remetente:', sender);
     } catch (logError) {
       console.error('Erro ao registrar informações adicionais:', logError);
-    }
-    
-    // Reportar erro se o modo debug estiver ativado
-    if (debug) {
-      try {
-        reportError(error, botVersion);
-      } catch (reportError) {
-        console.error('Erro ao reportar erro:', reportError);
-      }
-    }
-    
-    // Em caso de erro crítico, tentar enviar mensagem para o dono
-    if (debug && error.message && error.message.includes('critical')) {
-      try {
-        const errorMsg = `⚠️ *ERRO CRÍTICO*\n\n` +
-                        `*Tipo:* ${error.name}\n` +
-                        `*Mensagem:* ${error.message}\n` +
-                        `*Comando:* ${isCmd ? command : 'N/A'}\n` +
-                        `*Timestamp:* ${new Date().toISOString()}`;
-        
-        nazu.sendMessage(numerodono.replace(/\D/g, '') + '@s.whatsapp.net', { text: errorMsg });
-      } catch (notifyError) {
-        console.error('Erro ao notificar dono:', notifyError);
-      }
     }
   };
  };

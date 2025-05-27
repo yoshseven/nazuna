@@ -322,7 +322,7 @@ Configure o **nazuna Bot** no Pterodactyl de duas formas:
 **Opção 1: Egg Oficial da nazuna**
 
 1. **Baixar o Egg**  
-   - Pegue o egg em: [github.com/hiudyy/nazu-files/egg-ptero.json](https://github.com/hiudyy/nazu-files/egg-ptero.json).  
+   - Pegue o egg em: [https://gitlab.com/hiudyy/nazuna-funcs/nazuna-egg.json](https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/nazuna-egg.json).  
    - Importe no painel Pterodactyl (**Eggs** > **Import Egg**).
 
 2. **Criar o Servidor**  
@@ -768,7 +768,7 @@ Set up **nazuna Bot** on Pterodactyl in two ways:
 **Option 1: Official nazuna Egg**
 
 1. **Download the Egg**  
-   - Grab the egg at: [github.com/hiudyy/nazu-files/egg-ptero.json](https://github.com/hiudyy/nazu-files/egg-ptero.json).  
+   - Grab the egg at: [https://gitlab.com/hiudyy/nazuna-funcs/nazuna-egg.json](https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/nazuna-egg.json).  
    - Import it in your Pterodactyl panel (**Eggs** > **Import Facet Import Egg**).
 
 2. **Create the Server**  
@@ -1214,7 +1214,7 @@ Configura **nazuna Bot** en Pterodactyl de dos formas:
 **Opción 1: Egg Oficial de nazuna**
 
 1. **Descargar el Egg**  
-   - Consigue el egg en: [github.com/hiudyy/nazu-files/egg-ptero.json](https://github.com/hiudyy/nazu-files/egg-ptero.json).  
+   - Consigue el egg en: [https://gitlab.com/hiudyy/nazuna-funcs/nazuna-egg.json](https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/nazuna-egg.json).  
    - Impórtalo en el panel Pterodactyl (**Eggs** > **Import Egg**).
 
 2. **Crear el Servidor**  
@@ -1660,7 +1660,7 @@ Siapkan **nazuna Bot** di Pterodactyl dengan dua cara:
 **Opsi 1: Egg Resmi nazuna**
 
 1. **Unduh Egg**  
-   - Ambil egg di: [github.com/hiudyy/nazu-files/egg-ptero.json](https://github.com/hiudyy/nazu-files/egg-ptero.json).  
+   - Ambil egg di: [https://gitlab.com/hiudyy/nazuna-funcs/nazuna-egg.json](https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/nazuna-egg.json).  
    - Impor di panel Pterodactyl (**Eggs** > **Import Egg**).
 
 2. **Buat Server**  
@@ -2106,7 +2106,7 @@ Configurez **nazuna Bot** sur Pterodactyl de deux manières :
 **Option 1 : Egg Officiel nazuna**
 
 1. **Télécharger l’Egg**  
-   - Obtenez l’egg sur : [github.com/hiudyy/nazu-files/egg-ptero.json](https://github.com/hiudyy/nazu-files/egg-ptero.json).  
+   - Obtenez l’egg sur : [https://gitlab.com/hiudyy/nazuna-funcs/nazuna-egg.json](https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/nazuna-egg.json).  
    - Importez-le dans le panneau Pterodactyl (**Eggs** > **Importer un Egg**).
 
 2. **Créer le Serveur**  
