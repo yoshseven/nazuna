@@ -75,7 +75,7 @@ async function startNazu() {
       logger: logger,
       browser: ['Mac OS', 'Safari', '14.4.1'],
       // funções
-      getMessage: (key) => {
+      getMessage: async (key) => {
         if (!store) return proto.Message.fromObject({});
         const msg = await store.loadMessage(key.remoteJid, key.id).catch(() => null);
         return msg?.message || proto.Message.fromObject({});
