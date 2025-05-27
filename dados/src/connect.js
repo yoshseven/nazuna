@@ -21,9 +21,6 @@ const STORE_FILE = path.join(__dirname, '..', 'database', 'store_B.json');
 const DATABASE_DIR = path.join(__dirname, '..', 'database', 'grupos');
 const msgRetryCounterCache = new Map();
 const mediaCache = new Map();
-const userDevicesCache = new Map();
-const callOfferCache = new Map();
-const placeholderResendCache = new Map();
 const { prefixo, nomebot, nomedono, numerodono } = require('./config.json');
 
 const indexModule = require(path.join(__dirname, 'index.js'));
@@ -47,10 +44,6 @@ async function startNazu() {
 
     const nazu = makeWASocket({
       // true/false
-      appStateMacVerification: {
-        patch: true,
-        snapshot: true,
-      },
       syncFullHistory: true,
       emitOwnEvents: true,
       markOnlineOnConnect: false,
@@ -65,9 +58,6 @@ async function startNazu() {
       // caches
       msgRetryCounterCache,
       mediaCache,
-      userDevicesCache,
-      callOfferCache,
-      placeholderResendCache,
       // auth
       countryCode: 'BR',
       auth: state,
