@@ -62,6 +62,7 @@ async function loadRemoteModuleWithRetry(url, moduleName, maxRetries = 5, retryI
 // Diretórios base
 const utilsDir = path.join(__dirname, 'utils');
 const jsonDir = path.join(__dirname, 'json');
+const gamesDir = path.join(__dirname, 'games');
 
 // Importar requireRemote
 const { requireRemote } = loadModule(path.join(utilsDir, 'import.js'), 'import');
@@ -77,7 +78,6 @@ const downloadModuleUrls = {
   FilmesDL: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/filmes.js',
   apkMod: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/apkmod.js',
   tictactoe: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/tictactoe.js',
-  rpg: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/rpg.js',
   styleText: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/gerarnick.js'
 };
 
@@ -86,6 +86,7 @@ const emojiMix = loadModule(path.join(utilsDir, 'emojimix.js'), 'emojiMix');
 const upload = loadModule(path.join(utilsDir, 'upload.js'), 'upload');
 const sendSticker = loadModule(path.join(utilsDir, 'sticker.js'), 'sendSticker').sendSticker;
 const commandStats = loadModule(path.join(utilsDir, 'commandStats.js'), 'commandStats');
+const rpg = loadModule(path.join(gamesDir, 'rpg.js'), 'rpg');
 
 // Inicialização
 module.exports = (async () => {
@@ -101,7 +102,6 @@ module.exports = (async () => {
     apkMod: undefined,
     styleText: undefined,
     tictactoe: undefined,
-    rpg: undefined,
   };
 
   try {
@@ -131,7 +131,8 @@ module.exports = (async () => {
       upload,
       toolsJson: () => toolsJson,
       vabJson: () => vabJson,
-      commandStats
+      commandStats,
+      rpg
     };
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Erro na inicialização:`, error.message);
