@@ -102,7 +102,7 @@ class TenorClient {
 
   async fetchMix(emoji1, emoji2, attempt = 1) {
     try {
-      const response = await this.axios.get('', {
+      const response = await this.axios.get(CONFIG.API.BASE_URL, {
         params: {
           key: CONFIG.API.KEY,
           ...CONFIG.API.PARAMS,

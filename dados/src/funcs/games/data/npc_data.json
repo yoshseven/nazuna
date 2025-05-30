@@ -1,0 +1,81 @@
+[
+  {
+    "id": "elara",
+    "nome": "Elara",
+    "descricao": "A misteriosa guardiã da biblioteca antiga, sempre com um livro na mão.",
+    "dialogos": {
+      "neutro": [
+        "Silêncio, por favor. Os livros precisam de concentração.",
+        "Procurando por algum conhecimento específico?",
+        "A sabedoria reside nestas páginas... e em saber quando ficar quieto."
+      ],
+      "amigavel": [
+        "Olá, {nome_jogador}. É bom vê-lo interessado nos arquivos.",
+        "Encontrei um pergaminho antigo que pode lhe interessar.",
+        "Sua curiosidade é refrescante neste lugar silencioso."
+      ],
+      "romantico": [
+        "Sua presença ilumina esta biblioteca mais do que qualquer vela, {nome_jogador}...",
+        "Há histórias de amor escritas aqui, mas nenhuma se compara à que sinto florescer...",
+        "Gostaria de ler um capítulo... comigo?"
+      ]
+    },
+    "presentes_favoritos": ["Pergaminho Antigo", "Pena Rara", "Flor Lunar"],
+    "presentes_odiados": ["Espada Enferrujada", "Barulho Engarrafado"],
+    "condicao_namoro": { "afinidade_minima": 500, "missao_requerida": "O Segredo da Biblioteca" },
+    "condicao_casamento": { "afinidade_minima": 1000, "item_requerido": "Anel da Lua Eterna" }
+  },
+  {
+    "id": "kael",
+    "nome": "Kael",
+    "descricao": "O ferreiro robusto da vila, conhecido por sua força e coração gentil.",
+    "dialogos": {
+      "neutro": [
+        "Precisa de uma arma afiada ou uma armadura resistente?",
+        "O fogo da forja nunca descansa.",
+        "Um bom metal faz uma boa lâmina."
+      ],
+      "amigavel": [
+        "E aí, {nome_jogador}! Pronto para mais uma aventura?",
+        "Fiz uma melhoria naquela sua espada. Dê uma olhada!",
+        "É bom ter guerreiros como você por perto."
+      ],
+      "romantico": [
+        "Meu coração bate forte como a marreta na bigorna quando você está por perto, {nome_jogador}.",
+        "Forjei muitas coisas, mas nada tão precioso quanto o sentimento que tenho por você.",
+        "Quer... quer ver como faço uma ferradura? É mais romântico do que parece."
+      ]
+    },
+    "presentes_favoritos": ["Lingote de Mithril", "Martelo Abençoado", "Cerveja Artesanal"],
+    "presentes_odiados": ["Flor Delicada", "Livro de Poesia"],
+    "condicao_namoro": { "afinidade_minima": 450, "tarefa_requerida": "Coletar 10 Carvões Especiais" },
+    "condicao_casamento": { "afinidade_minima": 900, "item_requerido": "Amuleto da Forja Ancestral" }
+  },
+  {
+    "id": "lyra",
+    "nome": "Lyra",
+    "descricao": "A barda alegre que encanta a todos na taverna com suas canções.",
+    "dialogos": {
+      "neutro": [
+        "Uma canção para alegrar seu dia?",
+        "A música cura a alma, não acha?",
+        "Trabalhando em uma nova balada sobre heróis e dragões!"
+      ],
+      "amigavel": [
+        "Ei, {nome_jogador}! Sua chegada inspira uma melodia!",
+        "Ouvi falar das suas aventuras! Daria uma ótima canção!",
+        "Sente-se, tome uma bebida, a próxima música é por minha conta!"
+      ],
+      "romantico": [
+        "Minhas canções mais doces são inspiradas em você, {nome_jogador}.",
+        "Há uma melodia em meu coração que só toca quando você está perto.",
+        "Que tal um dueto? Você com sua bravura, eu com meu alaúde..."
+      ]
+    },
+    "presentes_favoritos": ["Alaúde Encantado", "Partitura Rara", "Vinho Élfico"],
+    "presentes_odiados": ["Silêncio Engarrafado", "Escudo Pesado"],
+    "condicao_namoro": { "afinidade_minima": 400 },
+    "condicao_casamento": { "afinidade_minima": 800, "item_requerido": "Pena da Fênix Musical" }
+  }
+]
+

@@ -1,0 +1,45 @@
+[
+  {
+    "id": "cabana_simples",
+    "nome": "Cabana Simples",
+    "nomeNormalizado": "cabana simples",
+    "descricao": "Uma pequena cabana de madeira, humilde mas acolhedora.",
+    "localizacao": "Vilarejo Inicial",
+    "custo": 5000,
+    "slots_decoracao": 3,
+    "bonus": [
+      { "tipo": "descanso_hp_bonus", "valor": 10 }, // Recupera +10% HP ao descansar
+      { "tipo": "armazenamento", "valor": 5 } // +5 slots de armazenamento (implementar no inventário?)
+    ]
+  },
+  {
+    "id": "casa_pedra",
+    "nome": "Casa de Pedra",
+    "nomeNormalizado": "casa de pedra",
+    "descricao": "Uma casa robusta construída com pedras resistentes.",
+    "localizacao": "Cidade Principal",
+    "custo": 25000,
+    "slots_decoracao": 8,
+    "bonus": [
+      { "tipo": "descanso_hp_bonus", "valor": 20 },
+      { "tipo": "armazenamento", "valor": 15 },
+      { "tipo": "crafting_speed_bonus", "valor": 5 } // +5% velocidade de crafting (se implementado)
+    ]
+  },
+  {
+    "id": "mansao_luxuosa",
+    "nome": "Mansão Luxuosa",
+    "nomeNormalizado": "mansao luxuosa",
+    "descricao": "Uma mansão espaçosa com jardins e vista para o mar.",
+    "localizacao": "Distrito Nobre",
+    "custo": 150000,
+    "slots_decoracao": 20,
+    "bonus": [
+      { "tipo": "descanso_hp_bonus", "valor": 35 },
+      { "tipo": "armazenamento", "valor": 40 },
+      { "tipo": "crafting_speed_bonus", "valor": 10 },
+      { "tipo": "xp_bonus_descanso", "valor": 5 } // +5% XP ganho após descansar
+    ]
+  }
+]
+

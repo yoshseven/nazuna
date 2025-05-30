@@ -5,8 +5,8 @@
 // ====================
 
 // Importações principais
-const { downloadContentFromMessage, getAggregateVotesInPollMessage } = require('baileys');
-const { exec, spawn, execSync } = require('child_process');
+const { downloadContentFromMessage } = require('baileys');
+const { exec, execSync } = require('child_process');
 const axios = require('axios');
 const pathz = require('path');
 const fs = require('fs');
@@ -38,19 +38,7 @@ function formatUptime(seconds, longFormat = false, showZero = false) {
   const s = Math.floor(seconds % 60);
   
   // Define os formatos para cada unidade
-  const formats = longFormat 
-    ? {
-        d: (val) => `${val} ${val === 1 ? 'dia' : 'dias'}`,
-        h: (val) => `${val} ${val === 1 ? 'hora' : 'horas'}`,
-        m: (val) => `${val} ${val === 1 ? 'minuto' : 'minutos'}`,
-        s: (val) => `${val} ${val === 1 ? 'segundo' : 'segundos'}`
-      }
-    : {
-        d: (val) => `${val}d`,
-        h: (val) => `${val}h`,
-        m: (val) => `${val}m`,
-        s: (val) => `${val}s`
-      };
+  const formats = longFormat ? { d: (val) => `${val} ${val === 1 ? 'dia' : 'dias'}`, h: (val) => `${val} ${val === 1 ? 'hora' : 'horas'}`, m: (val) => `${val} ${val === 1 ? 'minuto' : 'minutos'}`, s: (val) => `${val} ${val === 1 ? 'segundo' : 'segundos'}` } : { d: (val) => `${val}d`, h: (val) => `${val}h`, m: (val) => `${val}m`, s: (val) => `${val}s` };
   
   // Constrói a string de tempo
   const uptimeStr = [];
@@ -110,7 +98,7 @@ const loadJsonFile = (path, defaultValue = {}) => {
       console.error(`Erro ao carregar arquivo ${path}:`, error);
       return defaultValue;
     }
-  };
+};
 
 // Cria diretórios necessários
 ensureDirectoryExists(GRUPOS_DIR);

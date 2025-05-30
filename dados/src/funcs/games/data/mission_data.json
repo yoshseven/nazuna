@@ -1,0 +1,82 @@
+[
+  {
+    "id": "coleta_ervas_1",
+    "nome": "Coleta de Ervas Simples",
+    "nomeNormalizado": "coleta de ervas simples",
+    "descricao": "A alquimista local precisa de Ervas Simples para suas poções. Colete algumas na Floresta Viridiana.",
+    "tipo": "coleta",
+    "objetivos": [
+      { "tipo": "item", "item": "Erva Simples", "quantidade": 5 }
+    ],
+    "recompensas": {
+      "xp": 50,
+      "dinheiro": 20,
+      "itens": []
+    },
+    "pre_requisitos": {
+      "nivel_minimo": 1
+    }
+  },
+  {
+    "id": "primeira_espada",
+    "nome": "A Primeira Espada",
+    "nomeNormalizado": "a primeira espada",
+    "descricao": "O ferreiro Kael pode te ensinar a forjar uma Espada de Ferro se você trouxer os materiais.",
+    "tipo": "crafting",
+    "objetivos": [
+      { "tipo": "craft", "item": "Espada de Ferro", "quantidade": 1 }
+    ],
+    "recompensas": {
+      "xp": 100,
+      "dinheiro": 0,
+      "itens": [
+        { "item": "Luvas de Ferreiro Iniciante", "quantidade": 1 }
+      ]
+    },
+    "pre_requisitos": {
+      "nivel_minimo": 3
+      // "habilidade_minima": { "habilidade": "Ferraria", "nivel": 1 } // Se habilidades forem implementadas
+    }
+  },
+  {
+    "id": "cacada_ratos",
+    "nome": "Caçada aos Ratos Gigantes",
+    "nomeNormalizado": "cacada aos ratos gigantes",
+    "descricao": "Ratos gigantes estão infestando os arredores da Rota 1. Elimine alguns para proteger os viajantes.",
+    "tipo": "cacada",
+    "objetivos": [
+      { "tipo": "kill", "monstro": "Rato Gigante", "quantidade": 3 } // Precisa de sistema de monstros
+    ],
+    "recompensas": {
+      "xp": 75,
+      "dinheiro": 30,
+      "itens": []
+    },
+    "pre_requisitos": {
+      "nivel_minimo": 2
+    }
+  },
+  {
+    "id": "segredo_biblioteca",
+    "nome": "O Segredo da Biblioteca",
+    "nomeNormalizado": "o segredo da biblioteca",
+    "descricao": "Elara, a guardiã da biblioteca, mencionou um pergaminho perdido. Ajude-a a encontrá-lo.",
+    "tipo": "especial", // Pode envolver diálogo, exploração
+    "objetivos": [
+      { "tipo": "flag", "flag_id": "encontrou_pergaminho_elara" } // Requer sistema de flags
+    ],
+    "recompensas": {
+      "xp": 200,
+      "dinheiro": 50,
+      "itens": [
+        { "item": "Mapa Antigo", "quantidade": 1 }
+      ],
+      "afinidade": { "npcId": "elara", "valor": 50 } // Recompensa de afinidade
+    },
+    "pre_requisitos": {
+      "nivel_minimo": 5,
+      "afinidade_minima": { "npcId": "elara", "valor": 50 }
+    }
+  }
+]
+
