@@ -636,8 +636,7 @@ async function verDetalhesPokemon(senderId, idOuNumeroTime) {
 `;
     msg += `   Velocidade: ${pokemon.stats.speed}
 `;
-    // msg += `🧬 IVs: (HP:${pokemon.ivs.hp}, Atk:${pokemon.ivs.attack}, Def:${pokemon.ivs.defense}, SpAtk:${pokemon.ivs["special-attack"]}, SpDef:${pokemon.ivs["special-defense"]}, Spd:${pokemon.ivs.speed})
-`; // Mostrar IVs?
+    msg += `🧬 IVs: (HP:${pokemon.ivs.hp}, Atk:${pokemon.ivs.attack}, Def:${pokemon.ivs.defense}, SpAtk:${pokemon.ivs["special-attack"]}, SpDef:${pokemon.ivs["special-defense"]}, Spd:${pokemon.ivs.speed})`;
     msg += `😊 Felicidade: ${pokemon.felicidade || "?"}/255
 `;
     msg += `🎒 Item Segurado: ${pokemon.item_segurado || "Nenhum"}

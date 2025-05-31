@@ -5898,7 +5898,7 @@ case "pvp":
             upload: typeof upload === 'function' ? upload : null, // Passa a função de upload se existir
             getFileBuffer: typeof getFileBuffer === 'function' ? getFileBuffer : null, // Passa a função de buffer se existir
             m: typeof m !== 'undefined' ? m : null // Passa o objeto da mensagem
-            // Adicione outras funções/variáveis necessárias aqui (ex: conn, isGroup)
+            // Adicione outras funções/variáveis necessárias aqui (ex: nazu, isGroup)
         };
 
         // Chama o handler principal do RPG
@@ -5909,12 +5909,12 @@ case "pvp":
             reply(resultadoRPG.msg);
 
             // Verifica se há mensagem adicional para o alvo (ex: desafio PvP)
-            if (resultadoRPG.msgAlvo && resultadoRPG.alvoId && typeof conn !== 'undefined') {
-                conn.sendMessage(resultadoRPG.alvoId, { text: resultadoRPG.msgAlvo });
+            if (resultadoRPG.msgAlvo && resultadoRPG.alvoId && typeof nazu !== 'undefined') {
+                nazu.sendMessage(resultadoRPG.alvoId, { text: resultadoRPG.msgAlvo });
             }
             // Verifica se há mensagem adicional para o oponente (ex: início/fim PvP)
-            if (resultadoRPG.msgOponente && resultadoRPG.oponenteId && typeof conn !== 'undefined') {
-                 conn.sendMessage(resultadoRPG.oponenteId, { text: resultadoRPG.msgOponente });
+            if (resultadoRPG.msgOponente && resultadoRPG.oponenteId && typeof nazu !== 'undefined') {
+                 nazu.sendMessage(resultadoRPG.oponenteId, { text: resultadoRPG.msgOponente });
             }
 
         } else if (resultadoRPG && typeof resultadoRPG === 'string') {
