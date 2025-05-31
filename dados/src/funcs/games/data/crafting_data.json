@@ -1,0 +1,64 @@
+[
+  {
+    "id": "pocao_cura_pequena",
+    "nome": "Poção de Cura Pequena",
+    "nomeNormalizado": "pocao de cura pequena",
+    "descricao": "Restaura uma pequena quantidade de HP.",
+    "tipo": "consumivel",
+    "nivel_requerido": 1,
+    "materiais": [
+      { "item": "Erva Simples", "quantidade": 2 },
+      { "item": "Frasco Vazio", "quantidade": 1 }
+    ],
+    "resultado": { "item": "Poção de Cura Pequena", "quantidade": 1 },
+    "xp_ganho": 5
+  },
+  {
+    "id": "espada_ferro",
+    "nome": "Espada de Ferro",
+    "nomeNormalizado": "espada de ferro",
+    "descricao": "Uma espada básica feita de ferro.",
+    "tipo": "equipamento",
+    "categoria": "arma",
+    "nivel_requerido": 3,
+    "habilidade": "Ferraria",
+    "materiais": [
+      { "item": "Lingote de Ferro", "quantidade": 5 },
+      { "item": "Couro", "quantidade": 1 }
+    ],
+    "resultado": { "item": "Espada de Ferro", "quantidade": 1 },
+    "xp_ganho": 20
+  },
+  {
+    "id": "escudo_madeira",
+    "nome": "Escudo de Madeira",
+    "nomeNormalizado": "escudo de madeira",
+    "descricao": "Um escudo simples feito de madeira reforçada.",
+    "tipo": "equipamento",
+    "categoria": "escudo",
+    "nivel_requerido": 1,
+    "habilidade": "Carpintaria",
+    "materiais": [
+      { "item": "Tábua de Madeira", "quantidade": 4 },
+      { "item": "Tira de Couro", "quantidade": 2 }
+    ],
+    "resultado": { "item": "Escudo de Madeira", "quantidade": 1 },
+    "xp_ganho": 10
+  },
+  {
+    "id": "lingote_ferro",
+    "nome": "Lingote de Ferro",
+    "nomeNormalizado": "lingote de ferro",
+    "descricao": "Ferro refinado, pronto para ser forjado.",
+    "tipo": "material",
+    "nivel_requerido": 1,
+    "habilidade": "Metalurgia",
+    "materiais": [
+      { "item": "Minério de Ferro", "quantidade": 3 },
+      { "item": "Carvão", "quantidade": 1 }
+    ],
+    "resultado": { "item": "Lingote de Ferro", "quantidade": 1 },
+    "xp_ganho": 8
+  }
+]
+
