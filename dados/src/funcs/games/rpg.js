@@ -97,7 +97,7 @@ async function processarComandoRPG(senderId, command, args, pushname, funcoesExt
             case "loja":
             case "shop":
             case "mercado":
-                return await economy.verLoja(args[0]); // args[0] pode ser categoria
+                return await economy.mostrarLoja(args[0]); // args[0] pode ser categoria
             case "comprar":
             case "buy":
                 if (args.length < 1) return { msg: "Use `.comprar <item> [quantidade]`" };
