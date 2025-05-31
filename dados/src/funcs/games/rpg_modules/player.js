@@ -163,6 +163,8 @@ module.exports = {
     modificarHP,
     modificarFadiga,
     modificarMoral,
-    verPerfil
+    verPerfil,
+    salvarDadosJogador, 
+    carregarDadosJogador
 };
 
