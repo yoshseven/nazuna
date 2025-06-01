@@ -3709,23 +3709,6 @@ case 'dono':
   }
   break;
 
-  case 'criador':
-  try {
-    let criadorInfo = `🧠 *Sobre o Criador* 🧠\n\n`;
-    criadorInfo += `👨‍💻 *Nome*: Hiudy\n`;
-    criadorInfo += `🌟 *Sobre*: Hiudy é um desenvolvedor apaixonado por tecnologia e automação, criador da Nazuna\n`;
-    criadorInfo += `📜 *História do Bot*: A Nazuna foi criada em 2023 com o objetivo de trazer diversão, utilidades e um sistema de RPG interativo para grupos do WhatsApp. Inspirada em outros bots, ela foi desenvolvida com Node.js e a biblioteca Baileys para oferecer uma experiência única.\n`;
-    criadorInfo += `💡 *Objetivo*: Proporcionar entretenimento, ferramentas úteis e um ambiente interativo para comunidades no WhatsApp.\n`;
-    criadorInfo += `🔗 *GitHub*: https://github.com/hiudyy/nazuna\n`;
-    criadorInfo += `💖 *Apoie*: Dê uma estrela no repositório para apoiar o projeto!\n`;
-    await reply(criadorInfo);
-    await nazu.react('✅');
-  } catch (e) {
-    console.error(e);
-    await reply("ocorreu um erro 💔");
-  }
-  break;
-
 case 'ping':
   try {
     await nazu.react(['🔄']);
