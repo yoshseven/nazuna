@@ -146,8 +146,6 @@ async function processarComandoRPG(senderId, command, args, pushname, funcoesExt
             case "pet":
                 return await pets.verPet(senderId);
             case "alimentar":
-            case "feed":
-                return await pets.alimentarPet(senderId);
             case "interagir":
             case "brincar":
                 return await pets.interagirPet(senderId);
