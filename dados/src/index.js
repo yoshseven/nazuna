@@ -418,18 +418,13 @@ const useActivationCode = (code, groupId, userId) => {
 
 // Fim Funções Aluguel
 
-async function NazuninhaBotExec(nazu, m, store, groupCache) {
+async function NazuninhaBotExec(nazu, info, store, groupCache) {
   const { 
     youtube, tiktok, pinterest, igdl, sendSticker, 
     FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, 
     rpg, toolsJson, vabJson, apkMod, google, Lyrics,
     commandStats
   } = await require(__dirname+'/funcs/exports.js');
-  for (const info of m.messages) {
-  
-    if (!info.message || !info.key.remoteJid) {
-        continue;
-    }
     
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
   const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json');
@@ -5937,7 +5932,6 @@ case "pvp":
       console.error('Erro ao registrar informações adicionais:', logError);
     }
   };
- };
 };
 
 function getDiskSpaceInfo() {

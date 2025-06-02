@@ -214,7 +214,12 @@ async function startNazu() {
       if (!m.messages || !Array.isArray(m.messages) || m.type !== 'notify') return;
       try {
         if (typeof indexModule === 'function') {
-          await indexModule(nazu, m, store, groupCache);
+          for (const info of m.messages) { 
+            if (!info.message || !info.key.remoteJid) {
+            continue;
+          };
+          await indexModule(nazu, info, store, groupCache);
+          };
         } else {
           console.error('O módulo index.js não exporta uma função válida.');
         }
