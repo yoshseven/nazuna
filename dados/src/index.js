@@ -1559,7 +1559,7 @@ ${bahz.reply}`);
     try {
       const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
         message: q, 
-        chat_id: `cognimai_${sender.split('@')[0]}`, 
+        chat_id: `cog_${sender.split('@')[0]}`, 
         model_name: "cognimai" 
       })).data;
       await reply(`🤖 A Cognima AI responde:\n\n${bahz.reply}`);
@@ -2269,8 +2269,8 @@ ${bahz.reply}`);
 
     const response = await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", {
       message: q,
-      chat_id: `cog_ultra_${sender.split('@')[0]}`,
-      model_name: "cognimai-ultra",
+      chat_id: `cog_${sender.split('@')[0]}`,
+      model_name: "cognimai",
     });
 
     const resultPriv = response.data;
