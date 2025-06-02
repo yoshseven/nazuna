@@ -5079,6 +5079,18 @@ case 'listadv':
   }
   break;
   
+  case 'admins': case 'admin': case 'adm': case 'adms':
+  if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
+  try {
+    let membros = groupAdmins;
+    let msg = `📢 *Mencionando os admins do grupo:* ${q ? `\n💬 *Mensagem:* ${q}` : ''}\n\n`;
+    await nazu.sendMessage(from, {text: msg + membros.map(m => `➤ @${m.split('@')[0]}`).join('\n'), mentions: membros});
+  } catch (e) {
+    console.error(e);
+    reply("ocorreu um erro 💔");
+  }
+  break;
+  
   case 'perfil':
   try {
     const target = menc_os2 || sender;
