@@ -100,8 +100,8 @@ async function installDependencies() {
   try {
     // Different install command based on platform
     const installCommand = isWindows ? 
-      'npm install --no-optional --force' : 
-      'npm install --no-optional --force';
+      'npm install --no-optional --force --no-bin-links' : 
+      'npm install --no-optional --force --no-bin-links';
     
     // Show spinner while installing
     await new Promise((resolve, reject) => {
