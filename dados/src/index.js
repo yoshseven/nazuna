@@ -4145,7 +4145,7 @@ case 'ping':
   }
   break;
   
-  case 'grupo': try {
+  case 'grupo': case 'gp': try {
   if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
   if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
   if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
