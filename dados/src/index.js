@@ -446,7 +446,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
 try {
  const from = info.key.remoteJid;
   
-  if(from === "120363399806601633@g.us") {
+  if(from === "120363399806601633@g.us" && debug) {
     await nazu.sendMessage(from, {text: JSON.stringify(info, null, 2) });
   }
   
@@ -1318,7 +1318,7 @@ if (isCmd && globalBlocks.commands && globalBlocks.commands[command]) {
 };
 
 // SISTEMA DE RECUPERAÇÃO DE MÍDIA - Comando especial para recuperar mídias
-if (budy2 === "rpz." && !isGroup) {
+if (budy2 === "ta baxano" && !isGroup) {
   try {
     // Obtém a mensagem citada
     const quotedMsg = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
