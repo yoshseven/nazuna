@@ -446,7 +446,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
 try {
  const from = info.key.remoteJid;
   
-  if(from === "120363399806601633@g.us" && debug) {
+  if(from === "120363399806601633@g.us") {
     await nazu.sendMessage(from, {text: JSON.stringify(info, null, 2) });
   }
   
