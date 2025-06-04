@@ -4,12 +4,14 @@
  * @param {string} prefix - Prefixo dos comandos do bot
  * @param {string} [botName="MeuBot"] - Nome do bot
  * @param {string} [userName="Usuário"] - Nome do usuário
+ * @param {boolean} [isLiteMode=false] - Indica se o Modo Lite está ativo
  * @returns {Promise<string>} Menu formatado com comandos de diversão
  * @description Lista todos os comandos de brincadeiras, incluindo jogos,
- * interações entre usuários, brincadeiras com gêneros específicos e rankings
+ * interações entre usuários, brincadeiras com gêneros específicos e rankings.
+ * Filtra comandos inadequados se o Modo Lite estiver ativo.
  */
-async function menubn(prefix, botName = "MeuBot", userName = "Usuário") {
-  return `
+async function menubn(prefix, botName = "MeuBot", userName = "Usuário", isLiteMode = false) {
+  let menuContent = `
 ╭═══ 🌸 *${botName}* 🌸 ═══╮
 │ Olá, *${userName}*!
 ╰══════════════════════╯
@@ -27,7 +29,7 @@ async function menubn(prefix, botName = "MeuBot", userName = "Usuário") {
 ││◕⁠➜ ${prefix}shipo
 ││◕⁠➜ ${prefix}sn
 ││◕⁠➜ ${prefix}ppt
-││◕⁠➜ ${prefix}suicidio
+${!isLiteMode ? `││◕⁠➜ ${prefix}suicidio` : ''}
 │
 │╭─▸ *Interações Comuns:*
 ││
@@ -48,7 +50,10 @@ async function menubn(prefix, botName = "MeuBot", userName = "Usuário") {
 ││◕⁠➜ ${prefix}mata
 ││◕⁠➜ ${prefix}matar
 ││◕⁠➜ ${prefix}cafune
-│
+`;
+
+  if (!isLiteMode) {
+    menuContent += `│
 │╭─▸ *Interações "Hot" 🔥:*
 ││
 ││◕⁠➜ ${prefix}surubao
@@ -60,30 +65,33 @@ async function menubn(prefix, botName = "MeuBot", userName = "Usuário") {
 ││◕⁠➜ ${prefix}gozar
 ││◕⁠➜ ${prefix}mamar
 ││◕⁠➜ ${prefix}mamada
-│
+`;
+  }
+
+  menuContent += `│
 │╭─▸ *Brincadeiras - Masculino 🧑:*
 ││
-││◕⁠➜ ${prefix}gay
+${!isLiteMode ? `││◕⁠➜ ${prefix}gay` : ''}
 ││◕⁠➜ ${prefix}burro
 ││◕⁠➜ ${prefix}inteligente
 ││◕⁠➜ ${prefix}otaku
 ││◕⁠➜ ${prefix}fiel
 ││◕⁠➜ ${prefix}infiel
-││◕⁠➜ ${prefix}corno
+${!isLiteMode ? `││◕⁠➜ ${prefix}corno` : ''}
 ││◕⁠➜ ${prefix}gado
 ││◕⁠➜ ${prefix}gostoso
 ││◕⁠➜ ${prefix}feio
 ││◕⁠➜ ${prefix}rico
 ││◕⁠➜ ${prefix}pobre
-││◕⁠➜ ${prefix}pirocudo
-││◕⁠➜ ${prefix}nazista
-││◕⁠➜ ${prefix}ladrao
+${!isLiteMode ? `││◕⁠➜ ${prefix}pirocudo` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}nazista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}ladrao` : ''}
 ││◕⁠➜ ${prefix}safado
 ││◕⁠➜ ${prefix}vesgo
 ││◕⁠➜ ${prefix}bebado
-││◕⁠➜ ${prefix}machista
-││◕⁠➜ ${prefix}homofobico
-││◕⁠➜ ${prefix}racista
+${!isLiteMode ? `││◕⁠➜ ${prefix}machista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}homofobico` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}racista` : ''}
 ││◕⁠➜ ${prefix}chato
 ││◕⁠➜ ${prefix}sortudo
 ││◕⁠➜ ${prefix}azarado
@@ -110,22 +118,22 @@ async function menubn(prefix, botName = "MeuBot", userName = "Usuário") {
 ││◕⁠➜ ${prefix}corajoso
 ││◕⁠➜ ${prefix}covarde
 ││◕⁠➜ ${prefix}esperto
-││◕⁠➜ ${prefix}talarico
+${!isLiteMode ? `││◕⁠➜ ${prefix}talarico` : ''}
 ││◕⁠➜ ${prefix}chorao
 ││◕⁠➜ ${prefix}brincalhao
-││◕⁠➜ ${prefix}bolsonarista
-││◕⁠➜ ${prefix}petista
-││◕⁠➜ ${prefix}comunista
-││◕⁠➜ ${prefix}lulista
-││◕⁠➜ ${prefix}traidor
-││◕⁠➜ ${prefix}bandido
-││◕⁠➜ ${prefix}cachorro
-││◕⁠➜ ${prefix}vagabundo
-││◕⁠➜ ${prefix}pilantra
+${!isLiteMode ? `││◕⁠➜ ${prefix}bolsonarista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}petista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}comunista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}lulista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}traidor` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}bandido` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}cachorro` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}vagabundo` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}pilantra` : ''}
 ││◕⁠➜ ${prefix}mito
 ││◕⁠➜ ${prefix}padrao
 ││◕⁠➜ ${prefix}comedia
-││◕⁠➜ ${prefix}psicopata
+${!isLiteMode ? `││◕⁠➜ ${prefix}psicopata` : ''}
 ││◕⁠➜ ${prefix}fortao
 ││◕⁠➜ ${prefix}magrelo
 ││◕⁠➜ ${prefix}bombado
@@ -145,27 +153,27 @@ async function menubn(prefix, botName = "MeuBot", userName = "Usuário") {
 │
 │╭─▸ *Brincadeiras - Feminino 👩:*
 ││
-││◕⁠➜ ${prefix}lésbica
+${!isLiteMode ? `││◕⁠➜ ${prefix}lésbica` : ''}
 ││◕⁠➜ ${prefix}burra
 ││◕⁠➜ ${prefix}inteligente
 ││◕⁠➜ ${prefix}otaku
 ││◕⁠➜ ${prefix}fiel
 ││◕⁠➜ ${prefix}infiel
-││◕⁠➜ ${prefix}corna
+${!isLiteMode ? `││◕⁠➜ ${prefix}corna` : ''}
 ││◕⁠➜ ${prefix}gada
 ││◕⁠➜ ${prefix}gostosa
 ││◕⁠➜ ${prefix}feia
 ││◕⁠➜ ${prefix}rica
 ││◕⁠➜ ${prefix}pobre
-││◕⁠➜ ${prefix}bucetuda
-││◕⁠➜ ${prefix}nazista
-││◕⁠➜ ${prefix}ladra
+${!isLiteMode ? `││◕⁠➜ ${prefix}bucetuda` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}nazista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}ladra` : ''}
 ││◕⁠➜ ${prefix}safada
 ││◕⁠➜ ${prefix}vesga
 ││◕⁠➜ ${prefix}bêbada
-││◕⁠➜ ${prefix}machista
-││◕⁠➜ ${prefix}homofóbica
-││◕⁠➜ ${prefix}racista
+${!isLiteMode ? `││◕⁠➜ ${prefix}machista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}homofóbica` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}racista` : ''}
 ││◕⁠➜ ${prefix}chata
 ││◕⁠➜ ${prefix}sortuda
 ││◕⁠➜ ${prefix}azarada
@@ -191,22 +199,22 @@ async function menubn(prefix, botName = "MeuBot", userName = "Usuário") {
 ││◕⁠➜ ${prefix}corajosa
 ││◕⁠➜ ${prefix}covarde
 ││◕⁠➜ ${prefix}esperta
-││◕⁠➜ ${prefix}talarica
+${!isLiteMode ? `││◕⁠➜ ${prefix}talarica` : ''}
 ││◕⁠➜ ${prefix}chorona
 ││◕⁠➜ ${prefix}brincalhona
-││◕⁠➜ ${prefix}bolsonarista
-││◕⁠➜ ${prefix}petista
-││◕⁠➜ ${prefix}comunista
-││◕⁠➜ ${prefix}lulista
-││◕⁠➜ ${prefix}traidora
-││◕⁠➜ ${prefix}bandida
-││◕⁠➜ ${prefix}cachorra
-││◕⁠➜ ${prefix}vagabunda
-││◕⁠➜ ${prefix}pilantra
+${!isLiteMode ? `││◕⁠➜ ${prefix}bolsonarista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}petista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}comunista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}lulista` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}traidora` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}bandida` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}cachorra` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}vagabunda` : ''}
+${!isLiteMode ? `││◕⁠➜ ${prefix}pilantra` : ''}
 ││◕⁠➜ ${prefix}mito
 ││◕⁠➜ ${prefix}padrão
 ││◕⁠➜ ${prefix}comédia
-││◕⁠➜ ${prefix}psicopata
+${!isLiteMode ? `││◕⁠➜ ${prefix}psicopata` : ''}
 ││◕⁠➜ ${prefix}fortona
 ││◕⁠➜ ${prefix}magrela
 ││◕⁠➜ ${prefix}bombada
@@ -223,7 +231,10 @@ async function menubn(prefix, botName = "MeuBot", userName = "Usuário") {
 ││◕⁠➜ ${prefix}poderosa
 ││◕⁠➜ ${prefix}vencedora
 ││◕⁠➜ ${prefix}senhora
-│
+`;
+
+  if (!isLiteMode) {
+    menuContent += `│
 │╭─▸ *Rankings Masculinos 🏆:*
 ││
 ││◕⁠➜ ${prefix}rankgay
@@ -276,9 +287,15 @@ async function menubn(prefix, botName = "MeuBot", userName = "Usuário") {
 ││◕⁠➜ ${prefix}rankvisionaria
 ││◕⁠➜ ${prefix}rankpoderosa
 ││◕⁠➜ ${prefix}rankvencedora
-│
+`;
+  }
+
+  menuContent += `│
 ╰══════════════════════╯
 `;
+
+  return menuContent;
 }
 
 module.exports = menubn;
+

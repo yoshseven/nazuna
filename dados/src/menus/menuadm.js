@@ -4,11 +4,13 @@
  * @param {string} prefix - Prefixo dos comandos do bot
  * @param {string} [botName="MeuBot"] - Nome do bot
  * @param {string} [userName="Usuário"] - Nome do usuário
+ * @param {boolean} [isLiteMode=false] - Indica se o Modo Lite está ativo
  * @returns {Promise<string>} Menu formatado com comandos administrativos
  * @description Lista todos os comandos disponíveis para administradores de grupo,
- * incluindo gerenciamento de membros, configurações do grupo e recursos de moderação
+ * incluindo gerenciamento de membros, configurações do grupo e recursos de moderação.
+ * Filtra comandos inadequados se o Modo Lite estiver ativo.
  */
-async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
+async function menuadm(prefix, botName = "MeuBot", userName = "Usuário", isLiteMode = false) {
   return `
 ╭═══ 🌸 *${botName}* 🌸 ═══╮
 │ Olá, *${userName}*!
@@ -98,14 +100,14 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 ││
 ││◕⁠➜ ${prefix}modobn
 ││    ↳ Ativar modo boas-novas
-││◕⁠➜ ${prefix}modonsfw
-││    ↳ Ativar modo NSFW
+${!isLiteMode ? `││◕⁠➜ ${prefix}modonsfw` : `││🚫 ${prefix}modonsfw (Lite)`}
+${!isLiteMode ? `││    ↳ Ativar modo NSFW` : `││    ↳ (Desativado no Modo Lite)`}
 ││◕⁠➜ ${prefix}antilinkgp
 ││    ↳ Bloquear links de grupos
 ││◕⁠➜ ${prefix}antilinkhard
 ││    ↳ Bloquear todo tipo de links
-││◕⁠➜ ${prefix}antiporn
-││    ↳ Bloquear conteúdo adulto
+${!isLiteMode ? `││◕⁠➜ ${prefix}antiporn` : `││🚫 ${prefix}antiporn (Lite)`}
+${!isLiteMode ? `││    ↳ Bloquear conteúdo adulto` : `││    ↳ (Desativado no Modo Lite)`}
 ││◕⁠➜ ${prefix}modolite
 ││    ↳ Filtrar conteudo para crianças
 ││◕⁠➜ ${prefix}bemvindo / ${prefix}bv
@@ -133,6 +135,13 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 ││◕⁠➜ ${prefix}autodl
 ││    ↳ Sistema de Auto DL
 │
+│╭─▸ *Sistema de Aluguel (Admin):*
+││
+││◕⁠➜ ${prefix}usarcodigo [código]
+││    ↳ Ativar aluguel com código
+││◕⁠➜ ${prefix}statusaluguel
+││    ↳ Verificar status do aluguel
+│
 │╭─▸ *Configurações de Aparência:*
 ││
 ││◕⁠➜ ${prefix}legendasaiu
@@ -153,3 +162,4 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário") {
 }
 
 module.exports = menuadm;
+

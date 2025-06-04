@@ -5900,10 +5900,44 @@ case "pvp":
     break;
     
     
+    // Novos comandos de atualização (Apenas Dono)
+    case 'updatebot':
+      if (!isDono) return reply('❌ Comando restrito ao Dono do Bot.');
+      reply('🚀 Iniciando atualização completa do bot... O processo ocorrerá no console.');
+      exec(`node ${__dirname}/.scripts/update.js`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Erro ao executar update.js: ${error}`);
+          reply(`❌ Erro ao iniciar a atualização completa: ${error.message}`);
+          return;
+        }
+        console.log(`Saída update.js: ${stdout}`);
+        if (stderr) {
+          console.error(`Erro stderr update.js: ${stderr}`);
+        }
+        nazu.sendMessage(sender, { text: '✅ Processo de atualização completa iniciado no console.' });
+      });
+      break;
+
+    case 'updatemodules':
+      if (!isDono) return reply('❌ Comando restrito ao Dono do Bot.');
+      reply('🧠 Iniciando atualização inteligente dos módulos (Pro)... O processo ocorrerá no console.');
+      exec(`node ${__dirname}/.scripts/update-pro.js`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Erro ao executar update-pro.js: ${error}`);
+          reply(`❌ Erro ao iniciar a atualização dos módulos: ${error.message}`);
+          return;
+        }
+        console.log(`Saída update-pro.js: ${stdout}`);
+        if (stderr) {
+          console.error(`Erro stderr update-pro.js: ${stderr}`);
+        }
+        nazu.sendMessage(sender, { text: '✅ Processo de atualização de módulos iniciado no console.' });
+      });
+      break;
+
  default:
- if(isCmd) await nazu.react('❌');
- };
- 
+  if(isCmd) await nazu.react('❌');
+ }; 
   } catch(error) {
     // Log detalhado do erro para facilitar debugging
     console.error('==== ERRO NO PROCESSAMENTO DA MENSAGEM ====');
