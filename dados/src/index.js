@@ -25,7 +25,6 @@ const config = JSON.parse(fs.readFileSync(__dirname+'/config.json'));
 const { numerodono, nomedono, nomebot, prefixo, debug } = config;
 const prefix = prefixo; // Alias para compatibilidade
 
-// Inicialização de diretórios e arquivos necessários
 const DATABASE_DIR = __dirname + '/../database';
 const GRUPOS_DIR = DATABASE_DIR + '/grupos';
 const USERS_DIR = DATABASE_DIR + '/users';
@@ -37,10 +36,8 @@ function formatUptime(seconds, longFormat = false, showZero = false) {
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
   
-  // Define os formatos para cada unidade
   const formats = longFormat ? { d: (val) => `${val} ${val === 1 ? 'dia' : 'dias'}`, h: (val) => `${val} ${val === 1 ? 'hora' : 'horas'}`, m: (val) => `${val} ${val === 1 ? 'minuto' : 'minutos'}`, s: (val) => `${val} ${val === 1 ? 'segundo' : 'segundos'}` } : { d: (val) => `${val}d`, h: (val) => `${val}h`, m: (val) => `${val}m`, s: (val) => `${val}s` };
   
-  // Constrói a string de tempo
   const uptimeStr = [];
   
   if (d > 0 || showZero) uptimeStr.push(formats.d(d));
@@ -100,12 +97,10 @@ const loadJsonFile = (path, defaultValue = {}) => {
     }
 };
 
-// Cria diretórios necessários
 ensureDirectoryExists(GRUPOS_DIR);
 ensureDirectoryExists(USERS_DIR);
 ensureDirectoryExists(DONO_DIR);
 
-// Cria arquivos JSON necessários
 ensureJsonFileExists(DATABASE_DIR + '/antiflood.json');
 ensureJsonFileExists(DATABASE_DIR + '/cmdlimit.json');
 ensureJsonFileExists(DATABASE_DIR + '/antipv.json');
@@ -116,21 +111,16 @@ ensureJsonFileExists(DATABASE_DIR + '/botState.json', { status: 'on' });
 
 // Funções para Gerenciamento de Subdonos
 
-// Caminho para o arquivo de subdonos
 const SUBDONOS_FILE = pathz.join(DONO_DIR, 'subdonos.json');
 
-// Garante que o arquivo de subdonos exista
 ensureJsonFileExists(SUBDONOS_FILE, { subdonos: [] }); // Inicializa com uma lista vazia
 
-// Função para carregar a lista de subdonos
 const loadSubdonos = () => {
   return loadJsonFile(SUBDONOS_FILE, { subdonos: [] }).subdonos || [];
 };
 
-// Função para salvar a lista de subdonos
 const saveSubdonos = (subdonoList) => {
   try {
-    // Garante que o diretório DONO_DIR exista antes de salvar
     ensureDirectoryExists(DONO_DIR); 
     fs.writeFileSync(SUBDONOS_FILE, JSON.stringify({ subdonos: subdonoList }, null, 2));
     return true;
@@ -140,44 +130,41 @@ const saveSubdonos = (subdonoList) => {
   }
 };
 
-// Função para verificar se um usuário é subdono
 const isSubdono = (userId) => {
   const currentSubdonos = loadSubdonos(); 
   return currentSubdonos.includes(userId);
 };
 
-// Função para adicionar um subdono
 const addSubdono = (userId) => {
   if (!userId || typeof userId !== 'string' || !userId.includes('@s.whatsapp.net')) {
       return { success: false, message: 'ID de usuário inválido. Use o formato completo (ex: 1234567890@s.whatsapp.net) ou marque o usuário.' };
   }
   let currentSubdonos = loadSubdonos();
   if (currentSubdonos.includes(userId)) {
-      return { success: false, message: 'Este usuário já é um subdono. ✨' };
+      return { success: false, message: '✨ Este usuário já é um subdono! Não precisa adicionar de novo. 😊' };
   }
   
   // Verifica se o usuário a ser adicionado é o dono principal
   const nmrdn_check = numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net'; // Renomeado para evitar conflito de escopo
   if (userId === nmrdn_check) {
-      return { success: false, message: 'O dono principal não pode ser adicionado como subdono. 🤔' };
+      return { success: false, message: '🤔 O Dono principal já tem todos os superpoderes! Não dá pra adicionar como subdono. 😉' };
   }
 
   currentSubdonos.push(userId);
   if (saveSubdonos(currentSubdonos)) {
-    return { success: true, message: 'Subdono adicionado com sucesso! 🎉' };
+    return { success: true, message: '🎉 Pronto! Novo subdono adicionado com sucesso! ✨' };
   } else {
-    return { success: false, message: 'Erro ao salvar a lista de subdonos. 😥' };
+    return { success: false, message: '😥 Oops! Tive um probleminha para salvar a lista de subdonos. Tente novamente, por favor!' };
   }
 };
 
-// Função para remover um subdono
 const removeSubdono = (userId) => {
   if (!userId || typeof userId !== 'string' || !userId.includes('@s.whatsapp.net')) {
       return { success: false, message: 'ID de usuário inválido. Use o formato completo (ex: 1234567890@s.whatsapp.net) ou marque o usuário.' };
   }
   let currentSubdonos = loadSubdonos();
   if (!currentSubdonos.includes(userId)) {
-      return { success: false, message: 'Este usuário não é um subdono. 🤔' };
+      return { success: false, message: '🤔 Este usuário não está na lista de subdonos.' };
   }
 
   const initialLength = currentSubdonos.length;
@@ -188,13 +175,12 @@ const removeSubdono = (userId) => {
   }
 
   if (saveSubdonos(currentSubdonos)) {
-    return { success: true, message: 'Subdono removido com sucesso! 👋' };
+    return { success: true, message: '👋 Pronto! Subdono removido com sucesso! ✨' };
   } else {
-    return { success: false, message: 'Erro ao salvar a lista de subdonos após remoção. 😥' };
+    return { success: false, message: '😥 Oops! Tive um probleminha para salvar a lista após remover o subdono. Tente novamente!' };
   }
 };
 
-// Função para obter a lista de subdonos
 const getSubdonos = () => {
   return [...loadSubdonos()]; // Retorna uma cópia atualizada
 };
@@ -203,20 +189,16 @@ const getSubdonos = () => {
 
 // Funções para Gerenciamento de Aluguel
 
-// Caminhos para os arquivos de dados
 const ALUGUEIS_FILE = pathz.join(DONO_DIR, 'alugueis.json');
 const CODIGOS_ALUGUEL_FILE = pathz.join(DONO_DIR, 'codigos_aluguel.json');
 
-// Garante que os arquivos existam
 ensureJsonFileExists(ALUGUEIS_FILE, { globalMode: false, groups: {} }); // globalMode: false (desativado por padrão), groups: { groupId: { expiresAt: null | 'permanent' | ISOString } }
 ensureJsonFileExists(CODIGOS_ALUGUEL_FILE, { codes: {} }); // codes: { code: { duration: number | 'permanent', targetGroup: null | string, used: false, usedBy: null, usedAt: null } }
 
-// Função para carregar dados de aluguel
 const loadRentalData = () => {
   return loadJsonFile(ALUGUEIS_FILE, { globalMode: false, groups: {} });
 };
 
-// Função para salvar dados de aluguel
 const saveRentalData = (data) => {
   try {
     ensureDirectoryExists(DONO_DIR);
@@ -228,20 +210,17 @@ const saveRentalData = (data) => {
   }
 };
 
-// Função para verificar se o modo de aluguel global está ativo
 const isRentalModeActive = () => {
   const rentalData = loadRentalData();
   return rentalData.globalMode === true;
 };
 
-// Função para definir o modo de aluguel global
 const setRentalMode = (isActive) => {
   let rentalData = loadRentalData();
   rentalData.globalMode = !!isActive; // Garante que seja booleano
   return saveRentalData(rentalData);
 };
 
-// Função para verificar o status de aluguel de um grupo
 const getGroupRentalStatus = (groupId) => {
   const rentalData = loadRentalData();
   const groupInfo = rentalData.groups[groupId];
@@ -259,8 +238,6 @@ const getGroupRentalStatus = (groupId) => {
     if (expirationDate > new Date()) {
       return { active: true, expiresAt: groupInfo.expiresAt, permanent: false }; // Aluguel ativo e dentro do prazo
     } else {
-      // delete rentalData.groups[groupId];
-      // saveRentalData(rentalData); 
       return { active: false, expiresAt: groupInfo.expiresAt, permanent: false }; // Aluguel expirado
     }
   }
@@ -268,10 +245,9 @@ const getGroupRentalStatus = (groupId) => {
   return { active: false, expiresAt: null, permanent: false }; // Caso inválido ou sem data de expiração definida
 };
 
-// Função para definir/atualizar o aluguel de um grupo
 const setGroupRental = (groupId, durationDays) => {
   if (!groupId || typeof groupId !== 'string' || !groupId.endsWith('@g.us')) {
-    return { success: false, message: 'ID de grupo inválido.' };
+    return { success: false, message: '🤔 ID de grupo inválido! Verifique se o ID está correto (geralmente termina com @g.us).' };
   }
 
   let rentalData = loadRentalData();
@@ -287,7 +263,7 @@ const setGroupRental = (groupId, durationDays) => {
     expiresAt = expirationDate.toISOString();
     message = `✅ Aluguel ativado para o grupo ${groupId} por ${durationDays} dias! Expira em: ${expirationDate.toLocaleDateString('pt-BR')}.`;
   } else {
-    return { success: false, message: 'Duração inválida. Use um número de dias ou a palavra "permanente".' };
+    return { success: false, message: '🤔 Duração inválida! Use um número de dias (ex: 30) ou a palavra "permanente".' };
   }
 
   rentalData.groups[groupId] = { expiresAt };
@@ -295,16 +271,14 @@ const setGroupRental = (groupId, durationDays) => {
   if (saveRentalData(rentalData)) {
     return { success: true, message: message };
   } else {
-    return { success: false, message: '❌ Erro ao salvar o status de aluguel do grupo.' };
+    return { success: false, message: '😥 Oops! Tive um problema ao salvar as informações de aluguel deste grupo.' };
   }
 };
 
-// Função para carregar códigos de ativação
 const loadActivationCodes = () => {
   return loadJsonFile(CODIGOS_ALUGUEL_FILE, { codes: {} });
 };
 
-// Função para salvar códigos de ativação
 const saveActivationCodes = (data) => {
   try {
     ensureDirectoryExists(DONO_DIR);
@@ -316,7 +290,6 @@ const saveActivationCodes = (data) => {
   }
 };
 
-// Função para gerar um código de ativação único
 const generateActivationCode = (durationDays, targetGroupId = null) => {
   const crypto = require('crypto');
   let code = '';
@@ -327,12 +300,11 @@ const generateActivationCode = (durationDays, targetGroupId = null) => {
   } while (codesData.codes[code]); // Garante unicidade
 
   if (durationDays !== 'permanent' && (typeof durationDays !== 'number' || durationDays <= 0)) {
-      return { success: false, message: 'Duração inválida para o código. Use um número de dias ou "permanente".' };
+      return { success: false, message: '🤔 Duração inválida para o código! Use um número de dias (ex: 7) ou "permanente".' };
   }
   
   if (targetGroupId && (typeof targetGroupId !== 'string' || !targetGroupId.endsWith('@g.us'))) {
       // Permite targetGroupId nulo, mas se fornecido, deve ser válido
-      // return { success: false, message: 'ID de grupo alvo inválido para o código.' };
       // Vamos permitir códigos sem grupo alvo específico por enquanto
       console.warn(`Gerando código ${code} sem grupo alvo específico, embora um ID inválido (${targetGroupId}) tenha sido fornecido.`);
       targetGroupId = null; // Ignora ID inválido
@@ -364,26 +336,24 @@ const generateActivationCode = (durationDays, targetGroupId = null) => {
     message += `\nEnvie este código no grupo para ativar o aluguel.`;
     return { success: true, message: message, code: code };
   } else {
-    return { success: false, message: '❌ Erro ao salvar o novo código de ativação.' };
+    return { success: false, message: '😥 Oops! Não consegui salvar o novo código de ativação. Tente gerar novamente!' };
   }
 };
 
-// Função para validar e obter informações de um código
 const validateActivationCode = (code) => {
   const codesData = loadActivationCodes();
   const codeInfo = codesData.codes[code?.toUpperCase()]; // Compara em maiúsculas
 
   if (!codeInfo) {
-    return { valid: false, message: 'Código inválido. 🤷' };
+    return { valid: false, message: '🤷 Código de ativação inválido ou não encontrado!' };
   }
   if (codeInfo.used) {
-    return { valid: false, message: `Este código já foi usado em ${new Date(codeInfo.usedAt).toLocaleDateString('pt-BR')} por ${codeInfo.usedBy?.split('@')[0] || 'alguém'}. 😕` };
+    return { valid: false, message: `😕 Este código já foi usado em ${new Date(codeInfo.usedAt).toLocaleDateString('pt-BR')} por ${codeInfo.usedBy?.split('@')[0] || 'alguém'}!` };
   }
   
   return { valid: true, ...codeInfo };
 };
 
-// Função para marcar um código como usado e ativar o aluguel
 const useActivationCode = (code, groupId, userId) => {
   const validation = validateActivationCode(code);
   if (!validation.valid) {
@@ -394,12 +364,12 @@ const useActivationCode = (code, groupId, userId) => {
   code = code.toUpperCase(); // Garante que estamos usando a chave correta
 
   if (codeInfo.targetGroup && codeInfo.targetGroup !== groupId) {
-    return { success: false, message: 'Este código é destinado a outro grupo. 🔒' };
+    return { success: false, message: '🔒 Este código de ativação é específico para outro grupo!' };
   }
 
   const rentalResult = setGroupRental(groupId, codeInfo.duration);
   if (!rentalResult.success) {
-    return { success: false, message: `Erro ao ativar o aluguel com o código: ${rentalResult.message}` };
+    return { success: false, message: `😥 Oops! Erro ao ativar o aluguel com este código: ${rentalResult.message}` };
   }
 
   let codesData = loadActivationCodes();
@@ -412,11 +382,32 @@ const useActivationCode = (code, groupId, userId) => {
     return { success: true, message: `🎉 Código *${code}* ativado com sucesso! ${rentalResult.message}` };
   } else {
     console.error(`Falha CRÍTICA ao marcar código ${code} como usado após ativar aluguel para ${groupId}.`);
-    return { success: false, message: 'Erro CRÍTICO ao marcar o código como usado após ativar o aluguel. Contate o suporte.' };
+    return { success: false, message: '🚨 Erro Crítico! O aluguel foi ativado, mas não consegui marcar o código como usado. Por favor, contate o suporte informando o código!' };
   }
 };
 
 // Fim Funções Aluguel
+
+
+// Helper function to determine if Lite Mode is active for a group
+const isModoLiteActive = (groupData, modoLiteGlobalConfig) => {
+  const isModoLiteGlobal = modoLiteGlobalConfig?.status || false;
+  const isModoLiteGrupo = groupData?.modolite || false;
+
+  // Group setting overrides global unless global forces 'off' (not implemented here but considered)
+  // Or global setting applies unless group explicitly turns it 'off' (not implemented here but considered)
+  // Current logic: Group ON overrides Global OFF. Global ON applies unless Group explicitly OFF (not standard boolean).
+  // Simplifying based on original logic:
+  // return (isModoLiteGrupo && !modoLiteGlobalConfig.hasOwnProperty('forceOff')) || 
+  //        (isModoLiteGlobal && !groupData.hasOwnProperty('modoliteOff'));
+  // Let's stick to the original logic interpretation for now:
+  const groupHasSetting = groupData && typeof groupData.modolite === 'boolean';
+  if (groupHasSetting) {
+      return groupData.modolite; // Group setting takes precedence
+  }
+  return isModoLiteGlobal; // Fallback to global setting
+};
+
 
 async function NazuninhaBotExec(nazu, info, store, groupCache) {
   const { 
@@ -471,7 +462,7 @@ try {
  const baileys = require('baileys');
  const type = baileys.getContentType(info.message);
  
- const isMedia = (type === "imageMessage" || type === "videoMessage" || type === "audioMessage");
+ const isMedia = ["imageMessage", "videoMessage", "audioMessage"].includes(type);
  const isImage = type === 'imageMessage';
  const isVideo = type === 'videoMessage';
  const isVisuU2 = type === 'viewOnceMessageV2';
@@ -479,18 +470,24 @@ try {
  
  const pushname = info.pushName || '';
  
- const body = info.message?.conversation || 
-             info.message?.viewOnceMessageV2?.message?.imageMessage?.caption || 
-             info.message?.viewOnceMessageV2?.message?.videoMessage?.caption || 
-             info.message?.imageMessage?.caption || 
-             info.message?.videoMessage?.caption || 
-             info.message?.extendedTextMessage?.text || 
-             info.message?.viewOnceMessage?.message?.videoMessage?.caption || 
-             info.message?.viewOnceMessage?.message?.imageMessage?.caption || 
-             info.message?.documentWithCaptionMessage?.message?.documentMessage?.caption || 
-             info.message?.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text || 
-             info.message?.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption || 
-             info?.text || '';
+ // Função auxiliar para obter o texto da mensagem de forma segura
+const getMessageText = (message) => {
+  if (!message) return '';
+  return message.conversation || 
+         message.extendedTextMessage?.text || 
+         message.imageMessage?.caption || 
+         message.videoMessage?.caption || 
+         message.documentWithCaptionMessage?.message?.documentMessage?.caption ||
+         message.viewOnceMessage?.message?.imageMessage?.caption ||
+         message.viewOnceMessage?.message?.videoMessage?.caption ||
+         message.viewOnceMessageV2?.message?.imageMessage?.caption ||
+         message.viewOnceMessageV2?.message?.videoMessage?.caption ||
+         message.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text ||
+         message.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption ||
+         ''; // Retorna string vazia se nenhum texto for encontrado
+};
+
+ const body = getMessageText(info.message) || info?.text || '';
  
  const args = body.trim().split(/ +/).slice(1);
  const q = args.join(' ');
@@ -522,14 +519,14 @@ try {
    }
  }
 
- const isPremium = !!premiumListaZinha[sender] || !!premiumListaZinha[from] || isOwner;
+ const isPremium = premiumListaZinha[sender] || premiumListaZinha[from] || isOwner;
  
-  if (isGroup && !!banGpIds[from] && !isOwner && !isPremium) {
+  if (isGroup && banGpIds[from] && !isOwner && !isPremium) {
     return;
   }
  
   const groupMetadata = !isGroup ? {} : await nazu.groupMetadata(from).catch(() => ({}));
-  const groupName = isGroup && groupMetadata.subject ? groupMetadata.subject : '';
+  const groupName = groupMetadata?.subject || '';
   const AllgroupMembers = !isGroup ? [] : groupMetadata.participants?.map(p => p.id) || [];
   const groupAdmins = !isGroup ? [] : groupMetadata.participants?.filter(p => p.admin).map(p => p.id) || [];
   
@@ -565,22 +562,19 @@ try {
     }
   }
   
-  const isGroupAdmin = !isGroup ? false : 
-    groupAdmins.includes(sender) || 
-    isOwner || 
-    (groupData.moderators?.includes(sender) && groupData.allowedModCommands?.includes(command));
+  let isGroupAdmin = false;
+  if (isGroup) {
+      const isModeratorActionAllowed = groupData.moderators?.includes(sender) && groupData.allowedModCommands?.includes(command);
+      isGroupAdmin = groupAdmins.includes(sender) || isOwner || isModeratorActionAllowed;
+  }
   
-  const isModoBn = !!groupData.modobrincadeira;
-  const isOnlyAdmin = !!groupData.soadm;
-  const isAntiPorn = !!groupData.antiporn;
-  const isMuted = !!(groupData.mutedUsers && groupData.mutedUsers[sender]);
-  const isAntiLinkGp = !!groupData.antilinkgp;
-  const isModoRpg = isGroup && !!groupData.modorpg;
-  
-  const isModoLiteGlobal = modoLiteGlobal.status || false;
-  const isModoLiteGrupo = isGroup && !!groupData.modolite;
-  const isModoLite = (isModoLiteGrupo && !modoLiteGlobal.hasOwnProperty('forceOff')) || 
-                    (isModoLiteGlobal && !groupData.hasOwnProperty('modoliteOff'));
+  const isModoBn = groupData.modobrincadeira;
+  const isOnlyAdmin = groupData.soadm;
+  const isAntiPorn = groupData.antiporn;
+  const isMuted = groupData.mutedUsers?.[sender];
+  const isAntiLinkGp = groupData.antilinkgp;
+  const isModoRpg = isGroup && groupData.modorpg;
+    const isModoLite = isGroup && isModoLiteActive(groupData, modoLiteGlobal);
   
   if (isGroup && isOnlyAdmin && !isGroupAdmin) {
     return; // Silenciosamente ignora mensagens de não-admins quando soadm está ativo
@@ -638,7 +632,6 @@ try {
       console.error("Erro ao processar usuário mutado:", error);
     }
   }
- //FIM
  
  const rentalModeOn = isRentalModeActive();
  let groupHasActiveRental = false;
@@ -661,7 +654,7 @@ try {
     ];
 
     if (!groupHasActiveRental && isCmd && !isOwnerOrSub && !allowedCommandsBypass.includes(command)) {
-        await reply("Este grupo não possui um aluguel ativo. Use um código de ativação ou contate o dono.");
+        await reply("⏳ Oops! Parece que o aluguel deste grupo expirou ou não está ativo. Para usar os comandos, ative com um código ou peça para o dono renovar! 😊");
         return; // Impede o processamento de outros comandos
     }
  }
@@ -721,7 +714,6 @@ try {
      console.error("Erro no sistema de contagem de mensagens:", error);
    }
  }
- // FIM DO CONTADOR
  
  async function reply(text, options = {}) {
    try {
@@ -852,10 +844,13 @@ try {
          ensureDirectoryExists(tempDir);
          
          const fileName = options.fileName || `${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-         const extension = mediaType === 'image' ? '.jpg' : 
-                          mediaType === 'video' ? '.mp4' : 
-                          mediaType === 'audio' ? '.mp3' : 
-                          mediaType === 'document' ? '.bin' : '.dat';
+         const extensionMap = {
+           image: '.jpg',
+           video: '.mp4',
+           audio: '.mp3',
+           document: '.bin' // Default for documents
+         };
+         const extension = extensionMap[mediaType] || '.dat'; // Fallback extension
          
          const filePath = pathz.join(tempDir, fileName + extension);
          
@@ -873,7 +868,21 @@ try {
      throw error;
    }
  }
- //FIM FUNÇÕES BASICAS
+
+// Helper function to get media message object and type
+const getMediaInfo = (message) => {
+  if (!message) return null;
+  if (message.imageMessage) return { media: message.imageMessage, type: 'image' };
+  if (message.videoMessage) return { media: message.videoMessage, type: 'video' };
+  // Stickers might not be checkable by the API, excluding for now
+  // if (message.stickerMessage) return { media: message.stickerMessage, type: 'sticker' };
+  if (message.viewOnceMessage?.message?.imageMessage) return { media: message.viewOnceMessage.message.imageMessage, type: 'image' };
+  if (message.viewOnceMessage?.message?.videoMessage) return { media: message.viewOnceMessage.message.videoMessage, type: 'video' };
+  if (message.viewOnceMessageV2?.message?.imageMessage) return { media: message.viewOnceMessageV2.message.imageMessage, type: 'image' };
+  if (message.viewOnceMessageV2?.message?.videoMessage) return { media: message.viewOnceMessageV2.message.videoMessage, type: 'video' };
+  return null;
+};
+
 
  if (isGroup && info.message?.extendedTextMessage?.contextInfo?.mentionedJid) {
     const mentioned = info.message.extendedTextMessage.contextInfo.mentionedJid;
@@ -892,63 +901,72 @@ Motivo: ${afkData.reason}`;
       }
     }
   }
+// Anti-Porn Check
+if (isGroup && isAntiPorn) {
+  const mediaInfo = getMediaInfo(info.message);
 
- if (isGroup && isAntiPorn && (isImage || isVisuU || isVisuU2)) {
-   try {
-     const midiaz = info.message?.imageMessage || 
-                   info.message?.viewOnceMessageV2?.message?.imageMessage || 
-                   info.message?.viewOnceMessage?.message?.imageMessage || 
-                   info.message?.videoMessage || 
-                   info.message?.stickerMessage || 
-                   info.message?.viewOnceMessageV2?.message?.videoMessage || 
-                   info.message?.viewOnceMessage?.message?.videoMessage;
-     
-     if (midiaz) {
-       const stream = await getFileBuffer(midiaz, "image");
-       
-       const mediaURL = await upload(stream, true);
-       
-       if (mediaURL) {
-         const apiResponse = await axios.get(`https://nsfw-demo.sashido.io/api/image/classify?url=${mediaURL}`);
-         
-         const { Porn, Hentai } = apiResponse.data.reduce((acc, item) => ({
-           ...acc,
-           [item.className]: item.probability
-         }), {});
-         
-         if (Porn > 0.80 || Hentai > 0.80) {
-           await nazu.sendMessage(from, { delete: info.key });
-           
-           const contentType = Porn > Hentai ? 'Pornografia' : 'Hentai';
-           const probability = (Porn > Hentai ? Porn : Hentai).toFixed(2);
-           
-           if (!isGroupAdmin) {
-             if (isBotAdmin) {
-               await nazu.groupParticipantsUpdate(from, [sender], "remove");
-               
-               const userMessage = `🚫 *Conteúdo impróprio detectado*\n\n@${sender.split('@')[0]} foi removido por compartilhar conteúdo impróprio.\n\n📊 *Detecção*: ${contentType} (${probability} de probabilidade)`;
-               await nazu.sendMessage(from, { 
-                 text: userMessage, 
-                 mentions: [sender] 
-               }, { quoted: info });
-             } else {
-               await reply(`⚠️ Conteúdo adulto detectado de @${sender.split('@')[0]}, mas não posso remover o usuário porque não sou administrador.`, { mentions: [sender] });
+  // Only check images for now, as the API URL suggests image classification
+  if (mediaInfo && mediaInfo.type === 'image') {
+    try {
+      const imageBuffer = await getFileBuffer(mediaInfo.media, 'image'); // Get buffer for the image
+      const mediaURL = await upload(imageBuffer, true); // Upload the buffer
+
+      if (mediaURL) {
+        const apiResponse = await axios.get(`https://nsfw-demo.sashido.io/api/image/classify?url=${encodeURIComponent(mediaURL)}`); // Ensure URL is encoded
+
+        // Process the response safely, assuming structure [{ className: '...', probability: ... }, ...]
+        let scores = { Porn: 0, Hentai: 0 };
+        if (Array.isArray(apiResponse.data)) {
+           scores = apiResponse.data.reduce((acc, item) => {
+             if (item && typeof item.className === 'string' && typeof item.probability === 'number') {
+               // Only accumulate relevant scores
+               if (item.className === 'Porn' || item.className === 'Hentai') {
+                  acc[item.className] = Math.max(acc[item.className] || 0, item.probability); // Take max probability if duplicates exist
+               }
              }
-           } else {
-             await reply(`⚠️ Conteúdo adulto detectado (${contentType}, ${probability}), mas como você é administrador, não será removido do grupo.`);
-           }
-         }
-       }
-     }
-   } catch (error) {
-     console.error("Erro no sistema anti-pornografia:", error);
-   }
+             return acc;
+           }, { Porn: 0, Hentai: 0 }); // Initialize accumulator correctly
+        } else {
+            console.warn("Anti-porn API response format unexpected:", apiResponse.data);
+        }
+
+
+        const pornThreshold = 0.7; // Define threshold
+        const hentaiThreshold = 0.7; // Define threshold
+
+        const isPorn = scores.Porn >= pornThreshold;
+        const isHentai = scores.Hentai >= hentaiThreshold;
+
+        if (isPorn || isHentai) {
+          const reason = isPorn ? 'Pornografia' : 'Hentai';
+          await reply(`🚨 Conteúdo impróprio detectado! (${reason})`);
+          if (isBotAdmin) {
+            try {
+              await nazu.sendMessage(from, { delete: info.key });
+              await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+              await reply(`🔞 Oops! @${sender.split('@')[0]}, conteúdo impróprio não é permitido e você foi removido(a).`,  { mentions: [sender] });
+            } catch (adminError) {
+              console.error(`Erro ao remover usuário por anti-porn: ${adminError}`);
+              await reply(`⚠️ Não consegui remover @${sender.split('@')[0]} automaticamente após detectar conteúdo impróprio. Admins, por favor, verifiquem!`,  { mentions: [sender] });
+            }
+          } else {
+            await reply(`@${sender.split('@')[0]} enviou conteúdo impróprio (${reason}), mas não posso removê-lo sem ser admin.`, { mentions: [sender] });
+          }
+        }
+      } else {
+         console.warn("Falha no upload da imagem para verificação anti-porn.");
+      }
+    } catch (error) {
+      console.error("Erro na verificação anti-porn:", error);
+    }
+  }
+}
  };
 
 if (isGroup && groupData.antiloc && !isGroupAdmin && type === 'locationMessage') {
   await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
   await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-  await reply(`🚫 @${sender.split('@')[0]} foi removido por enviar uma localização!`, { mentions: [sender] });
+  await reply(`🗺️ Ops! @${sender.split('@')[0]}, parece que localizações não são permitidas aqui e você foi removido(a).`,  { mentions: [sender] });
 };
 
 if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
@@ -957,7 +975,7 @@ if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
   const lastCmd = antifloodData[from].users[sender]?.lastCmd || 0;
   const interval = antifloodData[from].interval * 1000;
   if (now - lastCmd < interval) {
-    return reply(`⏳ Aguarde ${Math.ceil((interval - (now - lastCmd)) / 1000)} segundos antes de usar outro comando!`);
+    return reply(`⏳ Calma aí, apressadinho(a)! 😊 Espere ${Math.ceil((interval - (now - lastCmd)) / 1000)} segundos para usar outro comando, por favor! ✨`);
   }
   antifloodData[from].users[sender] = { lastCmd: now };
   fs.writeFileSync(__dirname + '/../database/antiflood.json', JSON.stringify(antifloodData, null, 2));
@@ -966,7 +984,7 @@ if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
 if (isGroup && groupData.antidoc && !isGroupAdmin && (type === 'documentMessage' || type === 'documentWithCaptionMessage')) {
   await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
   await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-  await reply(`🚫 @${sender.split('@')[0]} foi removido por enviar um documento!`, { mentions: [sender] });
+  await reply(`📄 Oops! @${sender.split('@')[0]}, parece que documentos não são permitidos aqui e você foi removido(a).`,  { mentions: [sender] });
 };
 
 if (isGroup && cmdLimitData[from]?.enabled && isCmd && !isGroupAdmin) {
@@ -977,7 +995,7 @@ if (isGroup && cmdLimitData[from]?.enabled && isCmd && !isGroupAdmin) {
     cmdLimitData[from].users[sender] = { date: today, count: 0 };
   }
   if (cmdLimitData[from].users[sender].count >= cmdLimitData[from].limit) {
-    return reply(`🚫 Você atingiu o limite de ${cmdLimitData[from].limit} comandos por dia!`);
+    return reply(`🚫 Oops! Você já usou seus ${cmdLimitData[from].limit} comandos de hoje. Tente novamente amanhã! 😊`);
   }
   cmdLimitData[from].users[sender].count++;
   fs.writeFileSync(__dirname + '/../database/cmdlimit.json', JSON.stringify(cmdLimitData, null, 2));
@@ -1068,11 +1086,11 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
      // Remove o usuário se o bot for admin
      if (isBotAdmin) {
   await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-       await reply(`🚫 *Link detectado*\n\n@${sender.split('@')[0]} foi removido por enviar um link não permitido.`, { 
+       await reply(`🔗 Ops! @${sender.split('@')[0]}, links não são permitidos aqui e você foi removido(a).`,  { 
          mentions: [sender] 
        });
      } else {
-       await reply(`⚠️ Link detectado de @${sender.split('@')[0]}, mas não posso remover o usuário porque não sou administrador.`, {
+       await reply(`🔗 Atenção, @${sender.split('@')[0]}! Links não são permitidos aqui. Não consigo remover você, mas por favor, evite enviar links. 😉`,  {
          mentions: [sender]
        });
      }
@@ -1198,11 +1216,11 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
      // Remove o usuário se o bot for admin
      if (isBotAdmin) {
        await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-       await reply(`🚫 *Link de grupo detectado*\n\n@${sender.split('@')[0]} foi removido por compartilhar link de outro grupo.`, {
+       await reply(`🔗 Ops! @${sender.split('@')[0]}, links de outros grupos não são permitidos aqui e você foi removido(a).`,  {
          mentions: [sender]
        });
      } else {
-       await reply(`⚠️ Link de grupo detectado de @${sender.split('@')[0]}, mas não posso remover o usuário porque não sou administrador.`, {
+       await reply(`🔗 Atenção, @${sender.split('@')[0]}! Links de outros grupos não são permitidos. Não consigo remover você, mas por favor, evite compartilhar esses links. 😉`,  {
          mentions: [sender]
        });
      }
@@ -1271,7 +1289,7 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
         if (['tttend', 'rv', 'fimjogo'].includes(budy2)) {
           // Apenas admins podem encerrar jogos forçadamente
           if (!isGroupAdmin) {
-            await reply("⚠️ Apenas administradores podem encerrar jogos em andamento.");
+            await reply("✋ Somente os administradores do grupo podem encerrar um jogo da velha em andamento! 😊");
             return;
           }
           
@@ -1306,15 +1324,18 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
 
 //VERIFICAR USUÁRIOS BLOQUEADOS (GRUPO)
 if (isGroup && groupData.blockedUsers && (groupData.blockedUsers[sender] || groupData.blockedUsers[sender.split('@')[0]]) && isCmd) {
-  return reply(`🚫 Você está bloqueado de usar o bot neste grupo!\nMotivo: ${groupData.blockedUsers[sender] ? groupData.blockedUsers[sender].reason : groupData.blockedUsers[sender.split('@')[0]].reason}`);
+  return reply(`🚫 Oops! Parece que você não pode usar comandos neste grupo.
+Motivo: ${groupData.blockedUsers[sender] ? groupData.blockedUsers[sender].reason : groupData.blockedUsers[sender.split('@')[0]].reason}`);
 };
 
 //VERIFICAR BLOQUEIOS (GLOBAL)
 if (globalBlocks.users && (globalBlocks.users[sender.split('@')[0]] || globalBlocks.users[sender]) && isCmd) {
-  return reply(`🚫 Você está bloqueado globalmente!\nMotivo: ${globalBlocks.users[sender] ? globalBlocks.users[sender].reason : globalBlocks.users[sender.split('@')[0]].reason}`);
+  return reply(`🚫 Parece que você está bloqueado de usar meus comandos globalmente.
+Motivo: ${globalBlocks.users[sender] ? globalBlocks.users[sender].reason : globalBlocks.users[sender.split('@')[0]].reason}`);
 };
 if (isCmd && globalBlocks.commands && globalBlocks.commands[command]) {
-  return reply(`🚫 O comando *${command}* está bloqueado globalmente!\nMotivo: ${globalBlocks.commands[command].reason}`);
+  return reply(`🚫 O comando *${command}* está temporariamente desativado globalmente.
+Motivo: ${globalBlocks.commands[command].reason}`);
 };
 
 // SISTEMA DE RECUPERAÇÃO DE MÍDIA - Comando especial para recuperar mídias
@@ -1381,13 +1402,25 @@ if (budy2 === "ta baxano" && !isGroup) {
   }
   }
   
-  // Registra o uso do comando para estatísticas globais
-  if (isCmd && commandStats && commandStats.trackCommandUsage && command && command.length>0) {
+  // Registra o uso do comando para estatísticas globai  if (isCmd && command) {
+    // Adiciona uma única reação no início do processamento do comando
+    try {
+      await nazu.react('⏳', { key: info.key }); 
+    } catch (reactError) {
+      console.warn("Falha ao reagir no início do comando:",  if (isCmd && commandStats && commandStats.trackCommandUsage && command && command.length>0) {
     commandStats.trackCommandUsage(command, sender);
   }
-  
- switch(command) {
-  //ALTERADORES
+
+  // Adiciona uma única reação no início do processamento do comando, se for um comando válido
+  if (isCmd) {
+      try {
+        await nazu.react('⏳', { key: info.key });
+      } catch (reactError) {
+        console.warn("Falha ao reagir no início do comando:", reactError);
+      }
+  }
+
+ switch(command) {//ALTERADORES
   case 'speedup':
   case 'vozmenino':
   case 'vozmulher':
@@ -1433,17 +1466,17 @@ if (budy2 === "ta baxano" && !isGroup) {
         const effect = audioEffects[command];
         exec(`ffmpeg -i ${gem} -filter:a "${effect}" ${ran}`, async (err, stderr, stdout) => {
           await fs.unlinkSync(gem);
-          if (err) return reply(`Ocorreu um erro ao adicionar o *efeito ${command}* no áudio.`);
+          if (err) { console.error(`FFMPEG Error (Audio Effect ${command}):`, err); return reply(`🐝 Oops! Tive um probleminha ao aplicar o efeito *${command}* no seu áudio. Tente novamente, por favorzinho! 🥺`); }
           const hah = fs.readFileSync(ran);
           await nazu.sendMessage(from, { audio: hah, mimetype: 'audio/mpeg' }, { quoted: info });
           await fs.unlinkSync(ran);
         });
       } else {
-        reply("Marque o áudio..");
+        reply("🎶 Para usar este efeito, por favor, responda (marque) a mensagem de áudio que você quer modificar! 😊");
       }
     } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break
 
@@ -1489,24 +1522,24 @@ if (budy2 === "ta baxano" && !isGroup) {
 
         exec(ffmpegCmd, async (err) => {
           await fs.unlinkSync(media);
-          if (err) return reply(`Err: ${err}`);
+          if (err) { console.error(`FFMPEG Error (Video Effect ${command}):`, err); return reply(`🎬 Oops! Algo deu errado ao aplicar o efeito *${command}* no seu vídeo. Poderia tentar de novo? 🥺`); }
           const buffer453 = fs.readFileSync(ran);
           const messageType = command === 'tomp3' ? { audio: buffer453, mimetype: 'audio/mpeg' } : { video: buffer453, mimetype: 'video/mp4' };
           await nazu.sendMessage(from, messageType, { quoted: info });
           await fs.unlinkSync(ran);
         });
       } else {
-        reply(command === 'tomp3' ? "Marque o vídeo para converter para áudio." : "Marque o vídeo..");
+        reply(command === 'tomp3' ? "🎬 Para converter para áudio, por favor, responda (marque) a mensagem de vídeo! 😊" : "🎬 Para usar este efeito, por favor, responda (marque) a mensagem de vídeo que você quer modificar! 😊");
       }
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
     break;
   //INTELIGENCIA ARTIFICIAL
   
   case 'nazu': case 'nazuna': case 'ai': 
-    if (!q) return reply("Hmm, parece que você esqueceu de me dizer o que pensar! 🤔 Por favor, digite sua pergunta ou comando depois de `ai`, tá bom? ✨");
+    if (!q) return reply(`🤔 O que você gostaria de me perguntar ou pedir? É só digitar depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} qual a previsão do tempo?`);
     nazu.react('💖'); // Reação fofinha!
     try {
       const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { message: q, chat_id: `nazuninha_${sender.split('@')[0]}`, model_name: "nazuninha", })).data;
@@ -1515,12 +1548,12 @@ if (budy2 === "ta baxano" && !isGroup) {
 ${bahz.reply}`);
     } catch (e) {
       console.error("Erro na API Nazuninha:", e);
-      await reply("Oh não! 🥺 Tive um probleminha para conectar com minha inteligência... Tente de novo daqui a pouquinho, por favorzinho! 💔");
+      await reply("🌸 Awnn... Minha conexão mental falhou por um instante! 🧠⚡️ Poderia repetir sua pergunta, por favorzinho? 🥺");
     }
   break;
   
   case 'gpt': case 'gpt4': case 'chatgpt':
-    if (!q) return reply("O que você gostaria de perguntar ao GPT? 🤔 Me diga o prompt, por favorzinho! ✨");
+    if (!q) return reply(`🤔 Qual pergunta você quer fazer para o GPT? Digite depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} me explique sobre buracos negros.`);
     nazu.react("🧠"); // Reação inteligente!
     try {      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { message: q, chat_id: `gpt_${sender.split('@')[0]}`, model_name: "gpt", })).data;      await reply(`💡 Resposta do GPT:
 
@@ -1531,7 +1564,7 @@ ${bahz.reply}`);
     }reak;
   
   case 'llama': case 'llama3': case 'llamachat':
-    if (!q) return reply("Qual a sua pergunta para o Llama? 🤔 Me conta o que você quer saber! ✨");
+    if (!q) return reply(`🤔 O que você quer perguntar ao Llama? É só digitar depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} crie uma história curta.`);
     nazu.react("🦙"); // Reação de Llama!
     try {
       const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
@@ -1549,7 +1582,7 @@ ${bahz.reply}`);
   break;
   
   case 'cognimai': case 'cog-base':
-    if (!q) return reply("O que você quer perguntar para a Cognima AI? 🤔 Me diga o prompt, por favorzinho! ✨");
+    if (!q) return reply(`🤔 Qual sua dúvida para a Cognima AI? Digite depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} como funciona a fotossíntese?`);
     nazu.react("🤖"); // Reação robótica fofa!
     try {
       const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
@@ -1565,7 +1598,7 @@ ${bahz.reply}`);
   break;
   
   case 'qwen': case 'qwen2': case 'qwenchat':
-    if (!q) return reply("O que você gostaria de perguntar ao Qwen? 🤔 Me diga o prompt, por favorzinho! ✨");
+    if (!q) return reply(`🤔 O que você quer perguntar ao Qwen? É só digitar depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} me dê ideias para o jantar.`);
     nazu.react("🌠"); // Reação estelar!
     try {
       const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
@@ -1581,7 +1614,7 @@ ${bahz.reply}`);
   break;
   
   case 'gemma': case 'gemma2': case 'gecko':
-    if (!q) return reply("O que você quer perguntar para o Gemma? 🤔 Me diga o prompt, por favorzinho! ✨");
+    if (!q) return reply(`🤔 Qual sua pergunta para o Gemma? Digite depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} quem descobriu o Brasil?`);
     nazu.react("💎"); // Reação preciosa!
     try {
       const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
@@ -1597,7 +1630,7 @@ ${bahz.reply}`);
   break;
   
   case 'resumir':
-    if (!q) return reply("O que você gostaria que eu resumisse? 🤔 Me envie o texto, por favorzinho! ✨");
+    if (!q) return reply(`📝 Quer que eu faça um resuminho? Me envie o texto logo após o comando ${prefix}resumir! 😊`);
     nazu.react('📝'); // Reação de resumo!
     try {
       const prompt = `Resuma o seguinte texto em poucos parágrafos, de forma clara e fofa, mantendo as informações mais importantes:\n\n${q}`;
@@ -1614,12 +1647,14 @@ ${bahz.reply}`);
   break;
   
   case 'tradutor':
-    if (!q) return reply("Para qual idioma e qual texto você quer a tradução? 🤔 Me diga assim: `idioma | texto`\nExemplo: `inglês | Olá, como vai você?` ✨");
+    if (!q) return reply(`🌍 Quer traduzir algo? Me diga o idioma e o texto assim: ${prefix}tradutor idioma | texto
+Exemplo: ${prefix}tradutor inglês | Bom dia! 😊`);
     nazu.react('🌍'); // Reação de tradução!
     try {
       const partes = q.split('|');
       if (partes.length < 2) {
-        return reply("Formato incorreto, meu anjo! 🥺 Use: `idioma | texto`\nExemplo: `inglês | Olá, como vai você?`");
+        return reply(`Formato incorreto! 😅 Use: ${prefix}tradutor idioma | texto
+Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       }
       const idioma = partes[0].trim();
       const texto = partes.slice(1).join('|').trim();
@@ -1636,7 +1671,7 @@ ${bahz.reply}`);
     }
   break;
    case 'qrcode':
-    if (!q) return reply("O que você quer transformar em QR Code? 🤔 Me envie o texto ou link, por favorzinho! ✨");
+    if (!q) return reply(`📲 Quer gerar um QR Code? Me envie o texto ou link depois do comando ${prefix}qrcode! 😊`);
     nazu.react('📲'); // Reação de QR Code!
     try {
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(q)}`;
@@ -1651,9 +1686,9 @@ ${bahz.reply}`);
     break;
   
   case 'wikipedia':
-    if (!q) return reply("O que você gostaria de pesquisar na Wikipédia? 🤔 Me diga o termo, por favorzinho! ✨");
+    if (!q) return reply(`📚 O que você quer pesquisar na Wikipédia? Me diga o termo após o comando ${prefix}wikipedia! 😊`);
     nazu.react('📚'); // Reação de livrinho!
-    reply("Buscando na Wikipédia pra você... ⏳ Um momentinho!");
+    reply("📚 Consultando a Wikipédia... Só um instante! ⏳");
     try {
       let found = false;
       // Tenta buscar em Português primeiro
@@ -1704,14 +1739,14 @@ ${bahz.reply}`);
 
     } catch (e) {
       console.error("Erro ao buscar na Wikipédia:", e);
-      await reply("Oh não! 🥺 Tive um probleminha para pesquisar na Wikipédia... Tente de novo daqui a pouquinho, por favorzinho! 💔");
+      await reply("📚 Oops! Tive um probleminha para acessar a Wikipédia agora... 😥 Tente de novo daqui a pouco, por favor! ✨");
     }
   break;
   
   case 'dicionario':
-    if (!q) return reply("Qual palavrinha você quer que eu procure no dicionário? 🤔 Me diga, por favorzinho! ✨");
+    if (!q) return reply(`📔 Qual palavra você quer procurar no dicionário? Me diga após o comando ${prefix}dicionario! 😊`);
     nazu.react('📔'); // Reação de dicionário!
-    reply("Consultando meu dicionário mágico... ⏳ Um segundinho!");
+    reply("📔 Procurando no dicionário... Aguarde um pouquinho! ⏳");
     try {
       const palavra = q.trim().toLowerCase();
       let definicaoEncontrada = false;
@@ -2251,7 +2286,7 @@ ${bahz.reply}`);
   await nazu.sendMessage(from, { document: response.data, mimetype: mimeType, fileName: nomeArquivo }, { quoted: info });
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
   
@@ -2260,7 +2295,6 @@ ${bahz.reply}`);
     if(!isPremium) return reply('Apenas usuários premium.');
     if (!q) return nazu.react('❌');
 
-    await nazu.react('⚒️');
 
     const response = await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", {
       message: q,
@@ -2288,7 +2322,7 @@ ${bahz.reply}`);
     }
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
   
@@ -2299,7 +2333,7 @@ ${bahz.reply}`);
   reply(`${anu.data}`);
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
 
@@ -2309,17 +2343,16 @@ ${bahz.reply}`);
   await reply(datzn.join('\n'));
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
   
   case 'printsite': case 'ssweb': try{
   if(!q) return reply(`Cade o link?`)
-  await nazu.react('✅');
   await nazu.sendMessage(from, {image: {url: `https://image.thum.io/get/fullpage/${q}`}}, {quoted: info})
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
   
@@ -2343,7 +2376,7 @@ ${bahz.reply}`);
   await reply(`${linkz}`);
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break
 
@@ -2356,7 +2389,7 @@ ${bahz.reply}`);
   await nazu.sendMessage(from, {image: { url: datyz.img },caption: `Aqui está o que encontrei! 🎬\n\n*Nome*: ${datyz.name}\n\nSe tudo estiver certo, você pode assistir no link abaixo:\n${datyz.url}`}, { quoted: info });
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
   
@@ -2372,19 +2405,18 @@ await nazu.sendMessage(from, { image: { url: datinha.image }, caption: `\n💻 *
 await nazu.sendMessage(from, { document: { url: datinha.download }, mimetype: 'application/vnd.android.package-archive', fileName: `${datinha.details.name}.apk`, caption: `🔒 *Instalação Bloqueada pelo Play Protect?* 🔒\n\nCaso a instalação do aplicativo seja bloqueada pelo Play Protect, basta seguir as instruções do vídeo abaixo:\n\n🎥 https://youtu.be/FqQB2vojzlU?si=9qPnu_PGj3GU3L4_`}, {quoted: info});
   } catch (e) {
 console.log(e);
-await reply("ocorreu um erro 💔");
+await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
 };
 break;
   
   case 'mcplugin':case 'mcplugins': try {
   if(!q) return reply('Cadê o nome do plugin para eu pesquisar? 🤔');
-  await nazu.react('🔍');
   datz = await mcPlugin(q);
   if(!datz.ok) return reply(datz.msg);
   await nazu.sendMessage(from, {image: {url: datz.image}, caption: `🔍 Encontrei esse plugin aqui:\n\n*Nome*: _${datz.name}_\n*Publicado por*: _${datz.creator}_\n*Descrição*: _${datz.desc}_\n*Link para download*: _${datz.url}_\n\n> 💖 `}, {quoted: info});
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
   
@@ -2397,7 +2429,6 @@ case 'ytmp3':
     }
     
     // Reagir à mensagem para indicar processamento
-    await nazu.react('🔍');
     
     // Determinar se é um link ou uma pesquisa
     let videoUrl;
@@ -2411,7 +2442,6 @@ case 'ytmp3':
       // É uma pesquisa por texto
       videoInfo = await youtube.search(q);
       if (!videoInfo.ok) {
-        await nazu.react('❌');
         return reply(`❌ Erro na pesquisa: ${videoInfo.msg}`);
       }
       videoUrl = videoInfo.data.url;
@@ -2419,13 +2449,11 @@ case 'ytmp3':
     
     // Verificar se encontrou informações do vídeo
     if (!videoInfo.ok) {
-      await nazu.react('❌');
       return reply(`❌ Não foi possível encontrar informações sobre o vídeo: ${videoInfo.msg}`);
     }
     
     // Verificar se o vídeo não é muito longo (limite de 30 minutos)
     if (videoInfo.data.seconds > 1800) {
-      await nazu.react('⏱️');
       return reply(`⚠️ Este vídeo é muito longo (${videoInfo.data.timestamp}).\nPor favor, escolha um vídeo com menos de 30 minutos.`);
     }
     
@@ -2461,18 +2489,15 @@ case 'ytmp3':
     }, { quoted: info });
     
     // Atualizar reação para indicar download
-    await nazu.react('⬇️');
     
     // Baixar o áudio
     const dlRes = await youtube.mp3(videoUrl);
     if (!dlRes.ok) {
-      await nazu.react('❌');
       return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
     }
     
     // Tentar enviar como áudio (preferencial)
     try {
-      await nazu.react('🎵');
       await nazu.sendMessage(from, {
         audio: { url: dlRes.url }, 
         fileName: `${videoInfo.data.title}.mp3`, 
@@ -2494,18 +2519,15 @@ case 'ytmp3':
     }
     
     // Reação final de sucesso
-    await nazu.react('✅');
     
   } catch (error) {
     // Tratamento de erros específicos
     if (String(error).includes("age")) {
-      await nazu.react('🔞');
       return reply(`🔞 Este conteúdo possui restrição de idade e não pode ser baixado.`);
     }
     
     // Log do erro e resposta genérica
     console.error('Erro no comando play/ytmp3:', error);
-    await nazu.react('❌');
     reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
   }
   break;
@@ -2795,7 +2817,6 @@ case 'ytmp42':
       }, { quoted: info });
       
       // Reagir à mensagem
-      await nazu.react('📚');
       
     } catch (error) {
       console.error('Erro ao enviar menu:', error);
@@ -2808,7 +2829,6 @@ case 'ytmp42':
   // MENUS ESPECÍFICOS
   case 'alteradores': case 'menualterador': case 'menualteradores':
     try {
-      await nazu.react(['🔄']);
       await sendMenuWithMedia('alteradores', menuAlterador);
     } catch (error) {
       console.error('Erro ao enviar menu de alteradores:', error);
@@ -2818,7 +2838,6 @@ case 'ytmp42':
 
   case 'rpg': case 'menurpg':
     try {
-      await nazu.react(['🎮']);
       await sendMenuWithMedia('rpg', menuRpg);
     } catch (error) {
       console.error('Erro ao enviar menu de RPG:', error);
@@ -2828,7 +2847,6 @@ case 'ytmp42':
     
   case 'menuia': case 'aimenu': case 'menuias':
     try {
-      await nazu.react(['🤖']);
       await sendMenuWithMedia('ia', menuIa);
     } catch (error) {
       console.error('Erro ao enviar menu de IA:', error);
@@ -2838,7 +2856,6 @@ case 'ytmp42':
     
   case 'menubn': case 'menubrincadeira': case 'menubrincadeiras':
     try {
-      await nazu.react(['🎯']);
       
       // Obtém o conteúdo do menu
       let menuContent = await menubn(prefix, nomebot, pushname);
@@ -2875,7 +2892,6 @@ case 'ytmp42':
     
   case 'menudown': case 'menudownload': case 'menudownloads':
     try {
-      await nazu.react(['⬇️']);
       await sendMenuWithMedia('downloads', menudown);
     } catch (error) {
       console.error('Erro ao enviar menu de downloads:', error);
@@ -2885,7 +2901,6 @@ case 'ytmp42':
     
   case 'ferramentas': case 'menuferramentas': case 'menuferramenta':
     try {
-      await nazu.react(['🔧']);
       await sendMenuWithMedia('ferramentas', menuFerramentas);
     } catch (error) {
       console.error('Erro ao enviar menu de ferramentas:', error);
@@ -2895,7 +2910,6 @@ case 'ytmp42':
     
   case 'menuadm': case 'menuadmin': case 'menuadmins':
     try {
-      await nazu.react(['👑']);
       await sendMenuWithMedia('admin', menuadm);
     } catch (error) {
       console.error('Erro ao enviar menu de administração:', error);
@@ -2905,7 +2919,6 @@ case 'ytmp42':
     
   case 'menumembros': case 'menumemb': case 'menugeral':
     try {
-      await nazu.react(['👥']);
       await sendMenuWithMedia('membros', menuMembros);
     } catch (error) {
       console.error('Erro ao enviar menu de membros:', error);
@@ -2920,7 +2933,6 @@ case 'ytmp42':
         return;
       }
       
-      await nazu.react(['👑']);
       await sendMenuWithMedia('dono', menuDono);
     } catch (error) {
       console.error('Erro ao enviar menu do dono:', error);
@@ -2930,7 +2942,6 @@ case 'ytmp42':
     
   case 'stickermenu': case 'menusticker': case 'menufig':
     try {
-      await nazu.react(['🖼️']);
       await sendMenuWithMedia('stickers', menuSticker);
     } catch (error) {
       console.error('Erro ao enviar menu de stickers:', error);
@@ -3082,10 +3093,9 @@ case 'ytmp42':
     };
     const caseList = Array.from(cases).sort();
     await reply(`📜 *Lista de Comandos (Cases)*:\n\n${caseList.join('\n')}\n\nTotal: ${caseList.length} comandos`);
-    await nazu.react('✅');
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
 
@@ -3122,10 +3132,9 @@ case 'ytmp42':
     caseCode = `case '${caseName}':${caseCode}`;
     await nazu.sendMessage(from, { document: Buffer.from(caseCode, 'utf-8'), mimetype: 'text/plain', fileName: `${caseName}.txt` }, { quoted: info });
     await reply(`✅ Código do comando *${caseName}* enviado como documento!`);
-    await nazu.react('✅');
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
   
@@ -3152,10 +3161,9 @@ case 'botoff':
       : '✅ *Bot desativado!* Apenas o dono pode usar comandos.';
     
     await reply(message);
-    await nazu.react('🔄');
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
 break;
 
@@ -3170,10 +3178,9 @@ break;
     globalBlocks.commands[cmdToBlock] = { reason, timestamp: Date.now() }; // Update in-memory variable
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Comando *${cmdToBlock}* bloqueado globalmente!\nMotivo: ${reason}`);
-    await nazu.react('🔒');
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
 
@@ -3190,10 +3197,9 @@ break;
     delete globalBlocks.commands[cmdToUnblock]; // Update in-memory variable
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Comando *${cmdToUnblock}* desbloqueado globalmente!`);
-    await nazu.react('🔓');
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
 
@@ -3208,10 +3214,9 @@ break;
     globalBlocks.users[menc_os3] = { reason, timestamp: Date.now() }; // Update in-memory variable
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Usuário @${menc_os3.split('@')[0]} bloqueado globalmente!\nMotivo: ${reason}`, { mentions: [menc_os3] });
-    await nazu.react('🔒');
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
 
@@ -3231,10 +3236,9 @@ break;
     }
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Usuário @${menc_os2.split('@')[0]} desbloqueado globalmente!`, { mentions: [menc_os2] });
-    await nazu.react('🔓');
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
 
@@ -3247,30 +3251,27 @@ break;
     const blockedUsers = globalBlocks.users ? Object.entries(globalBlocks.users).map(([user, data]) => {const userId = user.split('@')[0]; return `👤 *${userId}* - Motivo: ${data.reason}`;}).join('\n') : 'Nenhum usuário bloqueado.';
     const message = `🔒 *Bloqueios Globais - ${nomebot}* 🔒\n\n📜 *Comandos Bloqueados*:\n${blockedCommands}\n\n👥 *Usuários Bloqueados*:\n${blockedUsers}`;    
     await reply(message);
-    await nazu.react('✅');
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
 
   case 'seradm': try {
   if(!isOwner) return reply("Este comando é apenas para o meu dono");
   await nazu.groupParticipantsUpdate(from, [sender], "promote");
-  await nazu.react('✅');
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
 
   case 'sermembro': try {
   if(!isOwner) return reply("Este comando é apenas para o meu dono");
   await nazu.groupParticipantsUpdate(from, [sender], "demote");
-  await nazu.react('✅');
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
 
@@ -3317,7 +3318,7 @@ break;
   fs.writeFileSync(__dirname + `/../database/dono/bangp.json`, JSON.stringify(banGpIds));
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
   
@@ -3379,7 +3380,6 @@ break;
   
   //COMANDOS GERAIS
   case 'rvisu':case 'open':case 'revelar': try {
-  await nazu.react("👀");
   var RSMM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage
   var boij22 = RSMM?.imageMessage || info.message?.imageMessage || RSMM?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || RSMM?.viewOnceMessage?.message?.imageMessage;
   var boijj = RSMM?.videoMessage || info.message?.videoMessage || RSMM?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage || RSMM?.viewOnceMessage?.message?.videoMessage;
@@ -3404,7 +3404,7 @@ break;
   };
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
   
@@ -3446,7 +3446,7 @@ break;
     await nazu.sendMessage(from, { text: finalMessage, mentions: rankedUsers.map(user => user.id).filter(id => id.includes('@s.whatsapp.net')) }, { quoted: info });
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
 break;
 
@@ -3466,7 +3466,7 @@ break;
     await nazu.sendMessage(from, {text: blad, mentions: menc}, {quoted: info});
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
   
@@ -3503,7 +3503,7 @@ break;
     });
     } catch(e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
     }
   break;
  
@@ -3553,7 +3553,7 @@ break;
     };
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
   
@@ -3588,7 +3588,7 @@ break;
     await nazu.sendMessage(from, { text: statusMessage }, { quoted: info });
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
   
@@ -3596,7 +3596,6 @@ break;
   case 'topcmds':
   case 'comandosmaisusados':
   try {
-    await nazu.react('📊');
     
     // Obtém os comandos mais usados
     const topCommands = commandStats.getMostUsedCommands(10);
@@ -3608,7 +3607,7 @@ break;
     await reply(menu);
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
   
@@ -3650,10 +3649,9 @@ break;
       mentions: stats.topUsers.map(u => u.userId)
     }, { quoted: info });
     
-    await nazu.react('📈');
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
   
@@ -3684,7 +3682,7 @@ break;
     await nazu.sendMessage(from, { text: statsMessage }, { quoted: info });
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
 break;
 
@@ -3697,16 +3695,14 @@ case 'dono':
     donoInfo += `👨‍💻 *Criador*: Hiudy\n`;
     donoInfo += `📡 *Prefixo*: ${prefix}\n`;
     await reply(donoInfo);
-    await nazu.react('✅');
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
 
 case 'ping':
   try {
-    await nazu.react(['🔄']);
     
     // Calcula a latência da mensagem
     const timestamp = Date.now();
@@ -3805,11 +3801,9 @@ case 'ping':
       caption: mensagem 
     }, { quoted: info });
 
-    await nazu.react(['🏓']);
   } catch (e) {
     console.error("Erro no comando ping:", e);
     await reply("❌ Ocorreu um erro ao processar o comando ping");
-    await nazu.react(['❌']);
   };
   break;
   
@@ -3820,7 +3814,7 @@ case 'ping':
   buff = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
   await nazu.sendMessage(from, {image: buff}, {quoted: info});
   } catch(error) {
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
 
@@ -3837,7 +3831,7 @@ case 'ping':
   await sendSticker(nazu, from, { sticker: Buffer.from(res.data.result.image, 'base64'), author: 'Hiudy', packname: 'By:', type: 'image' }, {quoted: info });
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
   
@@ -3848,7 +3842,7 @@ case 'ping':
   await sendSticker(nazu, from, { sticker: {url: datzc}, author: 'Hiudy', packname: 'By:', type: 'image'}, { quoted: info });
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
   
@@ -3861,7 +3855,7 @@ case 'ping':
   await sendSticker(nazu, from, { sticker: {url: `https://huratera.sirv.com/PicsArt_08-01-10.00.42.png?profile=Example-Text&text.0.text=${q}&text.0.outline.color=000000&text.0.outline.blur=0&text.0.outline.opacity=55&text.0.color=${cores}&text.0.font.family=${fontes}&text.0.background.color=ff0000`}, author: 'Hiudy', packname: 'By:', type: 'image'}, { quoted: info });
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
   
@@ -3884,7 +3878,7 @@ case 'ping':
     await sendSticker(nazu, from, { sticker: buffer, author: 'Hiudy', packname: 'By:', type: isVideo2 ? 'video' : 'image'}, { quoted: info });
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
   
@@ -3899,7 +3893,7 @@ case 'ping':
     await sendSticker(nazu, from, { sticker: buffer, author: 'Hiudy', packname: 'By:', type: isVideo2 ? 'video' : 'image', forceSquare: true}, { quoted: info });
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
 
@@ -3907,7 +3901,7 @@ case 'ping':
     await nazu.sendMessage(from, { sticker: { url: `https://raw.githubusercontent.com/badDevelopper/Testfigu/main/fig (${Math.floor(Math.random() * 8051)}).webp`}}, {quoted: info});
   } catch(e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
   
@@ -3919,7 +3913,7 @@ case 'ping':
    await sendSticker(nazu, from, { sticker: `data:image/jpeg;base64,${encmediats.toString('base64')}`, author: packname, packname: author, rename: true}, { quoted: info });
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
   
@@ -3933,7 +3927,7 @@ case 'ping':
   reply(`Autor e pacote salvos com sucesso!\nAutor: ${author}\nPacote: ${pack}`);
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
   
@@ -3948,7 +3942,7 @@ case 'ping':
   await sendSticker(nazu, from, { sticker: `data:image/jpeg;base64,${encmediats.toString('base64')}`, author: pack, packname: author, rename: true }, { quoted: info });
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
   
@@ -4005,7 +3999,7 @@ case 'ping':
     await reply(`✅ Usuário @${menc_os3.split('@')[0]} bloqueado no grupo!\nMotivo: ${reason}`, { mentions: [menc_os3] });
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
 
@@ -4022,7 +4016,7 @@ case 'ping':
     await reply(`✅ Usuário @${menc_os2.split('@')[0]} desbloqueado no grupo!`, { mentions: [menc_os2] });
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
 
@@ -4035,7 +4029,7 @@ case 'ping':
     await reply(message);
   } catch (e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
 
@@ -4065,7 +4059,7 @@ case 'ping':
     await reply('https://chat.whatsapp.com/'+linkgc)
     } catch(e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
     };
     break
 
@@ -4157,7 +4151,7 @@ case 'ping':
   await reply('Grupo fechado.');
   }} catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break
   
@@ -4225,7 +4219,7 @@ case 'ping':
     await nazu.sendMessage(from, DFC4).catch((error) => {});
     } catch(e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
     };
     break;
 
@@ -4431,7 +4425,7 @@ case 'ping':
         await reply('⚠️ *Modo de Brincadeiras desativado!* O grupo não está mais no modo de brincadeiras.');
     }} catch(e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
     };
     break;
     
@@ -4451,7 +4445,7 @@ case 'ping':
         await reply('⚠️ *Boas-vindas desativadas!* O grupo não enviará mais mensagens para novos membros.');
     }} catch(e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
     };
     break;
     
@@ -4545,7 +4539,7 @@ case 'removerfotosaiu': case 'rmfotosaiu': case 'delfotosaiu':
        await reply('✅ Mensagem de saída configurada com sucesso!\n\n📝 Mensagem definida como:\n' + q);
      } catch (error) {
        console.error(error);
-       await reply("ocorreu um erro 💔");
+       await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
      }
    }
    break;
@@ -4560,7 +4554,7 @@ case 'removerfotosaiu': case 'rmfotosaiu': case 'delfotosaiu':
        await reply(groupData.exit.enabled ? '✅ Mensagens de saída ativadas!' : '❌ Mensagens de saída desativadas!');
      } catch (error) {
        console.error(error);
-       await reply("ocorreu um erro 💔");
+       await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
      };
    };
    break;
@@ -4712,7 +4706,7 @@ case 'listadv':
     };
    } catch(e) {
    console.error(e);
-   await reply("ocorreu um erro 💔");
+   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
    };
    break;
    
@@ -4763,7 +4757,6 @@ case 'listadv':
       } else {
           await reply('🔞 *Modo Lite desativado!* O conteúdo do menu de brincadeiras será exibido completamente.');
       }
-      await nazu.react('🔄');
     } catch(e) {
       console.error(e);
       await reply("Ocorreu um erro 💔");
@@ -4790,7 +4783,6 @@ case 'listadv':
       } else {
         await reply('🔞 *Modo Lite desativado globalmente!* O conteúdo do menu de brincadeiras será exibido completamente (a menos que seja explicitamente ativado em algum grupo).');
       }
-      await nazu.react('🔄');
     } catch(e) {
       console.error(e);
       await reply("Ocorreu um erro 💔");
@@ -4893,7 +4885,7 @@ case 'listadv':
     reply(`✅ *Mensagem de boas-vindas configurada com sucesso!*\n\n📌 Nova mensagem:\n"${groupData.textbv}"`);
     } catch(e) {
     console.error(e);
-    await reply("ocorreu um erro 💔");
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
     };
   break;
   
@@ -5144,7 +5136,6 @@ case 'listadv':
     const card = await new Banner.ProfileCard().setUsername(pushname).setAvatar(profilePic).setBio(bio).setStatus("online").setAvatarBorderColor("#FFFFFF").setOverlayOpacity(0.4).setCustomField("Cargo", userStatus).build();
     
     await nazu.sendMessage(from, { image: card, caption: perfilText, mentions: [target] }, { quoted: info });
-    await nazu.react('📸');
   } catch (error) {
     console.error('Erro ao processar comando perfil:', error);
     await reply('Ocorreu um erro ao gerar o perfil 💔');
@@ -5184,7 +5175,7 @@ case 'listadv':
     await nazu.sendMessage(from, {poll: {name: toolsJson().iNever[Math.floor(Math.random() * toolsJson().iNever.length)],values: ["Eu nunca", "Eu ja"], selectableCount: 1}, messageContextInfo: { messageSecret: Math.random()}}, {from, options: {userJid: nazu?.user?.id}})
    } catch(e) {
    console.error(e);
-   await reply("ocorreu um erro 💔");
+   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
    };
    break
    
@@ -5195,7 +5186,7 @@ case 'listadv':
    await nazu.sendMessage(from, {poll: {name: 'O que você prefere?',values: [vabs.option1, vabs.option2], selectableCount: 1}, messageContextInfo: { messageSecret: Math.random()}}, {from, options: {userJid: nazu?.user?.id}})
    } catch(e) {
    console.error(e);
-   await reply("ocorreu um erro 💔");
+   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
    };
    break
    
@@ -5222,7 +5213,7 @@ case 'listadv':
   await nazu.sendMessage(from, {image: {url: 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1747545773146_rrv7of.bin'}, caption: ABC, mentions: mencts});
   } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
 
@@ -5236,7 +5227,7 @@ await reply(`*Ainda bem que morreu, não aguentava mais essa praga kkkkkk*`)
 }, 3000)
 } catch(e) {
   console.error(e);
-  await reply("ocorreu um erro 💔");
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
 
@@ -5260,7 +5251,7 @@ await reply(`*Ainda bem que morreu, não aguentava mais essa praga kkkkkk*`)
     };
 } catch(e) {
 console.error(e);
-await reply("ocorreu um erro 💔");
+await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
 };
 break;
 
@@ -5284,7 +5275,7 @@ break;
     };
 } catch(e) {
 console.error(e);
-await reply("ocorreu um erro 💔");
+await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
 };
 break;
 
@@ -5314,7 +5305,7 @@ case 'rankgay': case 'rankburro': case 'rankinteligente': case 'rankotaku': case
     }
 } catch(e) {
 console.error(e);
-await reply("ocorreu um erro 💔");
+await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
 };
 break;
 
@@ -5344,7 +5335,7 @@ case 'ranklesbica': case 'rankburra': case 'rankinteligente': case 'rankotaku': 
     }
 } catch(e) {
 console.error(e);
-await reply("ocorreu um erro 💔");
+await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
 };
 break;
 
@@ -5368,7 +5359,7 @@ case 'chute': case 'chutar': case 'tapa': case 'soco': case 'socar': case 'beijo
     };
 } catch(e) {
 console.error(e);
-await reply("ocorreu um erro 💔");
+await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
 };
    break;
   
@@ -5387,7 +5378,6 @@ await reply("ocorreu um erro 💔");
       if (reason) afkSetMessage += `
 Motivo: ${reason}`;
       await reply(afkSetMessage);
-      await nazu.react('💤');
   } catch (e) {
       console.error('Erro no comando afk:', e);
       await reply("Ocorreu um erro ao definir AFK 💔");
@@ -5401,7 +5391,6 @@ Motivo: ${reason}`;
         delete groupData.afkUsers[sender];
         fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
         await reply(`👋 Bem-vindo(a) de volta! Seu status AFK foi removido.`);
-        await nazu.react('👋');
     } else {
         await reply("Você não estava AFK.");
       }
@@ -5441,7 +5430,6 @@ Motivo: ${reason}`;
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       await reply(`✅ Regra adicionada com sucesso!
 ${groupData.rules.length}. ${q}`);
-      await nazu.react('➕');
   } catch (e) {
       console.error('Erro no comando addregra:', e);
       await reply("Ocorreu um erro ao adicionar a regra 💔");
@@ -5462,7 +5450,6 @@ ${groupData.rules.length}. ${q}`);
       const removedRule = groupData.rules.splice(ruleNumber - 1, 1);
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       await reply(`🗑️ Regra "${removedRule}" removida com sucesso!`);
-      await nazu.react('➖');
     } catch (e) {
       console.error('Erro no comando delregra:', e);
       await reply("Ocorreu um erro ao remover a regra 💔");
@@ -5482,7 +5469,6 @@ ${groupData.rules.length}. ${q}`);
       groupData.moderators.push(modToAdd);
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       await reply(`✅ @${modToAdd.split('@')[0]} foi promovido a moderador do grupo!`, { mentions: [modToAdd] });
-      await nazu.react('🛡️');
   } catch (e) {
       console.error('Erro no comando addmod:', e);
       await reply("Ocorreu um erro ao adicionar moderador 💔");
@@ -5502,7 +5488,6 @@ break;
       groupData.moderators.splice(modIndex, 1);
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       await reply(`✅ @${modToRemove.split('@')[0]} não é mais um moderador do grupo.`, { mentions: [modToRemove] });
-      await nazu.react('🛡️');
   } catch (e) {
       console.error('Erro no comando delmod:', e);
       await reply("Ocorreu um erro ao remover moderador 💔");
@@ -5543,7 +5528,6 @@ break;
       groupData.allowedModCommands.push(cmdToAllow);
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       await reply(`✅ Moderadores agora podem usar o comando: ${prefix}${cmdToAllow}`);
-      await nazu.react('🔧');
   } catch (e) {
       console.error('Erro no comando grantmodcmd:', e);
       await reply("Ocorreu um erro ao permitir comando para moderadores 💔");
@@ -5563,7 +5547,6 @@ break;
       groupData.allowedModCommands.splice(cmdIndex, 1);
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       await reply(`✅ Moderadores não podem mais usar o comando: ${prefix}${cmdToDeny}`);
-      await nazu.react('🔧');
   } catch (e) {
       console.error('Erro no comando revokemodcmd:', e);
       await reply("Ocorreu um erro ao proibir comando para moderadores 💔");
@@ -5591,7 +5574,6 @@ break;
   case 'clima':
     try {
       if (!q) return reply('Digite o nome da cidade para pesquisar o clima.');
-      await nazu.react('🌦️');
       const geocodingResponse = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1`);
       if (!geocodingResponse.data.results || geocodingResponse.data.results.length === 0) {
         return reply(`Cidade "${q}" não encontrada.`);
