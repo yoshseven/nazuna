@@ -961,7 +961,6 @@ if (isGroup && isAntiPorn) {
     }
   }
 }
- };
 
 if (isGroup && groupData.antiloc && !isGroupAdmin && type === 'locationMessage') {
   await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
