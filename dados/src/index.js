@@ -1401,14 +1401,10 @@ if (budy2 === "ta baxano" && !isGroup) {
   }
   }
   
-  // Registra o uso do comando para estatísticas globai  if (isCmd && command) {
-    // Adiciona uma única reação no início do processamento do comando
-    try {
-      await nazu.react('⏳', { key: info.key }); 
-    } catch (reactError) {
-      console.warn("Falha ao reagir no início do comando:",  if (isCmd && commandStats && commandStats.trackCommandUsage && command && command.length>0) {
+  // Registra o uso do comando para estatísticas global
+  if (isCmd && commandStats && commandStats.trackCommandUsage && command && command.length>0) {
     commandStats.trackCommandUsage(command, sender);
-  }
+  };
 
   // Adiciona uma única reação no início do processamento do comando, se for um comando válido
   if (isCmd) {
