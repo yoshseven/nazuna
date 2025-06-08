@@ -37,10 +37,6 @@ async function menuDono(prefix, botName = "MeuBot", userName = "Usuário") {
 ││    ↳ Atualizar o bot completo
 ││◕⁠➜ ${prefix}updatemodules
 ││    ↳ Atualizar módulos (Pro)
-││◕⁠➜ ${prefix}restart
-││    ↳ Reiniciar o bot
-││◕⁠➜ ${prefix}shutdown
-││    ↳ Desligar o bot
 │
 │╭─▸ *Gerenciamento de Acesso:*
 ││

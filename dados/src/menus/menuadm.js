@@ -124,23 +124,12 @@ ${!isLiteMode ? `││    ↳ Bloquear conteúdo adulto` : `││    ↳ (Desa
 ││    ↳ Anti flood de comandos
 ││◕⁠➜ ${prefix}cmdlimit
 ││    ↳ Limitar comandos diários
-││◕⁠➜ ${prefix}antiloc
-││    ↳ Anti localização
-││◕⁠➜ ${prefix}antidoc
-││    ↳ Anti documentos
 ││◕⁠➜ ${prefix}antifake
 ││    ↳ Banir números fake
 ││◕⁠➜ ${prefix}antipt
 ││    ↳ Banir números de Portugal
 ││◕⁠➜ ${prefix}autodl
 ││    ↳ Sistema de Auto DL
-│
-│╭─▸ *Sistema de Aluguel (Admin):*
-││
-││◕⁠➜ ${prefix}usarcodigo [código]
-││    ↳ Ativar aluguel com código
-││◕⁠➜ ${prefix}statusaluguel
-││    ↳ Verificar status do aluguel
 │
 │╭─▸ *Configurações de Aparência:*
 ││
