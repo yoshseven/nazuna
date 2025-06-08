@@ -34,8 +34,6 @@ async function menu(prefix, botName = "MeuBot", userName = "Usuário") {
 ││  ↳ Criar figurinhas
 ││🎵 ${prefix}alteradores
 ││  ↳ Efeitos Audio/Video
-││💡 ${prefix}menurpg
-││  ↳ Aventura e diversão RPG
 │
 ╰══════════════════════╯
 `;

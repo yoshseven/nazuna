@@ -18,7 +18,7 @@ const Banner = require("@cognima/banners");
 const { version: botVersion } = JSON.parse(fs.readFileSync(pathz.join(__dirname, '..', '..', 'package.json')));
 
 // Importa os menus
-const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuRpg, menuAlterador, menuLogos, menuTopCmd } = require(`${__dirname}/menus/index.js`);
+const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuAlterador, menuLogos, menuTopCmd } = require(`${__dirname}/menus/index.js`);
 
 // Carrega as configurações do bot
 const config = JSON.parse(fs.readFileSync(__dirname+'/config.json'));
@@ -413,7 +413,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
   const { 
     youtube, tiktok, pinterest, igdl, sendSticker, 
     FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, 
-    rpg, toolsJson, vabJson, apkMod, google, Lyrics,
+    toolsJson, vabJson, apkMod, google, Lyrics,
     commandStats
   } = await require(__dirname+'/funcs/exports.js');
     
@@ -573,8 +573,7 @@ const getMessageText = (message) => {
   const isAntiPorn = groupData.antiporn;
   const isMuted = groupData.mutedUsers?.[sender];
   const isAntiLinkGp = groupData.antilinkgp;
-  const isModoRpg = isGroup && groupData.modorpg;
-    const isModoLite = isGroup && isModoLiteActive(groupData, modoLiteGlobal);
+  const isModoLite = isGroup && isModoLiteActive(groupData, modoLiteGlobal);
   
   if (isGroup && isOnlyAdmin && !isGroupAdmin) {
     return; // Silenciosamente ignora mensagens de não-admins quando soadm está ativo
@@ -2169,7 +2168,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       antiflood: currentData.antiflood !== backupData.configs.antiflood ? "Proteção contra flood" : null,
       soadm: currentData.soadm !== backupData.configs.soadm ? "Modo só administradores" : null,
       modobrincadeira: currentData.modobrincadeira !== backupData.configs.modobrincadeira ? "Modo brincadeira" : null,
-      modorpg: currentData.modorpg !== backupData.configs.modorpg ? "Modo RPG" : null,
       autoSticker: currentData.autoSticker !== backupData.configs.autoSticker ? "Auto figurinhas" : null,
       autodl: currentData.autodl !== backupData.configs.autodl ? "Download automático" : null
     };
@@ -2831,15 +2829,6 @@ case 'ytmp42':
     }
   break;
 
-  case 'rpg': case 'menurpg':
-    try {
-      await sendMenuWithMedia('rpg', menuRpg);
-    } catch (error) {
-      console.error('Erro ao enviar menu de RPG:', error);
-      await reply("❌ Ocorreu um erro ao carregar o menu de RPG");
-    }
-  break;
-    
   case 'menuia': case 'aimenu': case 'menuias':
     try {
       await sendMenuWithMedia('ia', menuIa);
@@ -3670,7 +3659,6 @@ break;
       `🔞 Antiporn: ${isAntiPorn ? 'Ativado' : 'Desativado'}`,
       `🔗 Antilink: ${isAntiLinkGp ? 'Ativado' : 'Desativado'}`,
       `🎲 Modo Brincadeira: ${isModoBn ? 'Ativado' : 'Desativado'}`,
-      `🧙 Modo RPG: ${isModoRpg ? 'Ativado' : 'Desativado'}`,
       `👑 Apenas Admins: ${isOnlyAdmin ? 'Ativado' : 'Desativado'}`
     ].join('\n');
     const statsMessage = `\n📊 *Estatísticas do Grupo: ${groupName}* 📊\n\n👥 *Total de Membros*: ${totalMembers}\n👑 *Administradores*: ${totalAdmins}\n📅 *Criado em*: ${groupCreated}\n💬 *Mensagens Totais*: ${totalMessages}\n⚒️ *Comandos Usados*: ${totalCommands}\n🎨 *Figurinhas Enviadas*: ${totalStickers}\n\n⚙️ *Configurações*:\n${settings}\n\n✨ *Bot*: ${nomebot} by ${nomedono} ✨`;
@@ -4686,25 +4674,7 @@ case 'listadv':
     reply("Ocorreu um erro 💔");
   }
   break;
-  
-   case 'modorpg': try {
-    if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!isGroupAdmin) return reply("você precisa ser adm 💔");
-    if (!groupData.modorpg) {
-      groupData.modorpg = true;
-      fs.writeFileSync(__dirname + `/../database/grupos/${from}.json`, JSON.stringify(groupData, null, 2));
-      reply('✅ *Modo RPG ativado!* Agora os comandos de RPG estão disponíveis no grupo.');
-    } else {
-      groupData.modorpg = false;
-      fs.writeFileSync(__dirname + `/../database/grupos/${from}.json`, JSON.stringify(groupData, null, 2));
-      reply('⚠️ *Modo RPG desativado!* Os comandos de RPG não estão mais disponíveis.');
-    };
-   } catch(e) {
-   console.error(e);
-   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-   };
-   break;
-   
+
     case 'soadm': case 'onlyadm': case 'soadmin': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("você precisa ser adm 💔");
@@ -5753,152 +5723,6 @@ ${weatherEmoji} *${weatherDescription}*`;
       await reply("Ocorreu um erro ao pesquisar o clima 💔");
     }
     break;
-    
-    
-    //SISTEMA DE RPG NOVO EM TESTE :)
-    case "registrar":
-case "rg":
-case "perfil":
-case "profile":
-case "status":
-case "me":
-case "deletarconta":
-// Inventário & Economia
-case "inventario":
-case "inv":
-case "mochila":
-case "empregos":
-case "jobs":
-case "entrar":
-case "sair":
-case "demitir":
-case "trabalhar":
-case "work":
-case "loja":
-case "shop":
-case "mercado":
-case "comprar":
-case "buy":
-case "vender":
-case "sell":
-case "depositar":
-case "dep":
-case "levantar":
-case "sacar":
-case "withdraw":
-// Atividades
-case "minerar":
-case "mine":
-case "pescar":
-case "fish":
-case "cacar":
-case "hunt":
-case "plantar":
-case "farm":
-case "cortar":
-case "chop":
-case "lenhar":
-// Pets (casos adicionais)
-case "adotar":
-case "verpet":
-case "pet":
-case "interagir":
-case "brincar":
-case "renomearpet":
-case "apelidarpet":
-// Combate PvE (casos adicionais)
-case "atacar":
-case "fugir":
-// Relacionamentos (casos adicionais)
-case "namorar":
-case "casar":
-// Crafting (alias)
-case "criar":
-// Housing (subcomandos)
-case "listar":
-case "comprar":
-case "ver":
-// Combate PvE
-case "batalhar":
-case "lutar":
-case "huntmonster":
-case "pocao":
-case "potion":
-// Ranking
-case "rank":
-case "ranking":
-case "top":
-// Guildas
-case "guilda":
-case "guild":
-// Missões
-case "missao":
-case "quest":
-// Pokémon
-case "pkm_encontrar":
-case "pkm_capturar":
-case "pkm_time":
-case "pkm_pc":
-case "pkm_pokedex":
-case "pkm_batalhar":
-case "pkm_fugir":
-case "pkm_lutar":
-case "pkm_ataque":
-case "pkm_trocar":
-case "pkm_item":
-// Relacionamentos
-case "conversar":
-case "presentear":
-case "afinidade":
-// Creator Hub
-case "criador":
-case "feed":
-// Crafting
-case "craft":
-// Habitação
-case "casa":
-// Combate PvP
-case "pvp":
-    try {
-        // Prepara as funções externas que o handler pode precisar
-        const funcoesExternasParaRPG = {
-            upload: typeof upload === 'function' ? upload : null, // Passa a função de upload se existir
-            getFileBuffer: typeof getFileBuffer === 'function' ? getFileBuffer : null, // Passa a função de buffer se existir
-            m: typeof m !== 'undefined' ? m : null // Passa o objeto da mensagem
-            // Adicione outras funções/variáveis necessárias aqui (ex: nazu, isGroup)
-        };
-
-        // Chama o handler principal do RPG
-        const resultadoRPG = await rpg.processarComandoRPG(sender, command, args, pushname, funcoesExternasParaRPG);
-
-        // Envia a resposta do handler
-        if (resultadoRPG && resultadoRPG.msg) {
-            reply(resultadoRPG.msg);
-
-            // Verifica se há mensagem adicional para o alvo (ex: desafio PvP)
-            if (resultadoRPG.msgAlvo && resultadoRPG.alvoId && typeof nazu !== 'undefined') {
-                nazu.sendMessage(resultadoRPG.alvoId, { text: resultadoRPG.msgAlvo });
-            }
-            // Verifica se há mensagem adicional para o oponente (ex: início/fim PvP)
-            if (resultadoRPG.msgOponente && resultadoRPG.oponenteId && typeof nazu !== 'undefined') {
-                 nazu.sendMessage(resultadoRPG.oponenteId, { text: resultadoRPG.msgOponente });
-            }
-
-        } else if (resultadoRPG && typeof resultadoRPG === 'string') {
-            // Se o handler retornar apenas uma string (menos comum)
-            reply(resultadoRPG);
-        } else if (!resultadoRPG) {
-            // Se o handler não retornar nada (pode indicar erro interno ou comando silencioso)
-            console.log(`Handler do RPG não retornou mensagem para o comando: ${command}`);
-            // reply("Comando RPG processado, mas sem resposta visual."); // Opcional
-        }
-
-    } catch (err) {
-        console.error(`Erro ao executar comando RPG '${command}' no index.js:`, err);
-        reply(`❌ Ops! Algo deu muito errado ao processar o comando RPG. Avise o Mestre dos Códigos!`);
-    }
-    break;
-    
     
     // Novos comandos de atualização (Apenas Dono)
     case 'updatebot':
