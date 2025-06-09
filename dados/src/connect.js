@@ -2,25 +2,22 @@
 ═════════════════════════════
   Nazuna - Conexão WhatsApp
   Autor: Hiudy
-  Revisão: 08/06/2025
+  Revisão: 09/06/2025
 ═════════════════════════════
 */
 
 const { Boom } = require('@hapi/boom');
-const { makeWASocket, useMultiFileAuthState, DisconnectReason, proto, makeInMemoryStore } = require('baileys');
+const { makeWASocket, useMultiFileAuthState, proto } = require('baileys');
 const NodeCache = require('node-cache');
 const readline = require('readline');
-const { execSync } = require('child_process');
 const pino = require('pino');
 const fs = require('fs').promises;
 const path = require('path');
 
 const logger = pino({ level: 'silent' });
 const AUTH_DIR = path.join(__dirname, '..', 'database', 'qr-code');
-const STORE_FILE = path.join(__dirname, '..', 'database', 'store_B.json');
 const DATABASE_DIR = path.join(__dirname, '..', 'database', 'grupos');
-const msgRetryCounterCache = new Map();
-const mediaCache = new Map();
+const msgRetryCounterCache = new NodeCache({ stdTTL: 120, useClones: false }); 
 const { prefixo, nomebot, nomedono, numerodono } = require('./config.json');
 
 const indexModule = require(path.join(__dirname, 'index.js'));
@@ -30,12 +27,7 @@ const ask = (question) => {
   return new Promise((resolve) => rl.question(question, (answer) => { rl.close(); resolve(answer.trim()); }));
 };
 
-const groupCache = new NodeCache({ stdTTL: 300, useClones: false });
-const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) });
-store.readFromFile(STORE_FILE);
-setInterval(() => {
-    store.writeToFile(STORE_FILE);
-}, 10000);
+const groupCache = new NodeCache({ stdTTL: 120, useClones: false, maxKeys: 100 });
 
 async function startNazu() {
   try {
@@ -43,33 +35,21 @@ async function startNazu() {
     const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
 
     const nazu = makeWASocket({
-      // true/false
-      syncFullHistory: true,
-      emitOwnEvents: true,
       markOnlineOnConnect: false,
-      fireInitQueries: true,
-      generateHighQualityLinkPreview: true,
+      fireInitQueries: false,
+      generateHighQualityLinkPreview: false,
       shouldSyncHistoryMessage: () => true,
-      // delays
       connectTimeoutMs: 180000,
-      keepAliveIntervalMs: 5000,
+      keepAliveIntervalMs: 12000,
       retryRequestDelayMs: 500,
       defaultQueryTimeoutMs: undefined,
-      // caches
       msgRetryCounterCache,
-      mediaCache,
-      // auth
       countryCode: 'BR',
       auth: state,
       printQRInTerminal: !process.argv.includes('--code'),
       logger: logger,
       browser: ['Mac OS', 'Safari', '14.4.1'],
-      // funções
-      getMessage: async (key) => {
-        if (!store) return proto.Message.fromObject({});
-        const msg = await store.loadMessage(key.remoteJid, key.id).catch(() => null);
-        return msg?.message || proto.Message.fromObject({});
-      },
+      getMessage: async () => proto.Message.fromObject({}),
       cachedGroupMetadata: (jid) => groupCache.get(jid) || null
     });
 
@@ -85,7 +65,6 @@ async function startNazu() {
       console.log('📲 No WhatsApp, vá em "Aparelhos Conectados" -> "Conectar com Número de Telefone" e insira o código.\n');
     }
 
-    store.bind(nazu.ev);
     nazu.ev.on('creds.update', saveCreds);
 
     nazu.ev.on('groups.update', async ([ev]) => {
@@ -214,12 +193,10 @@ async function startNazu() {
       if (!m.messages || !Array.isArray(m.messages) || m.type !== 'notify') return;
       try {
         if (typeof indexModule === 'function') {
-          for (const info of m.messages) { 
-            if (!info.message || !info.key.remoteJid) {
-            continue;
-          };
-          await indexModule(nazu, info, store, groupCache);
-          };
+          for (const info of m.messages) {
+            if (!info.message || !info.key.remoteJid) continue;
+            await indexModule(nazu, info, null, groupCache); // null no lugar do store
+          }
         } else {
           console.error('O módulo index.js não exporta uma função válida.');
         }
