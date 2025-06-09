@@ -2493,7 +2493,6 @@ case 'ytmp3':
     try {
       await nazu.sendMessage(from, {
         audio: { url: dlRes.url }, 
-        ptt: true, 
         mimetype: 'audio/mpeg'
       }, { quoted: info });
     } catch (audioError) {
