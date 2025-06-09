@@ -2493,8 +2493,8 @@ case 'ytmp3':
     try {
       await nazu.sendMessage(from, {
         audio: { url: dlRes.url }, 
-        fileName: `${videoInfo.data.title}.mp3`, 
-        mimetype: 'audio/mp4'
+        ppt: true, 
+        mimetype: 'audio/mpeg'
       }, { quoted: info });
     } catch (audioError) {
       // Se falhar devido ao tamanho, tentar enviar como documento
