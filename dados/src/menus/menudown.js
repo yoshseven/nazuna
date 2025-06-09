@@ -20,12 +20,8 @@ async function menudown(prefix, botName = "MeuBot", userName = "Usuário") {
 ││    ↳ Buscar letras de musicas
 ││◕⁠➜ ${prefix}play
 ││    ↳ Baixar música do YouTube
-││◕⁠➜ ${prefix}play2
-││    ↳ Baixar música (alternativo)
 ││◕⁠➜ ${prefix}playvid
 ││    ↳ Baixar vídeo do YouTube
-││◕⁠➜ ${prefix}playvid2
-││    ↳ Baixar vídeo (alternativo)
 ││◕⁠➜ ${prefix}assistir
 ││    ↳ Pesquisar filmes para assistir
 ││◕⁠➜ ${prefix}mcplugin

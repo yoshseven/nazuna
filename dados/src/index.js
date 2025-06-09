@@ -2492,7 +2492,7 @@ case 'ytmp3':
     // Tentar enviar como áudio (preferencial)
     try {
       await nazu.sendMessage(from, {
-        audio: { url: dlRes.url }, 
+        audio: dlRes.buffer, 
         mimetype: 'audio/mpeg'
       }, { quoted: info });
     } catch (audioError) {
@@ -2500,7 +2500,7 @@ case 'ytmp3':
       if (String(audioError).includes("ENOSPC") || String(audioError).includes("size")) {
         await reply('📦 Arquivo muito grande para enviar como áudio, enviando como documento...');
         await nazu.sendMessage(from, {
-          document: { url: dlRes.url }, 
+          document: dlRes.buffer, 
           fileName: `${videoInfo.data.title}.mp3`, 
           mimetype: 'audio/mpeg'
         }, { quoted: info });
@@ -2560,7 +2560,7 @@ case 'ytmp4':
     if (!dlRes.ok) return reply(dlRes.msg);
     try {
       await nazu.sendMessage(from, {
-        video: { url: dlRes.url }, 
+        video: dlRes.buffer, 
         fileName: `${videoInfo.data.title}.mp4`, 
         mimetype: 'video/mp4'
       }, { quoted: info });
@@ -2568,7 +2568,7 @@ case 'ytmp4':
       if (String(videoError).includes("ENOSPC") || String(videoError).includes("size")) {
         await reply('Arquivo muito grande, enviando como documento...');
         await nazu.sendMessage(from, {
-          document: { url: dlRes.url }, 
+          document: dlRes.buffer, 
           fileName: `${videoInfo.data.title}.mp4`, 
           mimetype: 'video/mp4'
         }, { quoted: info });
@@ -2582,122 +2582,6 @@ case 'ytmp4':
   }
   break;
 
-case 'play2':
-case 'ytmp32':
-  try {
-    if (!q) return reply(`Digite o nome da música ou um link do YouTube.\n> Ex: ${prefix + command} Back to Black`);
-    nazu.react(['💖']);
-    let videoUrl;
-    if (q.includes('youtube.com') || q.includes('youtu.be')) {
-      videoUrl = q;
-    } else {
-      const searchResult = await youtube.search(q);
-      if (!searchResult.ok) return reply(searchResult.msg);
-      videoUrl = searchResult.data.url;
-    }
-    const videoInfo = (await youtube.search(q));
-    if (!videoInfo.ok) return reply(videoInfo.msg);
-    const caption = `
-🎵 *Música Encontrada* 🎵
-
-📌 *Título:* ${videoInfo.data.title}
-👤 *Artista/Canal:* ${videoInfo.data.author.name}
-⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)
-👀 *Visualizações:* ${videoInfo.data.views.toLocaleString()}
-📅 *Publicado:* ${videoInfo.data.ago}
-📜 *Descrição:* ${videoInfo.data.description.slice(0, 100)}${videoInfo.data.description.length > 100 ? '...' : ''}
-🔗 *Link:* ${videoInfo.data.url}
-
-🎧 *Enviando sua música, aguarde!*`;
-    await nazu.sendMessage(from, { 
-      image: { url: videoInfo.data.thumbnail }, 
-      caption: caption, 
-      footer: `By: ${nomebot}` 
-    }, { quoted: info });
-    const dlRes = await youtube.mp3v2(videoUrl);
-    if (!dlRes.ok) return reply(dlRes.msg);
-    try {
-      await nazu.sendMessage(from, {
-        audio: { url: dlRes.url }, 
-        fileName: `${videoInfo.data.title}.mp3`, 
-        mimetype: 'audio/mp4'
-      }, { quoted: info });
-    } catch (audioError) {
-      if (String(audioError).includes("ENOSPC") || String(audioError).includes("size")) {
-        await reply('Arquivo muito grande, enviando como documento...');
-        await nazu.sendMessage(from, {
-          document: { url: dlRes.url }, 
-          fileName: `${videoInfo.data.title}.mp3`, 
-          mimetype: 'audio/mpeg'
-        }, { quoted: info });
-      } else {
-        throw audioError;
-      }
-    }
-  } catch (e) {
-    console.error(e);
-    reply("Ocorreu um erro 💔");
-  }
-  break;
-
-case 'playvid2':
-case 'ytmp42':
-  try {
-    if (!q) return reply(`Digite o nome do vídeo ou um link do YouTube.\n> Ex: ${prefix + command} Back to Black`);
-    nazu.react(['💖']);
-    let videoUrl;
-    if (q.includes('youtube.com') || q.includes('youtu.be')) {
-      videoUrl = q;
-    } else {
-      const searchResult = await youtube.search(q);
-      if (!searchResult.ok) return reply(searchResult.msg);
-      videoUrl = searchResult.data.url;
-    }
-    const videoInfo = (await youtube.search(q));
-    if (!videoInfo.ok) return reply(videoInfo.msg);
-    const caption = `
-🎬 *Vídeo Encontrado* 🎬
-
-📌 *Título:* ${videoInfo.data.title}
-👤 *Artista/Canal:* ${videoInfo.data.author.name}
-⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)
-👀 *Visualizações:* ${videoInfo.data.views.toLocaleString()}
-📅 *Publicado:* ${videoInfo.data.ago}
-📜 *Descrição:* ${videoInfo.data.description.slice(0, 100)}${videoInfo.data.description.length > 100 ? '...' : ''}
-🔗 *Link:* ${videoInfo.data.url}
-
-📹 *Enviando seu vídeo, aguarde!*`;
-    await nazu.sendMessage(from, { 
-      image: { url: videoInfo.data.thumbnail }, 
-      caption: caption, 
-      footer: `By: ${nomebot}` 
-    }, { quoted: info });
-    const dlRes = await youtube.mp4v2(videoUrl);
-    if (!dlRes.ok) return reply(dlRes.msg);
-    try {
-      await nazu.sendMessage(from, {
-        video: { url: dlRes.url }, 
-        fileName: `${videoInfo.data.title}.mp4`, 
-        mimetype: 'video/mp4'
-      }, { quoted: info });
-    } catch (videoError) {
-      if (String(videoError).includes("ENOSPC") || String(videoError).includes("size")) {
-        await reply('Arquivo muito grande, enviando como documento...');
-        await nazu.sendMessage(from, {
-          document: { url: dlRes.url }, 
-          fileName: `${videoInfo.data.title}.mp4`, 
-          mimetype: 'video/mp4'
-        }, { quoted: info });
-      } else {
-        throw videoError;
-      }
-    }
-  } catch (e) {
-    console.error(e);
-    reply("Ocorreu um erro 💔");
-  }
-  break;
-  
   case 'letra': case 'lyrics': try {
   if(!q) return reply('cade o nome da musica?');
   await reply(await Lyrics(q));
