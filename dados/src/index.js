@@ -3170,7 +3170,7 @@ case 'ytmp4':
    break;
    
    // MENUS DO BOT
-  case 'statusbot':
+  case 'statusbot': {
       const botUptime = process.uptime();
       const botUptimeFormatted = formatUptime(botUptime, true);
       
@@ -3255,6 +3255,7 @@ case 'ytmp4':
       statusBotMessage += `🌸 ═══════════════════════════════ 🌸`;
       
       await reply(statusBotMessage);
+      }
       break;
 
     case 'infoserver':
@@ -3349,7 +3350,7 @@ case 'ytmp4':
       await reply(infoServerMessage);
       break;
 
-    case 'stats':
+    case 'stats': {
       const statsUptime = process.uptime();
       const statsUptimeFormatted = formatUptime(statsUptime, true);
       
@@ -3429,6 +3430,7 @@ case 'ytmp4':
       statsMessage += `🌸 ═══════════════════════════════ 🌸`;
       
       await reply(statsMessage);
+      }
       break;
 
     case 'menu': case 'help':
