@@ -2,7 +2,7 @@
 ═════════════════════════════
   Nazuna - Conexão WhatsApp
   Autor: Hiudy
-  Revisão: 09/06/2025
+  Revisão: 10/06/2025
 ═════════════════════════════
 */
 
@@ -195,7 +195,7 @@ async function startNazu() {
         if (typeof indexModule === 'function') {
           for (const info of m.messages) {
             if (!info.message || !info.key.remoteJid) continue;
-            await indexModule(nazu, info, null, groupCache); // null no lugar do store
+            await indexModule(nazu, info, null, groupCache);
           }
         } else {
           console.error('O módulo index.js não exporta uma função válida.');
