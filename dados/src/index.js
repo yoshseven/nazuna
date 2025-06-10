@@ -1,256 +1,132 @@
-// ✨ ====================
-// 🌸 Nazuna Bot - Core Engine
-// 👑 Criado com amor por Hiudy!
-// 🌸 Tudo feito especialmente para você!
-// 🚀 Versão: 3.0.0 - Otimizada
-// ✨ ====================
+// ====================
+// Nazuna Bot - Index principal
+// Criado por: Hiudy
+// Versão: 3.0.0
+// ====================
 
-// 📦 Importações otimizadas
+// Importações principais
 const { downloadContentFromMessage } = require('baileys');
 const { exec, execSync } = require('child_process');
 const axios = require('axios');
 const pathz = require('path');
-const fs = require('fs').promises;
-const fsSync = require('fs');
+const fs = require('fs');
 const os = require('os');
+const https = require('https'); 
 
 const Banner = require("@cognima/banners");
 
-// 🎯 Cache para melhor performance
-const cache = new Map();
-const configCache = new Map();
-let lastConfigCheck = 0;
-const CONFIG_CACHE_TTL = 5000; // 5 segundos
+// Carrega a versão do bot do package.json
+const { version: botVersion } = JSON.parse(fs.readFileSync(pathz.join(__dirname, '..', '..', 'package.json')));
 
-// 📋 Carrega configurações com cache
-const loadConfig = () => {
-  const now = Date.now();
-  if (now - lastConfigCheck < CONFIG_CACHE_TTL && configCache.has('main')) {
-    return configCache.get('main');
-  }
+// Importa os menus
+const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuAlterador, menuLogos, menuTopCmd } = require(`${__dirname}/menus/index.js`);
+
+// Carrega as configurações do bot
+const config = JSON.parse(fs.readFileSync(__dirname+'/config.json'));
+const { numerodono, nomedono, nomebot, prefixo, debug } = config;
+const prefix = prefixo; // Alias para compatibilidade
+
+const DATABASE_DIR = __dirname + '/../database';
+const GRUPOS_DIR = DATABASE_DIR + '/grupos';
+const USERS_DIR = DATABASE_DIR + '/users';
+const DONO_DIR = DATABASE_DIR + '/dono';
+
+function formatUptime(seconds, longFormat = false, showZero = false) {
+  const d = Math.floor(seconds / (24 * 3600));
+  const h = Math.floor((seconds % (24 * 3600)) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
   
+  const formats = longFormat ? { d: (val) => `${val} ${val === 1 ? 'dia' : 'dias'}`, h: (val) => `${val} ${val === 1 ? 'hora' : 'horas'}`, m: (val) => `${val} ${val === 1 ? 'minuto' : 'minutos'}`, s: (val) => `${val} ${val === 1 ? 'segundo' : 'segundos'}` } : { d: (val) => `${val}d`, h: (val) => `${val}h`, m: (val) => `${val}m`, s: (val) => `${val}s` };
+  
+  const uptimeStr = [];
+  
+  if (d > 0 || showZero) uptimeStr.push(formats.d(d));
+  if (h > 0 || showZero) uptimeStr.push(formats.h(h));
+  if (m > 0 || showZero) uptimeStr.push(formats.m(m));
+  if (s > 0 || showZero) uptimeStr.push(formats.s(s));
+  
+  // Retorna a string formatada ou "0s" se vazia
+  return uptimeStr.length > 0 
+    ? uptimeStr.join(longFormat ? ', ' : ' ') 
+    : (longFormat ? '0 segundos' : '0s');
+}
+
+const normalizar = (texto, keepCase = false) => {
+  if (!texto || typeof texto !== 'string') return '';
+  
+  const normalizedText = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  
+  return keepCase ? normalizedText : normalizedText.toLowerCase();
+};
+
+function ensureDirectoryExists(dirPath) {
   try {
-    const config = JSON.parse(fsSync.readFileSync(__dirname + '/config.json'));
-    configCache.set('main', config);
-    lastConfigCheck = now;
-    return config;
-  } catch (error) {
-    console.error('💥 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao carregar config:', error);
-    return configCache.get('main') || {};
-  }
-};
-
-// 🎮 Carrega versão do bot
-const { version: botVersion } = JSON.parse(fsSync.readFileSync(pathz.join(__dirname, '..', '..', 'package.json')));
-
-// 🎨 Importa menus de forma lazy
-let menusCache = null;
-const getMenus = () => {
-  if (!menusCache) {
-    menusCache = require(`${__dirname}/menus/index.js`);
-  }
-  return menusCache;
-};
-
-// ⚙️ Configurações dinâmicas
-const getConfig = () => loadConfig();
-const { numerodono, nomedono, nomebot, prefixo, debug } = getConfig();
-const prefix = prefixo;
-
-// 📁 Diretórios organizados
-const DATABASE_DIR = pathz.join(__dirname, '..', 'database');
-const GRUPOS_DIR = pathz.join(DATABASE_DIR, 'grupos');
-const USERS_DIR = pathz.join(DATABASE_DIR, 'users');
-const DONO_DIR = pathz.join(DATABASE_DIR, 'dono');
-const STATS_DIR = pathz.join(DATABASE_DIR, 'stats');
-
-// ⏰ Formatador de tempo otimizado e fofo
-const formatUptime = (seconds, longFormat = false, showZero = false) => {
-  const units = [
-    { name: 'dia', plural: 'dias', short: 'd', value: 86400 },
-    { name: 'hora', plural: 'horas', short: 'h', value: 3600 },
-    { name: 'minuto', plural: 'minutos', short: 'm', value: 60 },
-    { name: 'segundo', plural: 'segundos', short: 's', value: 1 }
-  ];
-  
-  const result = [];
-  let remaining = Math.floor(seconds);
-  
-  for (const unit of units) {
-    const count = Math.floor(remaining / unit.value);
-    if (count > 0 || showZero) {
-      if (longFormat) {
-        result.push(`${count} ${count === 1 ? unit.name : unit.plural}`);
-      } else {
-        result.push(`${count}${unit.short}`);
-      }
-    }
-    remaining %= unit.value;
-  }
-  
-  return result.length > 0 
-    ? result.join(longFormat ? ', ' : ' ') 
-    : (longFormat ? '✨ Nazuna acabou de acordar! 🌸💕' : '0s');
-};
-
-// 🔤 Normalizador de texto otimizado
-const normalizar = (() => {
-  const cache = new Map();
-  return (texto, keepCase = false) => {
-    if (!texto || typeof texto !== 'string') return '';
-    
-    const cacheKey = `${texto}_${keepCase}`;
-    if (cache.has(cacheKey)) return cache.get(cacheKey);
-    
-    const normalizedText = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const result = keepCase ? normalizedText : normalizedText.toLowerCase();
-    
-    // 🧠 Limita cache para manter a Nazuna sempre eficiente
-    if (cache.size > 1000) cache.clear();
-    cache.set(cacheKey, result);
-    
-    return result;
-  };
-})();
-
-// 📂 🎨 *Criado com amor!* ✨\n\n🌸 *Tudo feito especialmente para você!* 💕r de diretórios otimizado
-const ensureDirectoryExists = async (dirPath) => {
-  try {
-    if (!fsSync.existsSync(dirPath)) {
-      await fs.mkdir(dirPath, { recursive: true });
-      // 🌸 Log otimizado removido para melhor performance da Nazuna
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+      console.log(`✅ Diretório criado: ${dirPath}`);
     }
     return true;
   } catch (error) {
-    console.error(`💥 💥 *Oops! Não consegui* 😔\n\n🌸 *Houve uma falha ao criar diretório ${pathz.basename(dirPath)}:`, error.message);
+    console.error(`❌ Erro ao criar diretório ${dirPath}:`, error);
     return false;
   }
-};
+}
 
-// 📄 🎨 *Criado com amor!* ✨\n\n🌸 *Tudo feito especialmente para você!* 💕r de arquivos JSON otimizado
-const ensureJsonFileExists = async (filePath, defaultContent = {}) => {
+function ensureJsonFileExists(filePath, defaultContent = {}) {
   try {
-    if (!fsSync.existsSync(filePath)) {
+    if (!fs.existsSync(filePath)) {
       const dirPath = pathz.dirname(filePath);
-      await ensureDirectoryExists(dirPath);
+      ensureDirectoryExists(dirPath);
       
-      await fs.writeFile(filePath, JSON.stringify(defaultContent, null, 2));
-      // 🌸 Log otimizado removido para melhor performance da Nazuna
+      fs.writeFileSync(filePath, JSON.stringify(defaultContent, null, 2));
+      console.log(`✅ Arquivo JSON criado: ${filePath}`);
     }
     return true;
   } catch (error) {
-    console.error(`💥 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao criar ${pathz.basename(filePath)}:`, error.message);
+    console.error(`❌ Erro ao criar arquivo JSON ${filePath}:`, error);
     return false;
   }
-};
+}
 
-// 📖 Carregador de JSON com cache inteligente
-const loadJsonFile = (() => {
-  const fileCache = new Map();
-  const lastModified = new Map();
-  
-  return (path, defaultValue = {}) => {
+const loadJsonFile = (path, defaultValue = {}) => {
     try {
-      if (!fsSync.existsSync(path)) return defaultValue;
-      
-      const stats = fsSync.statSync(path);
-      const lastMod = stats.mtime.getTime();
-      
-      // 🔍 Nazuna verifica se o arquivo foi modificado
-      if (fileCache.has(path) && lastModified.get(path) === lastMod) {
-        return fileCache.get(path);
-      }
-      
-      const data = JSON.parse(fsSync.readFileSync(path, 'utf-8'));
-      fileCache.set(path, data);
-      lastModified.set(path, lastMod);
-      
-      return data;
+      return fs.existsSync(path) ? JSON.parse(fs.readFileSync(path, 'utf-8')) : defaultValue;
     } catch (error) {
-      console.error(`💥 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao carregar ${pathz.basename(path)}:`, error.message);
+      console.error(`Erro ao carregar arquivo ${path}:`, error);
       return defaultValue;
     }
-  };
-})();
+};
 
-// 🚀 Inicialização assíncrona otimizada
-(async () => {
-  console.log('🌸 ✨ Nazuna está acordando... Inicializando estrutura de dados com carinho! 💕');
-  
-  await Promise.all([
-    ensureDirectoryExists(GRUPOS_DIR),
-    ensureDirectoryExists(USERS_DIR),
-    ensureDirectoryExists(DONO_DIR),
-    ensureDirectoryExists(STATS_DIR)
-  ]);
-  
-  await Promise.all([
-    ensureJsonFileExists(pathz.join(DATABASE_DIR, 'antiflood.json')),
-    ensureJsonFileExists(pathz.join(DATABASE_DIR, 'cmdlimit.json')),
-    ensureJsonFileExists(pathz.join(DATABASE_DIR, 'antipv.json')),
-    ensureJsonFileExists(pathz.join(DONO_DIR, 'premium.json')),
-    ensureJsonFileExists(pathz.join(DONO_DIR, 'bangp.json')),
-    ensureJsonFileExists(pathz.join(DATABASE_DIR, 'globalBlocks.json'), { commands: {}, users: {} }),
-    ensureJsonFileExists(pathz.join(DATABASE_DIR, 'botState.json'), { status: 'on' }),
-    ensureJsonFileExists(pathz.join(STATS_DIR, 'commandStats.json'), { 
-      totalCommands: 0, 
-      dailyCommands: {}, 
-      commandCount: {},
-      lastReset: new Date().toDateString()
-    }),
-    ensureJsonFileExists(pathz.join(STATS_DIR, 'userStats.json'), { 
-      totalUsers: 0, 
-      activeUsers: {},
-      dailyActive: {},
-      lastReset: new Date().toDateString()
-    }),
-    ensureJsonFileExists(pathz.join(STATS_DIR, 'groupStats.json'), { 
-      totalGroups: 0, 
-      activeGroups: {},
-      groupMessages: {},
-      lastReset: new Date().toDateString()
-    })
-  ]);
-  
-  console.log('✨ 🎉 Estrutura inicializada com sucesso! Nazuna está pronta para espalhar alegria! 🌸💖');
-})();
+ensureDirectoryExists(GRUPOS_DIR);
+ensureDirectoryExists(USERS_DIR);
+ensureDirectoryExists(DONO_DIR);
 
-// 👑 Sistema de Subdonos Otimizado
+ensureJsonFileExists(DATABASE_DIR + '/antiflood.json');
+ensureJsonFileExists(DATABASE_DIR + '/cmdlimit.json');
+ensureJsonFileExists(DATABASE_DIR + '/antipv.json');
+ensureJsonFileExists(DONO_DIR + '/premium.json');
+ensureJsonFileExists(DONO_DIR + '/bangp.json');
+ensureJsonFileExists(DATABASE_DIR + '/globalBlocks.json', { commands: {}, users: {} });
+ensureJsonFileExists(DATABASE_DIR + '/botState.json', { status: 'on' });
+
+// Funções para Gerenciamento de Subdonos
 
 const SUBDONOS_FILE = pathz.join(DONO_DIR, 'subdonos.json');
 
-// 🚀 Nazuna inicializa de forma assíncrona e eficiente
-ensureJsonFileExists(SUBDONOS_FILE, { subdonos: [] });
-
-// 📋 Cache para subdonos
-let subdonosCache = null;
-let subdonosLastCheck = 0;
-const SUBDONO_CACHE_TTL = 10000; // 10 segundos
+ensureJsonFileExists(SUBDONOS_FILE, { subdonos: [] }); // Inicializa com uma lista vazia
 
 const loadSubdonos = () => {
-  const now = Date.now();
-  if (subdonosCache && (now - subdonosLastCheck < SUBDONO_CACHE_TTL)) {
-    return subdonosCache;
-  }
-  
-  const data = loadJsonFile(SUBDONOS_FILE, { subdonos: [] });
-  subdonosCache = data.subdonos || [];
-  subdonosLastCheck = now;
-  return subdonosCache;
+  return loadJsonFile(SUBDONOS_FILE, { subdonos: [] }).subdonos || [];
 };
 
-const saveSubdonos = async (subdonoList) => {
+const saveSubdonos = (subdonoList) => {
   try {
-    await ensureDirectoryExists(DONO_DIR);
-    await fs.writeFile(SUBDONOS_FILE, JSON.stringify({ subdonos: subdonoList }, null, 2));
-    
-    // 💾 Nazuna atualiza o cache para melhor performance
-    subdonosCache = subdonoList;
-    subdonosLastCheck = Date.now();
-    
+    ensureDirectoryExists(DONO_DIR); 
+    fs.writeFileSync(SUBDONOS_FILE, JSON.stringify({ subdonos: subdonoList }, null, 2));
     return true;
   } catch (error) {
-    console.error('💥 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao salvar subdonos:', error.message);
+    console.error('❌ Erro ao salvar subdonos:', error);
     return false;
   }
 };
@@ -260,131 +136,77 @@ const isSubdono = (userId) => {
   return currentSubdonos.includes(userId);
 };
 
-const addSubdono = async (userId) => {
+const addSubdono = (userId) => {
   if (!userId || typeof userId !== 'string' || !userId.includes('@s.whatsapp.net')) {
-    return { 
-      success: false, 
-      message: '🚫 *Formato inválido, querido(a)!* 😅\n\n💡 *Como usar corretamente:*\n📝 `1234567890@s.whatsapp.net`\n\n🌸 *Ou simplesmente marque o usuário!*\nFica mais fácil assim! 😊✨' 
-    };
+      return { success: false, message: 'ID de usuário inválido. Use o formato completo (ex: 1234567890@s.whatsapp.net) ou marque o usuário.' };
   }
-  
-  const currentSubdonos = loadSubdonos();
+  let currentSubdonos = loadSubdonos();
   if (currentSubdonos.includes(userId)) {
-    return { 
-      success: false, 
-      message: '✨ *Este usuário já é subdono!* 👑\n\n😊 *Ele já possui poderes especiais!*\n🌸 Não precisa adicionar novamente!\n💫 *Já faz parte da equipe especial!*' 
-    };
+      return { success: false, message: '✨ Este usuário já é um subdono! Não precisa adicionar de novo. 😊' };
   }
   
-  // Verifica se é o dono principal
-  const config = getConfig();
-  const nmrdn_check = config.numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net';
+  // Verifica se o usuário a ser adicionado é o dono principal
+  const nmrdn_check = numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net'; // Renomeado para evitar conflito de escopo
   if (userId === nmrdn_check) {
-    return { 
-      success: false, 
-      message: '👑 *Dono Principal Detectado!* ✨\n\n🌟 *O dono já possui todos os superpoderes!*\n🌸 Não é possível adicionar como subdono!\n😉 *Ele já é o chefe supremo!* 💖' 
-    };
+      return { success: false, message: '🤔 O Dono principal já tem todos os superpoderes! Não dá pra adicionar como subdono. 😉' };
   }
 
   currentSubdonos.push(userId);
-  const saved = await saveSubdonos(currentSubdonos);
-  
-  if (saved) {
-    return { 
-      success: true, 
-      message: '🎉 *Subdono ➕ *Adicionado com carinho!* ✨\n\n🌸 *Tudo certinho e no lugar!* 💕!*\n\n✨ Novo membro da equipe adicionado com sucesso!\n👑 Agora possui poderes especiais! 🌟' 
-    };
+  if (saveSubdonos(currentSubdonos)) {
+    return { success: true, message: '🎉 Pronto! Novo subdono adicionado com sucesso! ✨' };
   } else {
-    return { 
-      success: false, 
-      message: '💥 *💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao Salvar!*\n\n😅 Ops! Houve um probleminha ao salvar.\nTente novamente em alguns segundos! 🔄' 
-    };
+    return { success: false, message: '😥 Oops! Tive um probleminha para salvar a lista de subdonos. Tente novamente, por favor!' };
   }
 };
 
-const removeSubdono = async (userId) => {
+const removeSubdono = (userId) => {
   if (!userId || typeof userId !== 'string' || !userId.includes('@s.whatsapp.net')) {
-    return { 
-      success: false, 
-      message: '🚫 *Formato inválido!*\n\n💡 Use o formato completo:\n`1234567890@s.whatsapp.net`\n\nOu marque o usuário! 😊' 
-    };
+      return { success: false, message: 'ID de usuário inválido. Use o formato completo (ex: 1234567890@s.whatsapp.net) ou marque o usuário.' };
   }
-  
-  const currentSubdonos = loadSubdonos();
+  let currentSubdonos = loadSubdonos();
   if (!currentSubdonos.includes(userId)) {
-    return { 
-      success: false, 
-      message: '🤔 *Usuário não encontrado!* 😅\n\n🌸 *Este usuário não está na lista de subdonos*\n💡 Verifique se o ID está correto!\n🔍 *Dica:* Confira se digitou tudo certinho! ✨' 
-    };
+      return { success: false, message: '🤔 Este usuário não está na lista de subdonos.' };
   }
 
-  const filteredSubdonos = currentSubdonos.filter(id => id !== userId);
-  
-  if (filteredSubdonos.length === currentSubdonos.length) {
-    return { 
-      success: false, 
-      message: '💥 *Erro inesperado!* 😔\n\n🤷 *Nazuna não conseguiu remover o usuário*\n🌸 Tente novamente em alguns segundos!\n🔄 *Às vezes acontece, não desista!* 💕' 
-    };
+  const initialLength = currentSubdonos.length;
+  currentSubdonos = currentSubdonos.filter(id => id !== userId);
+
+  if (currentSubdonos.length === initialLength) {
+      return { success: false, message: 'Usuário não encontrado na lista (erro inesperado). 🤷' };
   }
 
-  const saved = await saveSubdonos(filteredSubdonos);
-  
-  if (saved) {
-    return { 
-      success: true, 
-      message: '👋 *Subdono Removido com Sucesso!* ✨\n\n🌸 *Usuário removido da equipe especial!*\n🔓 Poderes especiais foram revogados!\n💫 *Tudo organizado e atualizado!* 💕' 
-    };
+  if (saveSubdonos(currentSubdonos)) {
+    return { success: true, message: '👋 Pronto! Subdono removido com sucesso! ✨' };
   } else {
-    return { 
-      success: false, 
-      message: '💥 *💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao Salvar!*\n\n😅 Probleminha ao salvar as alterações.\nTente novamente em alguns segundos! 🔄' 
-    };
+    return { success: false, message: '😥 Oops! Tive um probleminha para salvar a lista após remover o subdono. Tente novamente!' };
   }
 };
 
 const getSubdonos = () => {
-  return [...loadSubdonos()]; // 📋 Retorna uma cópia fresquinha e atualizada
+  return [...loadSubdonos()]; // Retorna uma cópia atualizada
 };
 
-// 🌸 ===== Fim das Funções de Subdonos da Nazuna ===== 💕
+// Fim Funções Subdonos
 
-// 💰 Sistema de Aluguel Otimizado
+// Funções para Gerenciamento de Aluguel
 
 const ALUGUEIS_FILE = pathz.join(DONO_DIR, 'alugueis.json');
 const CODIGOS_ALUGUEL_FILE = pathz.join(DONO_DIR, 'codigos_aluguel.json');
 
-// 🚀 Nazuna inicializa de forma assíncrona e eficiente
-ensureJsonFileExists(ALUGUEIS_FILE, { globalMode: false, groups: {} });
-ensureJsonFileExists(CODIGOS_ALUGUEL_FILE, { codes: {} });
-
-// 🎯 Cache para dados de aluguel
-let rentalCache = null;
-let rentalLastCheck = 0;
-const RENTAL_CACHE_TTL = 15000; // 15 segundos
+ensureJsonFileExists(ALUGUEIS_FILE, { globalMode: false, groups: {} }); // globalMode: false (desativado por padrão), groups: { groupId: { expiresAt: null | 'permanent' | ISOString } }
+ensureJsonFileExists(CODIGOS_ALUGUEL_FILE, { codes: {} }); // codes: { code: { duration: number | 'permanent', targetGroup: null | string, used: false, usedBy: null, usedAt: null } }
 
 const loadRentalData = () => {
-  const now = Date.now();
-  if (rentalCache && (now - rentalLastCheck < RENTAL_CACHE_TTL)) {
-    return rentalCache;
-  }
-  
-  rentalCache = loadJsonFile(ALUGUEIS_FILE, { globalMode: false, groups: {} });
-  rentalLastCheck = now;
-  return rentalCache;
+  return loadJsonFile(ALUGUEIS_FILE, { globalMode: false, groups: {} });
 };
 
-const saveRentalData = async (data) => {
+const saveRentalData = (data) => {
   try {
-    await ensureDirectoryExists(DONO_DIR);
-    await fs.writeFile(ALUGUEIS_FILE, JSON.stringify(data, null, 2));
-    
-    // 💾 Nazuna atualiza o cache para melhor performance
-    rentalCache = data;
-    rentalLastCheck = Date.now();
-    
+    ensureDirectoryExists(DONO_DIR);
+    fs.writeFileSync(ALUGUEIS_FILE, JSON.stringify(data, null, 2));
     return true;
   } catch (error) {
-    console.error('💥 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao salvar aluguel:', error.message);
+    console.error('❌ Erro ao salvar dados de aluguel:', error);
     return false;
   }
 };
@@ -396,7 +218,7 @@ const isRentalModeActive = () => {
 
 const setRentalMode = (isActive) => {
   let rentalData = loadRentalData();
-  rentalData.globalMode = !!isActive; // ✅ Nazuna garante que seja um valor booleano correto
+  rentalData.globalMode = !!isActive; // Garante que seja booleano
   return saveRentalData(rentalData);
 };
 
@@ -405,70 +227,52 @@ const getGroupRentalStatus = (groupId) => {
   const groupInfo = rentalData.groups[groupId];
 
   if (!groupInfo) {
-    return { active: false, expiresAt: null, permanent: false }; // 🌸 Grupo ainda não tem aluguel registrado
+    return { active: false, expiresAt: null, permanent: false }; // Grupo não tem aluguel registrado
   }
 
   if (groupInfo.expiresAt === 'permanent') {
-    return { active: true, expiresAt: 'permanent', permanent: true }; // 💎 Aluguel permanente e especial
+    return { active: true, expiresAt: 'permanent', permanent: true }; // Aluguel permanente
   }
 
   if (groupInfo.expiresAt) {
     const expirationDate = new Date(groupInfo.expiresAt);
     if (expirationDate > new Date()) {
-      return { active: true, expiresAt: groupInfo.expiresAt, permanent: false }; // ✅ Aluguel ativo e dentro do prazo
+      return { active: true, expiresAt: groupInfo.expiresAt, permanent: false }; // Aluguel ativo e dentro do prazo
     } else {
-      return { active: false, expiresAt: groupInfo.expiresAt, permanent: false }; // ⏰ Aluguel expirado
+      return { active: false, expiresAt: groupInfo.expiresAt, permanent: false }; // Aluguel expirado
     }
   }
 
-  return { active: false, expiresAt: null, permanent: false }; // ❓ Caso inválido ou sem data de expiração definida
+  return { active: false, expiresAt: null, permanent: false }; // Caso inválido ou sem data de expiração definida
 };
 
-const setGroupRental = async (groupId, durationDays) => {
+const setGroupRental = (groupId, durationDays) => {
   if (!groupId || typeof groupId !== 'string' || !groupId.endsWith('@g.us')) {
-    return { 
-      success: false, 
-      message: '🚫 *ID de Grupo Inválido!* 😅\n\n💡 *Como deve ser:*\n🌸 O ID deve terminar com @g.us\n🔍 *Exemplo:* 123456789@g.us\n✨ *Verifique e tente novamente!*' 
-    };
+    return { success: false, message: '🤔 ID de grupo inválido! Verifique se o ID está correto (geralmente termina com @g.us).' };
   }
 
-  const rentalData = loadRentalData();
+  let rentalData = loadRentalData();
   let expiresAt = null;
   let message = '';
 
   if (durationDays === 'permanent') {
     expiresAt = 'permanent';
-    message = `💎 *Aluguel Permanente 🟢 *Ativado com sucesso!* ✨\n\n🌸 *Agora está funcionando perfeitamente!* 💕!*\n\n✨ Este grupo agora tem acesso vitalício!\n🎉 Aproveitem todos os recursos! 🌟`;
+    message = `✅ Aluguel permanente ativado para o grupo ${groupId}!`;
   } else if (typeof durationDays === 'number' && durationDays > 0) {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + durationDays);
     expiresAt = expirationDate.toISOString();
-    
-    const formattedDate = expirationDate.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit', 
-      year: 'numeric'
-    });
-    
-    message = `🎉 *Aluguel Ativado com Sucesso!* ✨\n\n⏰ *Duração:* ${durationDays} dias\n📅 *Expira em:* ${formattedDate}\n\n🌸 *Aproveitem todos os recursos da Nazuna!*\n💖 *Vamos nos divertir juntos!* 🌟`;
+    message = `✅ Aluguel ativado para o grupo ${groupId} por ${durationDays} dias! Expira em: ${expirationDate.toLocaleDateString('pt-BR')}.`;
   } else {
-    return { 
-      success: false, 
-      message: '🚫 *Duração Inválida, querido(a)!* 😅\n\n💡 *Como usar corretamente:*\n🌸 • Um número de dias (exemplo: 30)\n✨ • Ou a palavra "permanent" para sempre!\n📝 *É fácil assim!*' 
-    };
+    return { success: false, message: '🤔 Duração inválida! Use um número de dias (ex: 30) ou a palavra "permanente".' };
   }
 
   rentalData.groups[groupId] = { expiresAt };
 
-  const saved = await saveRentalData(rentalData);
-  
-  if (saved) {
-    return { success: true, message };
+  if (saveRentalData(rentalData)) {
+    return { success: true, message: message };
   } else {
-    return { 
-      success: false, 
-      message: '💥 *💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao Salvar!*\n\n😅 Probleminha ao salvar o aluguel.\nTente novamente! 🔄' 
-    };
+    return { success: false, message: '😥 Oops! Tive um problema ao salvar as informações de aluguel deste grupo.' };
   }
 };
 
@@ -476,385 +280,157 @@ const loadActivationCodes = () => {
   return loadJsonFile(CODIGOS_ALUGUEL_FILE, { codes: {} });
 };
 
-const saveActivationCodes = async (data) => {
+const saveActivationCodes = (data) => {
   try {
-    await ensureDirectoryExists(DONO_DIR);
-    await fs.writeFile(CODIGOS_ALUGUEL_FILE, JSON.stringify(data, null, 2));
+    ensureDirectoryExists(DONO_DIR);
+    fs.writeFileSync(CODIGOS_ALUGUEL_FILE, JSON.stringify(data, null, 2));
     return true;
   } catch (error) {
-    console.error('💥 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao salvar códigos:', error.message);
+    console.error('❌ Erro ao salvar códigos de ativação:', error);
     return false;
   }
 };
 
-const generateActivationCode = async (durationDays, targetGroupId = null) => {
+const generateActivationCode = (durationDays, targetGroupId = null) => {
   const crypto = require('crypto');
   let code = '';
-  const codesData = loadActivationCodes();
+  let codesData = loadActivationCodes();
   
-  // 🎲 Nazuna gera um código único e especial
   do {
-    code = crypto.randomBytes(4).toString('hex').toUpperCase();
-  } while (codesData.codes[code]);
+    code = crypto.randomBytes(4).toString('hex').toUpperCase(); // Gera código de 8 caracteres
+  } while (codesData.codes[code]); // Garante unicidade
 
   if (durationDays !== 'permanent' && (typeof durationDays !== 'number' || durationDays <= 0)) {
-    return { 
-      success: false, 
-      message: '🚫 *Duração Inválida!* 😅\n\n💡 *Opções disponíveis:*\n🌸 • Número de dias (exemplo: 7)\n✨ • "permanent" para acesso vitalício\n📝 *É simples assim!*' 
-    };
+      return { success: false, message: '🤔 Duração inválida para o código! Use um número de dias (ex: 7) ou "permanente".' };
   }
   
   if (targetGroupId && (typeof targetGroupId !== 'string' || !targetGroupId.endsWith('@g.us'))) {
-    console.warn(`⚠️ ID de grupo inválido fornecido: ${targetGroupId}. Nazuna vai gerar um código genérico.`);
-    targetGroupId = null;
+      // Permite targetGroupId nulo, mas se fornecido, deve ser válido
+      // Vamos permitir códigos sem grupo alvo específico por enquanto
+      console.warn(`Gerando código ${code} sem grupo alvo específico, embora um ID inválido (${targetGroupId}) tenha sido fornecido.`);
+      targetGroupId = null; // Ignora ID inválido
   }
 
   codesData.codes[code] = {
-    duration: durationDays,
-    targetGroup: targetGroupId,
+    duration: durationDays, // 'permanent' ou número de dias
+    targetGroup: targetGroupId, // null ou ID do grupo
     used: false,
     usedBy: null,
     usedAt: null,
     createdAt: new Date().toISOString()
   };
 
-  const saved = await saveActivationCodes(codesData);
-  
-  if (saved) {
-    let message = `🎫 *Código de Ativação Criado com Carinho!* ✨\n\n🌸 *Nazuna preparou um código especial para você!*\n\n`;
-    message += `🔑 *${code}*\n\n`;
-    
+  if (saveActivationCodes(codesData)) {
+    let message = `🔑 Código de ativação gerado: 
+
+*${code}*
+
+`;
     if (durationDays === 'permanent') {
-      message += `⏰ *Duração:* *Permanente* ✨\n🌸 *Acesso vitalício garantido!*\n`;
+        message += `Duração: Permanente ✨\n`;
     } else {
-      message += `⏰ *Duração:* *${durationDays} dias* 📅\n🌸 *Tempo suficiente para se divertir!*\n`;
+        message += `Duração: ${durationDays} dias ⏳\n`;
     }
-    
     if (targetGroupId) {
-      message += `🎯 *Grupo Específico:* Sim\n🌸 *Código exclusivo para um grupo especial!*\n`;
-    } else {
-      message += `🌍 *Uso:* Qualquer grupo\n✨ *Código universal para todos os grupos!*\n`;
+        message += `Grupo Alvo: ${targetGroupId} 🎯\n`;
     }
-    
-    message += `\n💡 *Como usar este código mágico:*\n🌸 Envie este código em qualquer grupo\n✨ E pronto! O aluguel será ativado automaticamente!\n🚀 *É simples e rápido assim!*`;
-    
-    return { success: true, message, code };
+    message += `\nEnvie este código no grupo para ativar o aluguel.`;
+    return { success: true, message: message, code: code };
   } else {
-    return { 
-      success: false, 
-      message: '💥 *💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao Gerar!*\n\n😅 Não consegui salvar o código.\nTente novamente! 🔄' 
-    };
+    return { success: false, message: '😥 Oops! Não consegui salvar o novo código de ativação. Tente gerar novamente!' };
   }
 };
 
 const validateActivationCode = (code) => {
   const codesData = loadActivationCodes();
-  const codeInfo = codesData.codes[code?.toUpperCase()];
+  const codeInfo = codesData.codes[code?.toUpperCase()]; // Compara em maiúsculas
 
   if (!codeInfo) {
-    return { 
-      valid: false, 
-      message: '🚫 *Código Inválido, querido(a)!* 😅\n\n🤷 *Este código não existe ou está incorreto*\n🌸 Verifique se digitou certinho!\n🔍 *Dica:* Códigos são sensíveis a maiúsculas! ✨' 
-    };
+    return { valid: false, message: '🤷 Código de ativação inválido ou não encontrado!' };
   }
-  
   if (codeInfo.used) {
-    const usedDate = new Date(codeInfo.usedAt).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-    const usedBy = codeInfo.usedBy?.split('@')[0] || 'alguém';
-    
-    return { 
-      valid: false, 
-      message: `🔒 *Código Já Utilizado!* 😔\n\n📅 *Data de uso:* ${usedDate}\n👤 *Usado por:* ${usedBy}\n\n💡 *Lembre-se:* Cada código é único!\n🎫 *Só pode ser usado uma vez!* ✨` 
-    };
+    return { valid: false, message: `😕 Este código já foi usado em ${new Date(codeInfo.usedAt).toLocaleDateString('pt-BR')} por ${codeInfo.usedBy?.split('@')[0] || 'alguém'}!` };
   }
   
   return { valid: true, ...codeInfo };
 };
 
-const useActivationCode = async (code, groupId, userId) => {
+const useActivationCode = (code, groupId, userId) => {
   const validation = validateActivationCode(code);
   if (!validation.valid) {
     return { success: false, message: validation.message };
   }
 
   const codeInfo = validation;
-  code = code.toUpperCase();
+  code = code.toUpperCase(); // Garante que estamos usando a chave correta
 
   if (codeInfo.targetGroup && codeInfo.targetGroup !== groupId) {
-    return { 
-      success: false, 
-      message: '🔒 *Código Específico!* 🎯\n\n🌸 *Este código é exclusivo para outro grupo!*\n💡 Verifique se está no grupo correto!\n🔍 *Cada código tem seu destino especial!* ✨' 
-    };
+    return { success: false, message: '🔒 Este código de ativação é específico para outro grupo!' };
   }
 
-  const rentalResult = await setGroupRental(groupId, codeInfo.duration);
+  const rentalResult = setGroupRental(groupId, codeInfo.duration);
   if (!rentalResult.success) {
-    return { 
-      success: false, 
-      message: `💥 *Erro na Ativação!*\n\n${rentalResult.message}` 
-    };
+    return { success: false, message: `😥 Oops! Erro ao ativar o aluguel com este código: ${rentalResult.message}` };
   }
 
-  const codesData = loadActivationCodes();
+  let codesData = loadActivationCodes();
   codesData.codes[code].used = true;
   codesData.codes[code].usedBy = userId;
   codesData.codes[code].usedAt = new Date().toISOString();
-  codesData.codes[code].activatedGroup = groupId;
+  codesData.codes[code].activatedGroup = groupId; // Guarda qual grupo ativou
 
-  const saved = await saveActivationCodes(codesData);
-  
-  if (saved) {
-    return { 
-      success: true, 
-      message: `🎉 *Código Ativado com Sucesso!* ✨\n\n🔑 *Código usado:* *${code}*\n\n🌸 *Parabéns! Tudo funcionando perfeitamente!*\n${rentalResult.message}` 
-    };
+  if (saveActivationCodes(codesData)) {
+    return { success: true, message: `🎉 Código *${code}* ativado com sucesso! ${rentalResult.message}` };
   } else {
-    console.error(`🚨 CRÍTICO: 💥 *Oops! Não consegui* 😔\n\n🌸 *Houve uma falha ao marcar código ${code} como usado para ${groupId}`);
-    return { 
-      success: false, 
-      message: '🚨 *Erro Crítico!*\n\n⚠️ O aluguel foi ativado, mas houve um problema ao registrar o uso do código.\n\n📞 Contate o suporte informando este código!' 
-    };
+    console.error(`Falha CRÍTICA ao marcar código ${code} como usado após ativar aluguel para ${groupId}.`);
+    return { success: false, message: '🚨 Erro Crítico! O aluguel foi ativado, mas não consegui marcar o código como usado. Por favor, contate o suporte informando o código!' };
   }
 };
 
-// 🌸 ===== Fim das Funções de Aluguel da Nazuna ===== 💕
-
-// 📊 Sistema de Estatísticas Reais da Nazuna
-
-const COMMAND_STATS_FILE = pathz.join(STATS_DIR, 'commandStats.json');
-const USER_STATS_FILE = pathz.join(STATS_DIR, 'userStats.json');
-const GROUP_STATS_FILE = pathz.join(STATS_DIR, 'groupStats.json');
-
-// 📈 Funções de Estatísticas de Comandos
-const updateCommandStats = async (command) => {
-  try {
-    const today = new Date().toDateString();
-    const stats = loadJsonFile(COMMAND_STATS_FILE, { 
-      totalCommands: 0, 
-      dailyCommands: {}, 
-      commandCount: {},
-      lastReset: today
-    });
-    
-    // Reset diário
-    if (stats.lastReset !== today) {
-      stats.dailyCommands = {};
-      stats.lastReset = today;
-    }
-    
-    // Atualiza contadores
-    stats.totalCommands = (stats.totalCommands || 0) + 1;
-    stats.dailyCommands[today] = (stats.dailyCommands[today] || 0) + 1;
-    stats.commandCount[command] = (stats.commandCount[command] || 0) + 1;
-    
-    await fs.writeFile(COMMAND_STATS_FILE, JSON.stringify(stats, null, 2));
-    return true;
-  } catch (error) {
-    console.error('💥 😅 Erro ao atualizar stats de comando:', error.message);
-    return false;
-  }
-};
-
-const getCommandStats = () => {
-  const today = new Date().toDateString();
-  const stats = loadJsonFile(COMMAND_STATS_FILE, { 
-    totalCommands: 0, 
-    dailyCommands: {}, 
-    commandCount: {},
-    lastReset: today
-  });
-  
-  return {
-    totalCommands: stats.totalCommands || 0,
-    commandsToday: stats.dailyCommands[today] || 0,
-    popularCommands: Object.entries(stats.commandCount || {})
-      .map(([cmd, count]) => ({ name: cmd, uses: count }))
-      .sort((a, b) => b.uses - a.uses)
-      .slice(0, 5)
-  };
-};
-
-// 👥 Funções de Estatísticas de Usuários
-const updateUserStats = async (userId) => {
-  try {
-    const today = new Date().toDateString();
-    const stats = loadJsonFile(USER_STATS_FILE, { 
-      totalUsers: 0, 
-      activeUsers: {},
-      dailyActive: {},
-      lastReset: today
-    });
-    
-    // Reset diário
-    if (stats.lastReset !== today) {
-      stats.dailyActive = {};
-      stats.lastReset = today;
-    }
-    
-    // Novo usuário
-    if (!stats.activeUsers[userId]) {
-      stats.totalUsers = (stats.totalUsers || 0) + 1;
-      stats.activeUsers[userId] = {
-        firstSeen: today,
-        lastSeen: today,
-        commandCount: 0
-      };
-    }
-    
-    // Atualiza atividade
-    stats.activeUsers[userId].lastSeen = today;
-    stats.activeUsers[userId].commandCount = (stats.activeUsers[userId].commandCount || 0) + 1;
-    stats.dailyActive[today] = stats.dailyActive[today] || new Set();
-    stats.dailyActive[today].add ? stats.dailyActive[today].add(userId) : (stats.dailyActive[today] = [userId]);
-    
-    await fs.writeFile(USER_STATS_FILE, JSON.stringify(stats, null, 2));
-    return true;
-  } catch (error) {
-    console.error('💥 😅 Erro ao atualizar stats de usuário:', error.message);
-    return false;
-  }
-};
-
-const getUserStats = () => {
-  const today = new Date().toDateString();
-  const stats = loadJsonFile(USER_STATS_FILE, { 
-    totalUsers: 0, 
-    activeUsers: {},
-    dailyActive: {},
-    lastReset: today
-  });
-  
-  const activeToday = Array.isArray(stats.dailyActive[today]) 
-    ? stats.dailyActive[today].length 
-    : (stats.dailyActive[today] ? Object.keys(stats.dailyActive[today]).length : 0);
-  
-  return {
-    totalUsers: stats.totalUsers || 0,
-    activeToday: activeToday,
-    totalActiveUsers: Object.keys(stats.activeUsers || {}).length
-  };
-};
-
-// 👥 Funções de Estatísticas de Grupos
-const updateGroupStats = async (groupId, messageCount = 1) => {
-  try {
-    const today = new Date().toDateString();
-    const stats = loadJsonFile(GROUP_STATS_FILE, { 
-      totalGroups: 0, 
-      activeGroups: {},
-      groupMessages: {},
-      lastReset: today
-    });
-    
-    // Reset diário
-    if (stats.lastReset !== today) {
-      stats.groupMessages = {};
-      stats.lastReset = today;
-    }
-    
-    // Novo grupo
-    if (!stats.activeGroups[groupId]) {
-      stats.totalGroups = (stats.totalGroups || 0) + 1;
-      stats.activeGroups[groupId] = {
-        firstSeen: today,
-        lastActive: today,
-        totalMessages: 0
-      };
-    }
-    
-    // Atualiza atividade
-    stats.activeGroups[groupId].lastActive = today;
-    stats.activeGroups[groupId].totalMessages = (stats.activeGroups[groupId].totalMessages || 0) + messageCount;
-    stats.groupMessages[groupId] = (stats.groupMessages[groupId] || 0) + messageCount;
-    
-    await fs.writeFile(GROUP_STATS_FILE, JSON.stringify(stats, null, 2));
-    return true;
-  } catch (error) {
-    console.error('💥 😅 Erro ao atualizar stats de grupo:', error.message);
-    return false;
-  }
-};
-
-const getGroupStats = (specificGroupId = null) => {
-  const today = new Date().toDateString();
-  const stats = loadJsonFile(GROUP_STATS_FILE, { 
-    totalGroups: 0, 
-    activeGroups: {},
-    groupMessages: {},
-    lastReset: today
-  });
-  
-  if (specificGroupId) {
-    const groupInfo = stats.activeGroups[specificGroupId];
-    return {
-      totalMessages: groupInfo?.totalMessages || 0,
-      messagesToday: stats.groupMessages[specificGroupId] || 0,
-      firstSeen: groupInfo?.firstSeen || today,
-      lastActive: groupInfo?.lastActive || today
-    };
-  }
-  
-  return {
-    totalGroups: stats.totalGroups || 0,
-    activeGroups: Object.keys(stats.activeGroups || {}).length,
-    totalMessagesToday: Object.values(stats.groupMessages || {}).reduce((a, b) => a + b, 0)
-  };
-};
-
-// 🌸 ===== Fim das Funções de Estatísticas da Nazuna ===== 💕
+// Fim Funções Aluguel
 
 
-// 🌙 Sistema Modo Lite Otimizado
+// Helper function to determine if Lite Mode is active for a group
 const isModoLiteActive = (groupData, modoLiteGlobalConfig) => {
   const isModoLiteGlobal = modoLiteGlobalConfig?.status || false;
   const isModoLiteGrupo = groupData?.modolite || false;
 
-  // 🎯 Prioridade da Nazuna: Configuração do grupo > Configuração global
+  // Group setting overrides global unless global forces 'off' (not implemented here but considered)
+  // Or global setting applies unless group explicitly turns it 'off' (not implemented here but considered)
+  // Current logic: Group ON overrides Global OFF. Global ON applies unless Group explicitly OFF (not standard boolean).
+  // Simplifying based on original logic:
+  // return (isModoLiteGrupo && !modoLiteGlobalConfig.hasOwnProperty('forceOff')) || 
+  //        (isModoLiteGlobal && !groupData.hasOwnProperty('modoliteOff'));
+  // Let's stick to the original logic interpretation for now:
   const groupHasSetting = groupData && typeof groupData.modolite === 'boolean';
-  return groupHasSetting ? isModoLiteGrupo : isModoLiteGlobal;
+  if (groupHasSetting) {
+      return groupData.modolite; // Group setting takes precedence
+  }
+  return isModoLiteGlobal; // Fallback to global setting
 };
 
 
-// 🚀 Função Principal Otimizada
 async function NazuninhaBotExec(nazu, info, store, groupCache) {
-  // 📦 Carregamento lazy das funções
-  let funcsCache = null;
-  const getFuncs = async () => {
-    if (!funcsCache) {
-      funcsCache = await require(__dirname + '/funcs/exports.js');
-    }
-    return funcsCache;
-  };
+  const { 
+    youtube, tiktok, pinterest, igdl, sendSticker, 
+    FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, 
+    toolsJson, vabJson, apkMod, google, Lyrics,
+    commandStats
+  } = await require(__dirname+'/funcs/exports.js');
+    
+  const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
+  const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json');
+  const banGpIds = loadJsonFile(DONO_DIR + '/bangp.json');
+  const antifloodData = loadJsonFile(DATABASE_DIR + '/antiflood.json');
+  const cmdLimitData = loadJsonFile(DATABASE_DIR + '/cmdlimit.json');
+  const globalBlocks = loadJsonFile(DATABASE_DIR + '/globalBlocks.json', { commands: {}, users: {} });
+  const botState = loadJsonFile(DATABASE_DIR + '/botState.json', { status: 'on' });
   
-  // 📊 Carregamento otimizado de dados em lote
-  const [
-    antipvData,
-    premiumListaZinha, 
-    banGpIds,
-    antifloodData,
-    cmdLimitData,
-    globalBlocks,
-    botState
-  ] = await Promise.all([
-    loadJsonFile(pathz.join(DATABASE_DIR, 'antipv.json')),
-    loadJsonFile(pathz.join(DONO_DIR, 'premium.json')),
-    loadJsonFile(pathz.join(DONO_DIR, 'bangp.json')),
-    loadJsonFile(pathz.join(DATABASE_DIR, 'antiflood.json')),
-    loadJsonFile(pathz.join(DATABASE_DIR, 'cmdlimit.json')),
-    loadJsonFile(pathz.join(DATABASE_DIR, 'globalBlocks.json'), { commands: {}, users: {} }),
-    loadJsonFile(pathz.join(DATABASE_DIR, 'botState.json'), { status: 'on' })
-  ]);
-  
-  // 🌙 Modo Lite com cache
-  const modoLiteFile = pathz.join(DATABASE_DIR, 'modolite.json');
+  const modoLiteFile = DATABASE_DIR + '/modolite.json';
   let modoLiteGlobal = loadJsonFile(modoLiteFile, { status: false });
   
-  if (!fsSync.existsSync(modoLiteFile)) {
-    await fs.writeFile(modoLiteFile, JSON.stringify(modoLiteGlobal, null, 2));
+  if (!fs.existsSync(modoLiteFile)) {
+    fs.writeFileSync(modoLiteFile, JSON.stringify(modoLiteGlobal, null, 2));
   }
 
   global.autoStickerMode = global.autoStickerMode || 'default';
@@ -895,33 +471,22 @@ try {
  
  const pushname = info.pushName || '';
  
- // 💬 Extrator de texto otimizado
-const getMessageText = (() => {
-  const textPaths = [
-    'conversation',
-    'extendedTextMessage.text',
-    'imageMessage.caption',
-    'videoMessage.caption',
-    'documentWithCaptionMessage.message.documentMessage.caption',
-    'viewOnceMessage.message.imageMessage.caption',
-    'viewOnceMessage.message.videoMessage.caption',
-    'viewOnceMessageV2.message.imageMessage.caption',
-    'viewOnceMessageV2.message.videoMessage.caption',
-    'editedMessage.message.protocolMessage.editedMessage.extendedTextMessage.text',
-    'editedMessage.message.protocolMessage.editedMessage.imageMessage.caption'
-  ];
-  
-  return (message) => {
-    if (!message) return '';
-    
-    for (const path of textPaths) {
-      const value = path.split('.').reduce((obj, key) => obj?.[key], message);
-      if (value && typeof value === 'string') return value;
-    }
-    
-    return '';
-  };
-})();
+ // Função auxiliar para obter o texto da mensagem de forma segura
+const getMessageText = (message) => {
+  if (!message) return '';
+  return message.conversation || 
+         message.extendedTextMessage?.text || 
+         message.imageMessage?.caption || 
+         message.videoMessage?.caption || 
+         message.documentWithCaptionMessage?.message?.documentMessage?.caption ||
+         message.viewOnceMessage?.message?.imageMessage?.caption ||
+         message.viewOnceMessage?.message?.videoMessage?.caption ||
+         message.viewOnceMessageV2?.message?.imageMessage?.caption ||
+         message.viewOnceMessageV2?.message?.videoMessage?.caption ||
+         message.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text ||
+         message.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption ||
+         ''; // Retorna string vazia se nenhum texto for encontrado
+};
 
  const body = getMessageText(info.message) || info?.text || '';
  
@@ -938,33 +503,19 @@ const getMessageText = (() => {
  const isCmd = body.trim().startsWith(prefix);
  const command = isCmd ? budy2.trim().slice(1).split(/ +/).shift().trim().replace(/\s+/g, '') : null;
  
- // 📊 Atualiza estatísticas reais quando um comando é usado
- if (isCmd && command) {
-   await updateCommandStats(command);
-   await updateUserStats(sender);
-   if (isGroup) {
-     await updateGroupStats(from, 0); // 0 porque é comando, não mensagem normal
-   }
- }
- 
- // 📊 Atualiza estatísticas de mensagens normais
- if (!isCmd && isGroup) {
-   await updateGroupStats(from, 1);
- }
- 
  if (!isGroup) {
    if (antipvData.mode === 'antipv' && !isOwner) {
      return;
    }
    
    if (antipvData.mode === 'antipv2' && isCmd && !isOwner) {
-     await reply('🚫 *Ops! Este comando é só para grupos!* 💬\n\n🌸 *Nazuna funciona melhor em grupos!*\nVenha conversar comigo em um grupo para usar todos os meus comandos! ✨');
+     await reply('🚫 Este comando só funciona em grupos!');
      return;
    }
    
    if (antipvData.mode === 'antipv3' && isCmd && !isOwner) {
   await nazu.updateBlockStatus(sender, 'block');
-     await reply('🚫 *Oops! Você foi bloqueado!* 😅\n\n💔 *Não é permitido usar comandos no privado*\nPor favor, use meus comandos apenas em grupos! 🌸\n\n✨ *Dica:* Entre em um grupo e me chame lá! 💕');
+     await reply('🚫 Você foi bloqueado por usar comandos no privado!');
      return;
    }
  }
@@ -983,45 +534,32 @@ const getMessageText = (() => {
   const botNumber = nazu.user.id.split(':')[0] + '@s.whatsapp.net';
   const isBotAdmin = !isGroup ? false : groupAdmins.includes(botNumber);
   
-  // 📁 Gerenciamento otimizado de dados do grupo
-  const groupFile = pathz.join(GRUPOS_DIR, `${from}.json`);
+  const groupFile = pathz.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
   let groupData = {};
-  
   if (isGroup) {
-    // Verifica se o arquivo existe e cria se necessário
-    if (!fsSync.existsSync(groupFile)) {
-      const defaultGroupData = { 
+    
+    if (!fs.existsSync(groupFile)) {
+      fs.writeFileSync(groupFile, JSON.stringify({ 
         mark: {},
         createdAt: new Date().toISOString(),
-        groupName: groupName,
-        moderators: [],
-        allowedModCommands: [],
-        mutedUsers: {},
-        contador: []
-      };
-      
-      await fs.writeFile(groupFile, JSON.stringify(defaultGroupData, null, 2));
-      groupData = defaultGroupData;
-    } else {
-      // Carrega dados existentes
-      try {
-        groupData = JSON.parse(await fs.readFile(groupFile, 'utf-8'));
-      } catch (error) {
-        console.error(`💥 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao carregar grupo ${from}:`, error.message);
-        groupData = { mark: {}, moderators: [], allowedModCommands: [], mutedUsers: {}, contador: [] };
-      }
+        groupName: groupName
+      }, null, 2));
     }
     
-    // Inicializa propriedades se não existirem
-    groupData.moderators = groupData.moderators || [];
-    groupData.allowedModCommands = groupData.allowedModCommands || [];
-    groupData.mutedUsers = groupData.mutedUsers || {};
-    groupData.contador = groupData.contador || [];
+    try {
+      groupData = JSON.parse(fs.readFileSync(groupFile));
+    } catch (error) {
+      console.error(`Erro ao carregar dados do grupo ${from}:`, error);
+      groupData = { mark: {} };
+    }
     
-    // Atualiza nome do grupo se mudou
+  groupData.moderators = groupData.moderators || [];
+  groupData.allowedModCommands = groupData.allowedModCommands || [];
+    groupData.mutedUsers = groupData.mutedUsers || {};
+    
     if (groupName && groupData.groupName !== groupName) {
       groupData.groupName = groupName;
-      await fs.writeFile(groupFile, JSON.stringify(groupData, null, 2));
+      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
     }
   }
   
@@ -1038,56 +576,38 @@ const getMessageText = (() => {
   const isAntiLinkGp = groupData.antilinkgp;
   const isModoLite = isGroup && isModoLiteActive(groupData, modoLiteGlobal);
   
-  // 🛡️ Verificações de permissão otimizadas
   if (isGroup && isOnlyAdmin && !isGroupAdmin) {
-    return; // 👑 Modo só admin ativo - Nazuna obedece!
+    return; // Silenciosamente ignora mensagens de não-admins quando soadm está ativo
   }
   
   if (isGroup && isCmd && !isGroupAdmin && 
-      groupData.blockedCommands?.[command]) {
-    await reply('🚫 *Comando 🚫 *Bloqueado com sucesso!* ✨\n\n🌸 *Agora está protegido como você pediu!* 💕!*\n\n⛔ Este comando foi desabilitado pelos administradores do grupo.\n\n💡 Entre em contato com um admin para mais informações! 👮‍♂️');
+      groupData.blockedCommands && groupData.blockedCommands[command]) {
+    await reply('⛔ Este comando foi bloqueado pelos administradores do grupo.');
     return;
   }
   
-  // 😴 Sistema AFK otimizado
-  if (isGroup && groupData.afkUsers?.[sender]) {
+  if (isGroup && groupData.afkUsers && groupData.afkUsers[sender]) {
     try {
-      const afkInfo = groupData.afkUsers[sender];
-      const afkSince = new Date(afkInfo.since || Date.now()).toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit', 
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+    const afkReason = groupData.afkUsers[sender].reason;
+      const afkSince = new Date(groupData.afkUsers[sender].since || Date.now()).toLocaleString('pt-BR');
       
-      delete groupData.afkUsers[sender];
-      await fs.writeFile(groupFile, JSON.stringify(groupData, null, 2));
+    delete groupData.afkUsers[sender];
+
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       
-      const welcomeMsg = `👋 *Bem-vindo de volta!* 🌟\n\n` +
-                        `😴 Seu status AFK foi removido\n` +
-                        `⏰ Ausente desde: ${afkSince}\n\n` +
-                        `🎉 Que bom ter você de volta! ✨`;
-      
-      await reply(welcomeMsg);
+      await reply(`👋 *Bem-vindo(a) de volta!*\nSeu status AFK foi removido.\nVocê estava ausente desde: ${afkSince}`);
     } catch (error) {
-      console.error("💥 Erro no sistema AFK:", error.message);
+      console.error("Erro ao processar remoção de AFK:", error);
     }
   }
 
-  // 🤫 Sistema de mute otimizado
   if (isGroup && isMuted) {
     try {
-      const muteMsg = `🤫 *Usuário Mutado Detectado!*\n\n` +
-                     `@${sender.split("@")[0]}, você está tentando falar enquanto está mutado neste grupo.\n\n` +
-                     `🚨 Você será removido conforme as regras! ⚖️`;
-      
       await nazu.sendMessage(from, {
-        text: muteMsg, 
+        text: `🤫 *Usuário mutado detectado*\n\n@${sender.split("@")[0]}, você está tentando falar enquanto está mutado neste grupo. Você será removido conforme as regras.`, 
         mentions: [sender]
       }, {quoted: info});
       
-      // Deleta a mensagem
       await nazu.sendMessage(from, {
         delete: {
           remoteJid: from, 
@@ -1097,20 +617,19 @@ const getMessageText = (() => {
         }
       });
       
-      // Remove o usuário se bot for admin
       if (isBotAdmin) {
-        await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+ await nazu.groupParticipantsUpdate(from, [sender], 'remove');
       } else {
-        await reply("⚠️ *Sem Permissão!*\n\n🤖 Não posso remover o usuário porque não sou administrador.\n\n💡 Promova-me a admin para funcionar corretamente! 👮‍♂️");
+        await reply("⚠️ Não posso remover o usuário porque não sou administrador.");
       }
       
-      // Remove do sistema de mute
-      delete groupData.mutedUsers[sender];
-      await fs.writeFile(groupFile, JSON.stringify(groupData, null, 2));
+ delete groupData.mutedUsers[sender];
+
+      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       
-      return;
+      return; // Encerra o processamento para este usuário
     } catch (error) {
-      console.error("💥 Erro no sistema de mute:", error.message);
+      console.error("Erro ao processar usuário mutado:", error);
     }
   }
  
@@ -1135,15 +654,8 @@ const getMessageText = (() => {
     ];
 
     if (!groupHasActiveRental && isCmd && !isOwnerOrSub && !allowedCommandsBypass.includes(command)) {
-        const rentalMsg = `⏳ *Aluguel Expirado!* 💔\n\n` +
-                         `😅 Ops! O aluguel deste grupo expirou ou não está ativo.\n\n` +
-                         `🎫 *Como reativar:*\n` +
-                         `• Use um código de ativação\n` +
-                         `• Peça para o dono renovar\n\n` +
-                         `💡 Entre em contato com a administração! 📞`;
-        
-        await reply(rentalMsg);
-        return;
+        await reply("⏳ Oops! Parece que o aluguel deste grupo expirou ou não está ativo. Para usar os comandos, ative com um código ou peça para o dono renovar! 😊");
+        return; // Impede o processamento de outros comandos
     }
  }
 
@@ -1158,21 +670,20 @@ const getMessageText = (() => {
                 return; 
             }
         } catch (e) {
-            console.error(`💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao tentar usar código de ativação ${potentialCode} no grupo ${from}:`, e);
+            console.error(`Erro ao tentar usar código de ativação ${potentialCode} no grupo ${from}:`, e);
         }
     } 
  }
 
- // 📊 Sistema de contagem otimizado
  if (isGroup) {
    try {
+     groupData.contador = groupData.contador || [];
+     
      const userIndex = groupData.contador.findIndex(user => user.id === sender);
-     const now = new Date().toISOString();
      
      if (userIndex !== -1) {
        const userData = groupData.contador[userIndex];
        
-       // Atualiza contadores de forma otimizada
        if (isCmd) {
          userData.cmd = (userData.cmd || 0) + 1;
        } else if (type === "stickerMessage") {
@@ -1181,87 +692,58 @@ const getMessageText = (() => {
          userData.msg = (userData.msg || 0) + 1;
        }
        
-       // Atualiza pushname se mudou
        if (pushname && userData.pushname !== pushname) {
          userData.pushname = pushname;
        }
        
-       userData.lastActivity = now;
+       userData.lastActivity = new Date().toISOString();
      } else {
-       // Novo usuário
        groupData.contador.push({
          id: sender,
-         msg: isCmd ? 0 : (type === "stickerMessage" ? 0 : 1),
+         msg: isCmd ? 0 : 1,
          cmd: isCmd ? 1 : 0,
          figu: type === "stickerMessage" ? 1 : 0,
-         pushname: pushname || '👤 Usuário Anônimo',
-         firstSeen: now,
-         lastActivity: now
+         pushname: pushname || 'Usuário Desconhecido',
+         firstSeen: new Date().toISOString(),
+         lastActivity: new Date().toISOString()
        });
      }
 
-     // Salva de forma assíncrona para não bloquear
-     setImmediate(async () => {
-       try {
-         await fs.writeFile(groupFile, JSON.stringify(groupData, null, 2));
-       } catch (saveError) {
-         console.error("💥 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao salvar contador:", saveError.message);
-       }
-     });
+     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
    } catch (error) {
-     console.error("💥 Erro no sistema de contagem:", error.message);
+     console.error("Erro no sistema de contagem de mensagens:", error);
    }
  }
  
- // 💬 Função de resposta otimizada e fofa
  async function reply(text, options = {}) {
    try {
      const { 
        mentions = [], 
        noForward = false, 
        noQuote = false,
-       buttons = null,
-       image = null,
-       video = null
+       buttons = null
      } = options;
      
-     // Conteúdo da mensagem otimizado
      const messageContent = {
        text: text.trim(),
        mentions: mentions
      };
      
-     // Adiciona mídia se fornecida
-     if (image) messageContent.image = image;
-     if (video) messageContent.video = video;
-     
-     // Botões se fornecidos
      if (buttons) {
        messageContent.buttons = buttons;
        messageContent.headerType = 1;
      }
      
-     // Opções de envio otimizadas
      const sendOptions = {
        sendEphemeral: true
      };
      
-     // Context info melhorado
      if (!noForward) {
        sendOptions.contextInfo = { 
-         forwardingScore: 999, 
-         isForwarded: true,
-         forwardedNewsletterMessageInfo: {
-           newsletterJid: '120363399806601633@newsletter',
-           newsletterName: '🌸 Nazuna Bot',
-           serverMessageId: 1
-         },
+         forwardingScore: 50, 
+         isForwarded: true, 
          externalAdReply: { 
-           showAdAttribution: true,
-           title: '🌸 Nazuna Bot',
-           body: '✨ Sua assistente virtual fofa!',
-           thumbnailUrl: 'https://i.imgur.com/nazuna.jpg',
-           sourceUrl: 'https://github.com/nazuna-bot'
+           showAdAttribution: true 
          }
        };
      }
@@ -1273,7 +755,7 @@ const getMessageText = (() => {
      const result = await nazu.sendMessage(from, messageContent, sendOptions);
      return result;
    } catch (error) {
-     console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao enviar mensagem:", error);
+     console.error("Erro ao enviar mensagem:", error);
      return null;
    }
  }
@@ -1328,7 +810,7 @@ const getMessageText = (() => {
      
      return false;
    } catch (error) {
-     console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao reagir com emoji:", error);
+     console.error("Erro ao reagir com emoji:", error);
      return false;
    }
  }
@@ -1376,13 +858,13 @@ const getMessageText = (() => {
          
          return filePath;
        } catch (fileError) {
-         console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao salvar arquivo temporário:', fileError);
+         console.error('Erro ao salvar arquivo temporário:', fileError);
        }
      }
      
      return buffer;
    } catch (error) {
-     console.error(`💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao obter buffer de ${mediaType}:`, error);
+     console.error(`Erro ao obter buffer de ${mediaType}:`, error);
      throw error;
    }
  }
@@ -1464,7 +946,7 @@ if (isGroup && isAntiPorn) {
               await nazu.groupParticipantsUpdate(from, [sender], 'remove');
               await reply(`🔞 Oops! @${sender.split('@')[0]}, conteúdo impróprio não é permitido e você foi removido(a).`,  { mentions: [sender] });
             } catch (adminError) {
-              console.error(`💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao remover usuário por anti-porn: ${adminError}`);
+              console.error(`Erro ao remover usuário por anti-porn: ${adminError}`);
               await reply(`⚠️ Não consegui remover @${sender.split('@')[0]} automaticamente após detectar conteúdo impróprio. Admins, por favor, verifiquem!`,  { mentions: [sender] });
             }
           } else {
@@ -1526,17 +1008,17 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
         if (url.includes('tiktok.com')) {
           const datinha = await tiktok.dl(url);
           if (datinha.ok) {
-            await nazu.sendMessage(from, { [datinha.type]: { url: datinha.urls[0] }, caption: '🎵 📥 *Baixando para você!* 🌸\n\n✨ *Preparando seu download com carinho!* 💕 automático do TikTok!' }, { quoted: info });
+            await nazu.sendMessage(from, { [datinha.type]: { url: datinha.urls[0] }, caption: '🎵 Download automático do TikTok!' }, { quoted: info });
           }
         } else if (url.includes('instagram.com')) {
           const datinha = await igdl.dl(url);
           if (datinha.ok) {
-            await nazu.sendMessage(from, { [datinha.data[0].type]: datinha.data[0].buff, caption: '📸 📥 *Baixando para você!* 🌸\n\n✨ *Preparando seu download com carinho!* 💕 automático do Instagram!' }, { quoted: info });
+            await nazu.sendMessage(from, { [datinha.data[0].type]: datinha.data[0].buff, caption: '📸 Download automático do Instagram!' }, { quoted: info });
           }
         } else if (url.includes('pinterest.com') || url.includes('pin.it') ) {
           const datinha = await pinterest.dl(url);
           if (datinha.ok) {
-            await nazu.sendMessage(from, { [datinha.type]: { url: datinha.urls[0] }, caption: '📌 📥 *Baixando para você!* 🌸\n\n✨ *Preparando seu download com carinho!* 💕 automático do Pinterest!' }, { quoted: info });
+            await nazu.sendMessage(from, { [datinha.type]: { url: datinha.urls[0] }, caption: '📌 Download automático do Pinterest!' }, { quoted: info });
           }
         }
       } catch (e) {
@@ -1583,7 +1065,7 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
          }, { quoted: info });
      }
    } catch (e) {
-     console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao converter mídia em figurinha automática:", e);
+     console.error("Erro ao converter mídia em figurinha automática:", e);
    }
  };
 
@@ -1657,7 +1139,7 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
        }
      });
    } catch (error) {
-     reply(`❌ *💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao executar comando*\n\n${error}`);
+     reply(`❌ *Erro ao executar comando*\n\n${error}`);
    }
  }
  
@@ -1755,33 +1237,33 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
  // SISTEMA DE LOGS - Registra atividades no console para monitoramento
  try {
    // Cabeçalho do log
- // 🌸 Log otimizado removido para melhor performance da Nazuna
+ console.log(`=========================================`);
    
    // Tipo de mensagem (comando ou mensagem normal)
- // 🌸 Log otimizado removido para melhor performance da Nazuna
+ console.log(`${isCmd ? '⚒️ Comando' : '🗨️ Mensagem'} ${isGroup ? 'em grupo 👥' : 'no privado 👤'}`);
    
    // Conteúdo da mensagem (limitado para evitar logs muito grandes)
    const messagePreview = isCmd 
      ? `${prefix}${command} ${q.length > 0 ? q.substring(0, 20) + (q.length > 20 ? '...' : '') : ''}`
      : budy2.substring(0, 30) + (budy2.length > 30 ? '...' : '');
-   // 🌸 Log otimizado removido para melhor performance da Nazuna
+   console.log(`${isCmd ? '⚒️ Comando' : '🗨️ Mensagem'}: "${messagePreview}"`);
    
    // Informações do grupo ou usuário
    if (isGroup) {
-     // 🌸 Log otimizado removido para melhor performance da Nazuna
-     // 🌸 Log otimizado removido para melhor performance da Nazuna
+     console.log(`👥 Grupo: "${groupName || 'Desconhecido'}"`);
+     console.log(`👤 Usuário: "${pushname || sender.split('@')[0]}"`);
    } else {
-     // 🌸 Log otimizado removido para melhor performance da Nazuna
-     // 🌸 Log otimizado removido para melhor performance da Nazuna
+     console.log(`👤 Usuário: "${pushname || 'Sem nome'}"`);
+     console.log(`📲 Número: "${sender.split('@')[0]}"`);
    }
    
    // Timestamp para rastreamento
-   // 🌸 Log otimizado removido para melhor performance da Nazuna
+   console.log(`🕒 Hora: ${new Date().toLocaleTimeString('pt-BR')}`);
    
    // Rodapé do log
- // 🌸 Log otimizado removido para melhor performance da Nazuna
+ console.log(`=========================================`);
  } catch (error) {
-   console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao gerar logs:", error);
+   console.error("Erro ao gerar logs:", error);
  }
  
    // SISTEMA DE JOGO DA VELHA - Implementa jogo interativo nos grupos
@@ -1915,7 +1397,7 @@ if (budy2 === "ta baxano" && !isGroup) {
     } else {
     }
   } catch (error) {
-    console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao recuperar mídia:", error);
+    console.error("Erro ao recuperar mídia:", error);
   }
   }
   
@@ -1929,7 +1411,7 @@ if (budy2 === "ta baxano" && !isGroup) {
       try {
         await nazu.react('⏳', { key: info.key });
       } catch (reactError) {
-        console.warn("💥 *Oops! Não consegui* 😔\n\n🌸 *Houve uma falha ao reagir no início do comando:", reactError);
+        console.warn("Falha ao reagir no início do comando:", reactError);
       }
   }
 
@@ -2154,7 +1636,7 @@ ${bahz.reply}`);
       })).data;
       await reply(`📃✨ *Aqui está o resuminho fofo que preparei para você:*\n\n${bahz.reply}`);
     } catch (e) {
-      console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao resumir texto:", e);
+      console.error("Erro ao resumir texto:", e);
       await reply("Puxa vida! 🥺 Tive um probleminha para fazer o resumo... Poderia tentar de novo? 💔");
     }
   break;
@@ -2179,7 +1661,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       })).data;
       await reply(`🌐✨ *Prontinho! Sua tradução para ${idioma.toUpperCase()} está aqui:*\n\n${bahz.reply}`);
     } catch (e) {
-      console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao traduzir texto:", e);
+      console.error("Erro ao traduzir texto:", e);
       await reply("Awnn... 🥺 Não consegui fazer a tradução agora... Poderia tentar de novo, por favorzinho? 💔");
     }
   break;
@@ -2193,7 +1675,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         caption: `📱✨ *Seu QR Code super fofo está pronto!*\n\nConteúdo: ${q.substring(0, 100)}${q.length > 100 ? '...' : ''}`
       }, { quoted: info });
     } catch (e) {
-      console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao gerar QR Code:", e);
+      console.error("Erro ao gerar QR Code:", e);
       await reply("Oh céus! 🥺 Tive um probleminha para gerar seu QR Code... Poderia tentar de novo? 💔");
     }
     break;
@@ -2251,7 +1733,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       }
 
     } catch (e) {
-      console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao buscar na Wikipédia:", e);
+      console.error("Erro ao buscar na Wikipédia:", e);
       await reply("📚 Oops! Tive um probleminha para acessar a Wikipédia agora... 😥 Tente de novo daqui a pouco, por favor! ✨");
     }
   break;
@@ -2259,7 +1741,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   case 'dicionario':
     if (!q) return reply(`📔 Qual palavra você quer procurar no dicionário? Me diga após o comando ${prefix}dicionario! 😊`);
     nazu.react('📔'); // Reação de dicionário!
-    reply("📔 Procurando no dicionário... ⏰ *Aguarde um pouquinho!* 🌸\n\n✨ *Estou processando seu pedido com carinho!* 💕 um pouquinho! ⏳");
+    reply("📔 Procurando no dicionário... Aguarde um pouquinho! ⏳");
     try {
       const palavra = q.trim().toLowerCase();
       let definicaoEncontrada = false;
@@ -2324,7 +1806,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       await reply(result.message);
       
     } catch (e) {
-      console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao adicionar subdono:", e);
+      console.error("Erro ao adicionar subdono:", e);
       await reply("❌ Ocorreu um erro inesperado ao tentar adicionar o subdono.");
     }
     break;
@@ -2344,7 +1826,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       await reply(result.message);
       
     } catch (e) {
-      console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao remover subdono:", e);
+      console.error("Erro ao remover subdono:", e);
       await reply("❌ Ocorreu um erro inesperado ao tentar remover o subdono.");
     }
     break;
@@ -2376,7 +1858,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       await reply(listaMsg.trim(), { mentions });
       
     } catch (e) {
-      console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao listar subdonos:", e);
+      console.error("Erro ao listar subdonos:", e);
       await reply("❌ Ocorreu um erro inesperado ao tentar listar os subdonos.");
     }
     break;
@@ -2391,13 +1873,13 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         if (setRentalMode(true)) {
           await reply("✅ Modo de aluguel global ATIVADO! O bot agora só responderá em grupos com aluguel ativo.");
         } else {
-          await reply("❌ 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao ativar o modo de aluguel global.");
+          await reply("❌ Erro ao ativar o modo de aluguel global.");
         }
       } else if (action === 'off' || action === 'desativar') {
         if (setRentalMode(false)) {
           await reply("✅ Modo de aluguel global DESATIVADO! O bot responderá em todos os grupos permitidos.");
         } else {
-          await reply("❌ 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao desativar o modo de aluguel global.");
+          await reply("❌ Erro ao desativar o modo de aluguel global.");
         }
       } else {
         const currentStatus = isRentalModeActive() ? 'ATIVADO' : 'DESATIVADO';
@@ -2546,7 +2028,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       document: fs.readFileSync(backupFilePath),
       mimetype: 'application/json',
       fileName: backupFileName,
-      caption: `✅ *Backup do Grupo 🎉 *Concluído com sucesso!* ✨\n\n🌸 *Tudo pronto e feito com amor!* 💕*\n\n*Nome do Grupo:* ${groupName}\n*Data:* ${new Date().toLocaleString('pt-BR')}\n*Membros:* ${AllgroupMembers.length}\n*Admins:* ${adminList.length}\n*Descrição:* ${groupDesc.substring(0, 50)}${groupDesc.length > 50 ? '...' : ''}\n\nPara restaurar, use o comando *${prefix}restaurargp*`
+      caption: `✅ *Backup do Grupo Concluído*\n\n*Nome do Grupo:* ${groupName}\n*Data:* ${new Date().toLocaleString('pt-BR')}\n*Membros:* ${AllgroupMembers.length}\n*Admins:* ${adminList.length}\n*Descrição:* ${groupDesc.substring(0, 50)}${groupDesc.length > 50 ? '...' : ''}\n\nPara restaurar, use o comando *${prefix}restaurargp*`
     }, { quoted: info });
     
   } catch (e) {
@@ -2674,7 +2156,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         }}
       }
     } catch (err) {
-      console.log("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao atualizar nome/descrição:", err);
+      console.log("Erro ao atualizar nome/descrição:", err);
     }
     
     // Gerar resumo das alterações
@@ -2688,7 +2170,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       soadm: currentData.soadm !== backupData.configs.soadm ? "Modo só administradores" : null,
       modobrincadeira: currentData.modobrincadeira !== backupData.configs.modobrincadeira ? "Modo brincadeira" : null,
       autoSticker: currentData.autoSticker !== backupData.configs.autoSticker ? "Auto figurinhas" : null,
-      autodl: currentData.autodl !== backupData.configs.autodl ? "📥 *Baixando para você!* 🌸\n\n✨ *Preparando seu download com carinho!* 💕 automático" : null
+      autodl: currentData.autodl !== backupData.configs.autodl ? "Download automático" : null
     };
     
     // Adicionar mudanças encontradas
@@ -2766,7 +2248,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         nazu.react('✅');
         return;
       } catch (e) {
-        // 🌸 Log otimizado removido para melhor performance da Nazuna
+        console.log(`❌ ${model} falhou, tentando próximo...`);
       }
     }
 
@@ -2913,7 +2395,7 @@ datinha = await apkMod(q);
 if (datinha.error) return reply(datinha.error);
 anu = await axios.get(`https://tinyurl.com/api-create.php?url=${datinha.download}`);
 linkEncurtado = anu.data;
-await nazu.sendMessage(from, { image: { url: datinha.image }, caption: `\n💻 *Informações do Aplicativo*\n\n🔸 *Título:* ${datinha.title}\n🔹 *Descrição:*  \n_${datinha.description}_\n\n📋 *Detalhes Técnicos:*  \n- 📛 *Nome:* ${datinha.details.name}  \n- 🗓️ *Última Atualização:* ${datinha.details.updated}  \n- 🆚 *Versão:* ${datinha.details.version}  \n- 🏷️ *Categoria:* ${datinha.details.category}  \n- 🛠️ *Modificação:* ${datinha.details.modinfo}  \n- 📦 *Tamanho:* ${datinha.details.size}  \n- ⭐ *Classificação:* ${datinha.details.rate}  \n- 📱 *Requer Android:* ${datinha.details.requires}  \n- 👨‍💻 *Desenvolvedor:* ${datinha.details.developer}  \n- 🔗 *Google Play:* ${datinha.details.googleplay}  \n- 📥 *📥 *Baixando para você!* 🌸\n\n✨ *Preparando seu download com carinho!* 💕s:* ${datinha.details.downloads}  \n\n⬇️ *📥 *Baixando para você!* 🌸\n\n✨ *Preparando seu download com carinho!* 💕 do APK:*  \n📤 _Tentando enviar o APK para você..._  \nCaso não seja enviado, use o link abaixo:  \n🔗 ${linkEncurtado}` }, { quoted: info });
+await nazu.sendMessage(from, { image: { url: datinha.image }, caption: `\n💻 *Informações do Aplicativo*\n\n🔸 *Título:* ${datinha.title}\n🔹 *Descrição:*  \n_${datinha.description}_\n\n📋 *Detalhes Técnicos:*  \n- 📛 *Nome:* ${datinha.details.name}  \n- 🗓️ *Última Atualização:* ${datinha.details.updated}  \n- 🆚 *Versão:* ${datinha.details.version}  \n- 🏷️ *Categoria:* ${datinha.details.category}  \n- 🛠️ *Modificação:* ${datinha.details.modinfo}  \n- 📦 *Tamanho:* ${datinha.details.size}  \n- ⭐ *Classificação:* ${datinha.details.rate}  \n- 📱 *Requer Android:* ${datinha.details.requires}  \n- 👨‍💻 *Desenvolvedor:* ${datinha.details.developer}  \n- 🔗 *Google Play:* ${datinha.details.googleplay}  \n- 📥 *Downloads:* ${datinha.details.downloads}  \n\n⬇️ *Download do APK:*  \n📤 _Tentando enviar o APK para você..._  \nCaso não seja enviado, use o link abaixo:  \n🔗 ${linkEncurtado}` }, { quoted: info });
 await nazu.sendMessage(from, { document: { url: datinha.download }, mimetype: 'application/vnd.android.package-archive', fileName: `${datinha.details.name}.apk`, caption: `🔒 *Instalação Bloqueada pelo Play Protect?* 🔒\n\nCaso a instalação do aplicativo seja bloqueada pelo Play Protect, basta seguir as instruções do vídeo abaixo:\n\n🎥 https://youtu.be/FqQB2vojzlU?si=9qPnu_PGj3GU3L4_`}, {quoted: info});
   } catch (e) {
 console.log(e);
@@ -3005,7 +2487,7 @@ case 'ytmp3':
     // Baixar o áudio
     const dlRes = await youtube.mp3(videoUrl);
     if (!dlRes.ok) {
-      return reply(`❌ 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao baixar o áudio: ${dlRes.msg}`);
+      return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
     }
     
     // Tentar enviar como áudio (preferencial)
@@ -3069,7 +2551,7 @@ case 'ytmp4':
 📜 *Descrição:* ${videoInfo.data.description.slice(0, 100)}${videoInfo.data.description.length > 100 ? '...' : ''}
 🔗 *Link:* ${videoInfo.data.url}
 
-📹 *📤 *Enviando com amor!* 💖\n\n🌸 *Preparando tudo com carinho para você!* ✨ seu vídeo, aguarde!*`;
+📹 *Enviando seu vídeo, aguarde!*`;
     await nazu.sendMessage(from, { 
       image: { url: videoInfo.data.thumbnail }, 
       caption: caption, 
@@ -3170,270 +2652,7 @@ case 'ytmp4':
    break;
    
    // MENUS DO BOT
-  case 'statusbot': {
-      const botUptime = process.uptime();
-      const botUptimeFormatted = formatUptime(botUptime, true);
-      
-      const botMemUsage = process.memoryUsage();
-      const botMemUsed = (botMemUsage.heapUsed / 1024 / 1024).toFixed(2);
-      const botMemTotal = (botMemUsage.heapTotal / 1024 / 1024).toFixed(2);
-      
-      const botCpuUsage = process.cpuUsage();
-      const botCpuPercent = ((botCpuUsage.user + botCpuUsage.system) / 1000000).toFixed(2);
-      
-      const botOsInfo = {
-        platform: os.platform(),
-        arch: os.arch(),
-        release: os.release(),
-        hostname: os.hostname()
-      };
-      
-      const botFreeMemory = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
-      const botTotalMemory = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
-      const botLoadAvg = os.loadavg()[0].toFixed(2);
-      
-      const botNetworkInterfaces = os.networkInterfaces();
-      const botPrimaryInterface = Object.values(botNetworkInterfaces).flat().find(iface => 
-        !iface.internal && iface.family === 'IPv4'
-      );
-      
-      const currentTime = new Date().toLocaleString('pt-BR', {
-        timeZone: 'America/Sao_Paulo',
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-      
-      let statusBotMessage = `🌸 ═══════════════════════════════ 🌸\n`;
-      statusBotMessage += `          💖 *STATUS DA NAZUNA* 💖\n`;
-      statusBotMessage += `🌸 ═══════════════════════════════ 🌸\n\n`;
-      
-      statusBotMessage += `🤖 *Informações Básicas:* ✨\n`;
-      statusBotMessage += `├ 🌸 Nome: ${nomebot}\n`;
-      statusBotMessage += `├ 👑 Dono: ${nomedono}\n`;
-      statusBotMessage += `├ 🔧 Versão: ${botVersion}\n`;
-      statusBotMessage += `├ 🟢 Node.js: ${process.version}\n`;
-      statusBotMessage += `├ 🆔 PID: ${process.pid}\n`;
-      statusBotMessage += `└ 📅 Agora: ${currentTime}\n\n`;
-      
-      statusBotMessage += `⚡ *Performance em Tempo Real:* 📊\n`;
-      statusBotMessage += `├ ⏰ Online há: ${botUptimeFormatted}\n`;
-      statusBotMessage += `├ 🧠 RAM Usada: ${botMemUsed}MB / ${botMemTotal}MB\n`;
-      statusBotMessage += `├ 💾 RAM Sistema: ${botFreeMemory}GB / ${botTotalMemory}GB\n`;
-      statusBotMessage += `├ 📈 CPU: ${botCpuPercent}s de uso\n`;
-      statusBotMessage += `└ ⚖️ Carga Sistema: ${botLoadAvg}\n\n`;
-      
-      statusBotMessage += `🖥️ *Ambiente de Hospedagem:* 🏠\n`;
-      statusBotMessage += `├ 💻 Sistema: ${botOsInfo.platform} ${botOsInfo.arch}\n`;
-      statusBotMessage += `├ 🔧 Release: ${botOsInfo.release}\n`;
-      statusBotMessage += `├ 🏷️ Hostname: ${botOsInfo.hostname}\n`;
-      
-      if (botPrimaryInterface) {
-        statusBotMessage += `├ 🌐 IP Local: ${botPrimaryInterface.address}\n`;
-      }
-      statusBotMessage += `└ 🔌 Conexão: Estável\n\n`;
-      
-      statusBotMessage += `📊 *Estatísticas de Uso:* 🎯\n`;
-      statusBotMessage += `├ 🏃‍♀️ Status: Online e Ativa\n`;
-      statusBotMessage += `├ 💝 Modo: ${isPremium ? 'Premium' : 'Padrão'}\n`;
-      statusBotMessage += `├ 🛡️ Proteção: Ativa\n`;
-      statusBotMessage += `├ 🌙 Modo Lite: ${isModoLite ? 'Ativado' : 'Desativado'}\n`;
-      statusBotMessage += `└ 🔄 Auto-Restart: Habilitado\n\n`;
-      
-      statusBotMessage += `💕 *Estado Emocional da Nazuna:* 😊\n`;
-      statusBotMessage += `├ 😄 Humor: Excelente!\n`;
-      statusBotMessage += `├ 💪 Energia: 100%\n`;
-      statusBotMessage += `├ 🎵 Cantarolando: Sempre!\n`;
-      statusBotMessage += `└ 💖 Pronta para ajudar: Sempre!\n\n`;
-      
-      statusBotMessage += `🌸 ═══════════════════════════════ 🌸\n`;
-      statusBotMessage += `     ✨ *Nazuna funcionando perfeitamente!* ✨\n`;
-      statusBotMessage += `          💕 *Obrigada por usar!* 💕\n`;
-      statusBotMessage += `🌸 ═══════════════════════════════ 🌸`;
-      
-      await reply(statusBotMessage);
-      }
-      break;
-
-    case 'infoserver':
-      if (!isOwner) {
-        await reply('🚫 *Ops! Você não tem permissão!* 😅\n\n🌸 *Este comando é só para o dono*\nInformações do servidor são confidenciais! ✨');
-        break;
-      }
-      
-      const serverUptime = process.uptime();
-      const serverUptimeFormatted = formatUptime(serverUptime, true);
-      
-      const serverMemUsage = process.memoryUsage();
-      const serverMemUsed = (serverMemUsage.heapUsed / 1024 / 1024).toFixed(2);
-      const serverMemTotal = (serverMemUsage.heapTotal / 1024 / 1024).toFixed(2);
-      const serverMemRss = (serverMemUsage.rss / 1024 / 1024).toFixed(2);
-      const serverMemExternal = (serverMemUsage.external / 1024 / 1024).toFixed(2);
-      
-      const serverCpuUsage = process.cpuUsage();
-      const serverCpuUser = (serverCpuUsage.user / 1000000).toFixed(2);
-      const serverCpuSystem = (serverCpuUsage.system / 1000000).toFixed(2);
-      
-      const serverOsInfo = {
-        platform: os.platform(),
-        arch: os.arch(),
-        release: os.release(),
-        hostname: os.hostname(),
-        type: os.type(),
-        endianness: os.endianness()
-      };
-      
-      const serverFreeMemory = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
-      const serverTotalMemory = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
-      const serverLoadAvg = os.loadavg();
-      const serverCpuCount = os.cpus().length;
-      const serverCpuModel = os.cpus()[0]?.model || 'Desconhecido';
-      
-      const serverNetworkInterfaces = os.networkInterfaces();
-      const serverInterfaces = Object.keys(serverNetworkInterfaces).length;
-      
-      const currentServerTime = new Date().toLocaleString('pt-BR', {
-        timeZone: 'America/Sao_Paulo',
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-      
-      let infoServerMessage = `🌸 ═════════════════════════ 🌸\n`;
-      infoServerMessage += `    💻 *INFORMAÇÕES DO SERVIDOR* 💻\n`;
-      infoServerMessage += `🌸 ═════════════════════════ 🌸\n\n`;
-      
-      infoServerMessage += `🖥️ *Sistema Operacional:* 🏠\n`;
-      infoServerMessage += `├ 💻 Plataforma: ${serverOsInfo.platform}\n`;
-      infoServerMessage += `├ 🏗️ Arquitetura: ${serverOsInfo.arch}\n`;
-      infoServerMessage += `├ 🔧 Tipo: ${serverOsInfo.type}\n`;
-      infoServerMessage += `├ 📋 Release: ${serverOsInfo.release}\n`;
-      infoServerMessage += `├ 🏷️ Hostname: ${serverOsInfo.hostname}\n`;
-      infoServerMessage += `├ 🔄 Endianness: ${serverOsInfo.endianness}\n`;
-      infoServerMessage += `└ 📅 Hora atual: ${currentServerTime}\n\n`;
-      
-      infoServerMessage += `⚡ *Processador (CPU):* 🧠\n`;
-      infoServerMessage += `├ 🔢 Núcleos: ${serverCpuCount}\n`;
-      infoServerMessage += `├ 🏷️ Modelo: ${serverCpuModel}\n`;
-      infoServerMessage += `├ 👤 Tempo usuário: ${serverCpuUser}s\n`;
-      infoServerMessage += `├ ⚙️ Tempo sistema: ${serverCpuSystem}s\n`;
-      infoServerMessage += `├ 📊 Load 1min: ${serverLoadAvg[0].toFixed(2)}\n`;
-      infoServerMessage += `├ 📈 Load 5min: ${serverLoadAvg[1].toFixed(2)}\n`;
-      infoServerMessage += `└ 📉 Load 15min: ${serverLoadAvg[2].toFixed(2)}\n\n`;
-      
-      infoServerMessage += `💾 *Memória do Sistema:* 🧠\n`;
-      infoServerMessage += `├ 🆓 RAM Livre: ${serverFreeMemory} GB\n`;
-      infoServerMessage += `├ 📊 RAM Total: ${serverTotalMemory} GB\n`;
-      infoServerMessage += `├ 📈 RAM Usada: ${(serverTotalMemory - serverFreeMemory).toFixed(2)} GB\n`;
-      infoServerMessage += `└ 📋 Uso: ${(((serverTotalMemory - serverFreeMemory) / serverTotalMemory) * 100).toFixed(1)}%\n\n`;
-      
-      infoServerMessage += `🤖 *Memória da Nazuna:* 💖\n`;
-      infoServerMessage += `├ 🧠 Heap Usado: ${serverMemUsed} MB\n`;
-      infoServerMessage += `├ 📦 Heap Total: ${serverMemTotal} MB\n`;
-      infoServerMessage += `├ 🏠 RSS: ${serverMemRss} MB\n`;
-      infoServerMessage += `├ 🔗 Externo: ${serverMemExternal} MB\n`;
-      infoServerMessage += `└ 📊 Eficiência: ${((serverMemUsed / serverMemTotal) * 100).toFixed(1)}%\n\n`;
-      
-      infoServerMessage += `🌐 *Rede e Conectividade:* 🔗\n`;
-      infoServerMessage += `├ 🔌 Interfaces: ${serverInterfaces}\n`;
-      infoServerMessage += `├ 📡 Status: Online\n`;
-      infoServerMessage += `└ 🛡️ Firewall: Ativo\n`;
-      
-      infoServerMessage += `⏰ *Tempo de Atividade:* 🕐\n`;
-      infoServerMessage += `└ 🚀 Nazuna online há: ${serverUptimeFormatted}\n`;
-      await reply(infoServerMessage);
-      break;
-
-    case 'stats': {
-      const statsUptime = process.uptime();
-      const statsUptimeFormatted = formatUptime(statsUptime, true);
-      
-      // Carrega estatísticas reais
-      const realCommandStats = getCommandStats();
-      const realUserStats = getUserStats();
-      const realGroupStats = getGroupStats();
-      
-      const globalStats = {
-        totalUsers: realUserStats.totalUsers,
-        totalGroups: realGroupStats.totalGroups,
-        commandsToday: realCommandStats.commandsToday,
-        commandsTotal: realCommandStats.totalCommands,
-        messagesProcessed: realGroupStats.totalMessagesToday,
-        activeUsers: realUserStats.activeToday,
-        premiumUsers: Object.keys(premiumListaZinha || {}).length,
-        subOwners: getSubdonos().length
-      };
-      
-      const popularCommands = realCommandStats.popularCommands.length > 0 
-        ? realCommandStats.popularCommands 
-        : [{ name: 'Nenhum comando usado ainda', uses: 0 }];
-      
-      const currentDate = new Date().toLocaleDateString('pt-BR');
-      const currentTime = new Date().toLocaleTimeString('pt-BR');
-      
-      let statsMessage = `🌸 ═══════════════════════════════ 🌸\n`;
-      statsMessage += `          📊 *ESTATÍSTICAS DA NAZUNA* 📊\n`;
-      statsMessage += `🌸 ═══════════════════════════════ 🌸\n\n`;
-      
-      statsMessage += `👥 *Usuários e Comunidade:* 🌍\n`;
-      statsMessage += `├ 👤 Total de usuários: ${globalStats.totalUsers.toLocaleString()}\n`;
-      statsMessage += `├ 👥 Grupos ativos: ${globalStats.totalGroups}\n`;
-      statsMessage += `├ 🏃‍♀️ Usuários ativos hoje: ${globalStats.activeUsers}\n`;
-      statsMessage += `├ 💎 Usuários premium: ${globalStats.premiumUsers}\n`;
-      statsMessage += `├ ⭐ Subdonos: ${globalStats.subOwners}\n`;
-      statsMessage += `└ 📈 Crescimento: +${Math.floor(Math.random() * 50) + 10} hoje\n\n`;
-      
-      statsMessage += `⚡ *Atividade e Comandos:* 🎯\n`;
-      statsMessage += `├ 🎮 Comandos hoje: ${globalStats.commandsToday.toLocaleString()}\n`;
-      statsMessage += `├ 📊 Total de comandos: ${globalStats.commandsTotal.toLocaleString()}\n`;
-      statsMessage += `├ 💬 Mensagens processadas: ${globalStats.messagesProcessed.toLocaleString()}\n`;
-      statsMessage += `├ ⚡ Média por hora: ${Math.floor(globalStats.commandsToday / 24)}\n`;
-      statsMessage += `└ 🔥 Comandos mais usados: ${popularCommands.length} tipos\n\n`;
-      
-      statsMessage += `🏆 *Comandos Mais Populares:* 🌟\n`;
-      popularCommands.forEach((cmd, index) => {
-        const emoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🏅';
-        statsMessage += `${index === popularCommands.length - 1 ? '└' : '├'} ${emoji} ${cmd.name}: ${cmd.uses} usos\n`;
-      });
-      statsMessage += `\n`;
-      
-      statsMessage += `⏰ *Tempo e Disponibilidade:* 🕐\n`;
-      statsMessage += `├ 🚀 Online há: ${statsUptimeFormatted}\n`;
-      statsMessage += `├ 📅 Data atual: ${currentDate}\n`;
-      statsMessage += `├ 🕐 Hora atual: ${currentTime}\n`;
-      statsMessage += `├ 📈 Uptime: 99.${Math.floor(Math.random() * 9) + 1}%\n`;
-      statsMessage += `└ 🔄 Última reinicialização: Há ${Math.floor(Math.random() * 24)} horas\n\n`;
-      
-      statsMessage += `💖 *Relacionamentos e Interações:* 🤝\n`;
-      statsMessage += `├ 😊 Usuários únicos: ${globalStats.totalUsers}\n`;
-      statsMessage += `├ 💕 Grupos conectados: ${globalStats.totalGroups}\n`;
-      statsMessage += `├ 🎁 Comandos processados: ${globalStats.commandsTotal}\n`;
-      statsMessage += `├ 🌟 Mensagens hoje: ${globalStats.messagesProcessed}\n`;
-      statsMessage += `└ 💝 Corações conquistados: Incontáveis! 💕\n\n`;
-      
-      statsMessage += `🎨 *Recursos e Funcionalidades:* 🛠️\n`;
-      statsMessage += `├ 👑 Subdonos ativos: ${globalStats.subOwners}\n`;
-      statsMessage += `├ 💎 Usuários premium: ${globalStats.premiumUsers}\n`;
-      statsMessage += `├ 🎮 Comandos disponíveis: Muitos!\n`;
-      statsMessage += `├ 🛡️ Proteções ativas: Sempre!\n`;
-      statsMessage += `└ ✨ Momentos mágicos: Todos os dias!\n\n`;
-      
-      statsMessage += `🌸 ═══════════════════════════════ 🌸\n`;
-      statsMessage += `        ✨ *Obrigada por fazer parte!* ✨\n`;
-      statsMessage += `         💕 *Vocês tornam tudo especial!* 💕\n`;
-      statsMessage += `🌸 ═══════════════════════════════ 🌸`;
-      
-      await reply(statsMessage);
-      }
-      break;
-
-    case 'menu': case 'help':
+  case 'menu': case 'help':
     try {
       // Verificar se existe mídia personalizada para o menu
       const menuVideoPath = __dirname + '/../midias/menu.mp4';
@@ -3477,7 +2696,7 @@ case 'ytmp4':
       // Reagir à mensagem
       
     } catch (error) {
-      console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao enviar menu:', error);
+      console.error('Erro ao enviar menu:', error);
       
       // Fallback: enviar apenas o texto do menu se houver erro com a mídia
       const menuText = await menu(prefix, nomebot, pushname);
@@ -3489,7 +2708,7 @@ case 'ytmp4':
     try {
       await sendMenuWithMedia('alteradores', menuAlterador);
     } catch (error) {
-      console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao enviar menu de alteradores:', error);
+      console.error('Erro ao enviar menu de alteradores:', error);
       await reply("❌ Ocorreu um erro ao carregar o menu de alteradores");
     }
   break;
@@ -3498,7 +2717,7 @@ case 'ytmp4':
     try {
       await sendMenuWithMedia('ia', menuIa);
     } catch (error) {
-      console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao enviar menu de IA:', error);
+      console.error('Erro ao enviar menu de IA:', error);
       await reply("❌ Ocorreu um erro ao carregar o menu de IA");
     }
   break;
@@ -3534,7 +2753,7 @@ case 'ytmp4':
       
       await sendMenuWithMedia('brincadeiras', async () => menuContent);
     } catch (error) {
-      console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao enviar menu de brincadeiras:', error);
+      console.error('Erro ao enviar menu de brincadeiras:', error);
       await reply("❌ Ocorreu um erro ao carregar o menu de brincadeiras");
     }
   break;
@@ -3543,7 +2762,7 @@ case 'ytmp4':
     try {
       await sendMenuWithMedia('downloads', menudown);
     } catch (error) {
-      console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao enviar menu de downloads:', error);
+      console.error('Erro ao enviar menu de downloads:', error);
       await reply("❌ Ocorreu um erro ao carregar o menu de downloads");
     }
   break;
@@ -3552,7 +2771,7 @@ case 'ytmp4':
     try {
       await sendMenuWithMedia('ferramentas', menuFerramentas);
     } catch (error) {
-      console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao enviar menu de ferramentas:', error);
+      console.error('Erro ao enviar menu de ferramentas:', error);
       await reply("❌ Ocorreu um erro ao carregar o menu de ferramentas");
     }
   break;
@@ -3561,7 +2780,7 @@ case 'ytmp4':
     try {
       await sendMenuWithMedia('admin', menuadm);
     } catch (error) {
-      console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao enviar menu de administração:', error);
+      console.error('Erro ao enviar menu de administração:', error);
       await reply("❌ Ocorreu um erro ao carregar o menu de administração");
     }
   break;
@@ -3570,7 +2789,7 @@ case 'ytmp4':
     try {
       await sendMenuWithMedia('membros', menuMembros);
     } catch (error) {
-      console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao enviar menu de membros:', error);
+      console.error('Erro ao enviar menu de membros:', error);
       await reply("❌ Ocorreu um erro ao carregar o menu de membros");
     }
   break;
@@ -3584,7 +2803,7 @@ case 'ytmp4':
       
       await sendMenuWithMedia('dono', menuDono);
     } catch (error) {
-      console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao enviar menu do dono:', error);
+      console.error('Erro ao enviar menu do dono:', error);
       await reply("❌ Ocorreu um erro ao carregar o menu do dono");
     }
   break;
@@ -3593,7 +2812,7 @@ case 'ytmp4':
     try {
       await sendMenuWithMedia('stickers', menuSticker);
     } catch (error) {
-      console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao enviar menu de stickers:', error);
+      console.error('Erro ao enviar menu de stickers:', error);
       await reply("❌ Ocorreu um erro ao carregar o menu de stickers");
     }
   break;
@@ -3690,7 +2909,7 @@ case 'ytmp4':
       reply(`✅ Entrei no grupo com sucesso! ID: ${res}`);
       nazu.react('🎉');
     }).catch((err) => {
-      reply('❌ 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao entrar no grupo. Link inválido ou permissão negada.');
+      reply('❌ Erro ao entrar no grupo. Link inválido ou permissão negada.');
     });
   } catch (e) {
     console.error(e);
@@ -3898,7 +3117,7 @@ break;
     // globalBlocks is already loaded
     const blockedCommands = globalBlocks.commands ? Object.entries(globalBlocks.commands).map(([cmd, data]) => `🔧 *${cmd}* - Motivo: ${data.reason}`).join('\n') : 'Nenhum comando bloqueado.';
     const blockedUsers = globalBlocks.users ? Object.entries(globalBlocks.users).map(([user, data]) => {const userId = user.split('@')[0]; return `👤 *${userId}* - Motivo: ${data.reason}`;}).join('\n') : 'Nenhum usuário bloqueado.';
-    const message = `🔒 *Bloqueios Globais - ${nomebot}* 🔒\n\n📜 *Comandos 🚫 *Bloqueado com sucesso!* ✨\n\n🌸 *Agora está protegido como você pediu!* 💕s*:\n${blockedCommands}\n\n👥 *Usuários 🚫 *Bloqueado com sucesso!* ✨\n\n🌸 *Agora está protegido como você pediu!* 💕s*:\n${blockedUsers}`;    
+    const message = `🔒 *Bloqueios Globais - ${nomebot}* 🔒\n\n📜 *Comandos Bloqueados*:\n${blockedCommands}\n\n👥 *Usuários Bloqueados*:\n${blockedUsers}`;    
     await reply(message);
   } catch (e) {
     console.error(e);
@@ -4082,7 +3301,7 @@ break;
           });
         }
       } catch (e) {
-        console.error(`💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao ler ${file}:`, e);
+        console.error(`Erro ao ler ${file}:`, e);
       };
     };
 
@@ -4185,7 +3404,7 @@ break;
           };
         };
       } catch (e) {
-        console.error(`💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao ler ${file}:`, e);
+        console.error(`Erro ao ler ${file}:`, e);
       };
     };
     const userName = pushname || sender.split('@')[0];
@@ -4205,7 +3424,181 @@ break;
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
-  
+
+case 'infoserver':
+  if (!isOwner) {
+    await reply('🚫 *Ops! Você não tem permissão!* 😅\n\n🌸 *Este comando é só para o dono*\nInformações do servidor são confidenciais! ✨');
+    break;
+  }
+
+  // Coleta de informações básicas
+  const serverUptime = process.uptime();
+  const serverUptimeFormatted = formatUptime(serverUptime, true);
+
+  const serverMemUsage = process.memoryUsage();
+  const serverMemUsed = (serverMemUsage.heapUsed / 1024 / 1024).toFixed(2);
+  const serverMemTotal = (serverMemUsage.heapTotal / 1024 / 1024).toFixed(2);
+  const serverMemRss = (serverMemUsage.rss / 1024 / 1024).toFixed(2);
+  const serverMemExternal = (serverMemUsage.external / 1024 / 1024).toFixed(2);
+
+  const serverCpuUsage = process.cpuUsage();
+  const serverCpuUser = (serverCpuUsage.user / 1000000).toFixed(2);
+  const serverCpuSystem = (serverCpuUsage.system / 1000000).toFixed(2);
+
+  const serverOsInfo = {
+    platform: os.platform(),
+    arch: os.arch(),
+    release: os.release(),
+    hostname: os.hostname(),
+    type: os.type(),
+    endianness: os.endianness()
+  };
+
+  const serverFreeMemory = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
+  const serverTotalMemory = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
+  const serverLoadAvg = os.loadavg();
+  const serverCpuCount = os.cpus().length;
+  const serverCpuModel = os.cpus()[0]?.model || 'Desconhecido';
+
+  const serverNetworkInterfaces = os.networkInterfaces();
+  const serverInterfaces = Object.keys(serverNetworkInterfaces).length;
+
+  const currentServerTime = new Date().toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+
+  // Item 1: Informações Adicionais do Sistema
+  const nodeVersion = process.version;
+  const osUptime = (os.uptime() / 3600).toFixed(2); // Uptime do SO em horas
+  let networkDetails = '';
+  for (const [name, interfaces] of Object.entries(serverNetworkInterfaces)) {
+    interfaces.forEach(iface => {
+      networkDetails += `├ ${name} (${iface.family}): ${iface.address}\n`;
+    });
+  }
+
+  // Nova adição: Armazenamento usando getDiskSpaceInfo()
+  let diskInfo = { totalGb: 0, freeGb: 0, usedGb: 0, percentUsed: 0 };
+  try {
+    diskInfo = await getDiskSpaceInfo(); // Usa a função fornecida
+  } catch (error) {
+    console.error('Erro ao obter informações de disco:', error);
+  }
+  const diskFree = diskInfo.freeGb.toFixed(2);
+  const diskTotal = diskInfo.totalGb.toFixed(2);
+  const diskUsed = diskInfo.usedGb.toFixed(2);
+  const diskUsagePercent = diskInfo.percentUsed.toFixed(1);
+
+  // Item 3: Monitoramento em Tempo Real - Taxa de Uso da CPU
+  const startUsage = process.cpuUsage();
+  await new Promise(resolve => setTimeout(resolve, 1000)); // Aguarda 1s para medir
+  const endUsage = process.cpuUsage(startUsage);
+  const cpuPercent = ((endUsage.user + endUsage.system) / 10000).toFixed(1);
+
+  // Item 3: Latência do Bot
+  const startTime = Date.now();
+  const endTime = Date.now();
+  const latency = endTime - startTime;
+
+  // Nova adição: Velocidade de Internet (Latência de Rede)
+  let networkLatency = 'N/A';
+  try {
+    const startNetworkTest = Date.now();
+    await new Promise((resolve, reject) => {
+      const req = https.get('https://www.google.com', res => {
+        res.on('data', () => {}); // Consumir dados
+        res.on('end', () => resolve());
+      });
+      req.on('error', err => reject(err));
+      req.setTimeout(5000, () => reject(new Error('Timeout')));
+    });
+    const endNetworkTest = Date.now();
+    networkLatency = `${endNetworkTest - startNetworkTest}ms`;
+  } catch (error) {
+    networkLatency = 'Erro ao testar';
+    console.error('Erro ao testar latência de rede:', error);
+  }
+
+  // Início da mensagem
+  let infoServerMessage = `🌸 ═════════════════════════ 🌸\n`;
+  infoServerMessage += `    💻 *INFORMAÇÕES DO SERVIDOR* 💻\n`;
+  infoServerMessage += `🌸 ═════════════════════════ 🌸\n\n`;
+
+  // Sistema Operacional
+  infoServerMessage += `🖥️ *Sistema Operacional:* 🏠\n`;
+  infoServerMessage += `├ 🟢 Node.js: ${nodeVersion}\n`;
+  infoServerMessage += `├ 💻 Plataforma: ${serverOsInfo.platform}\n`;
+  infoServerMessage += `├ 🏗️ Arquitetura: ${serverOsInfo.arch}\n`;
+  infoServerMessage += `├ 🔧 Tipo: ${serverOsInfo.type}\n`;
+  infoServerMessage += `├ 📋 Release: ${serverOsInfo.release}\n`;
+  infoServerMessage += `├ 🏷️ Hostname: ${serverOsInfo.hostname}\n`;
+  infoServerMessage += `├ 🔄 Endianness: ${serverOsInfo.endianness}\n`;
+  infoServerMessage += `├ ⏳ Sistema online há: ${osUptime} horas\n`;
+  infoServerMessage += `└ 📅 Hora atual: ${currentServerTime}\n\n`;
+
+  // Processador
+  infoServerMessage += `⚡ *Processador (CPU):* 🧠\n`;
+  infoServerMessage += `├ 🔢 Núcleos: ${serverCpuCount}\n`;
+  infoServerMessage += `├ 🏷️ Modelo: ${serverCpuModel}\n`;
+  infoServerMessage += `├ 👤 Tempo usuário: ${serverCpuUser}s\n`;
+  infoServerMessage += `├ ⚙️ Tempo sistema: ${serverCpuSystem}s\n`;
+  infoServerMessage += `├ 📈 Uso CPU atual: ${cpuPercent}%\n`;
+  infoServerMessage += `├ 📊 Load 1min: ${serverLoadAvg[0].toFixed(2)}\n`;
+  infoServerMessage += `├ 📈 Load 5min: ${serverLoadAvg[1].toFixed(2)}\n`;
+  infoServerMessage += `└ 📉 Load 15min: ${serverLoadAvg[2].toFixed(2)}\n\n`;
+
+  // Memória do Sistema
+  const memoryUsagePercent = (((serverTotalMemory - serverFreeMemory) / serverTotalMemory) * 100).toFixed(1);
+  const memoryEmoji = memoryUsagePercent > 80 ? '⚠️' : '✅';
+  const memoryBar = '█'.repeat(memoryUsagePercent / 10) + '-'.repeat(10 - memoryUsagePercent / 10);
+  infoServerMessage += `💾 *Memória do Sistema:* 🧠\n`;
+  infoServerMessage += `├ 🆓 RAM Livre: ${serverFreeMemory} GB\n`;
+  infoServerMessage += `├ 📊 RAM Total: ${serverTotalMemory} GB\n`;
+  infoServerMessage += `├ 📈 RAM Usada: ${(serverTotalMemory - serverFreeMemory).toFixed(2)} GB\n`;
+  infoServerMessage += `└ ${memoryEmoji} Uso: [${memoryBar}] ${memoryUsagePercent}%\n\n`;
+
+  // Memória do Bot
+  const botMemoryUsagePercent = ((serverMemUsed / serverMemTotal) * 100).toFixed(1);
+  const botMemoryEmoji = botMemoryUsagePercent > 80 ? '⚠️' : '✅';
+  const botMemoryBar = '█'.repeat(botMemoryUsagePercent / 10) + '-'.repeat(10 - botMemoryUsagePercent / 10);
+  infoServerMessage += `🤖 *Memória da Nazuna:* 💖\n`;
+  infoServerMessage += `├ 🧠 Heap Usado: ${serverMemUsed} MB\n`;
+  infoServerMessage += `├ 📦 Heap Total: ${serverMemTotal} MB\n`;
+  infoServerMessage += `├ 🏠 RSS: ${serverMemRss} MB\n`;
+  infoServerMessage += `├ 🔗 Externo: ${serverMemExternal} MB\n`;
+  infoServerMessage += `└ ${botMemoryEmoji} Eficiência: [${botMemoryBar}] ${botMemoryUsagePercent}%\n\n`;
+
+  // Rede e Conectividade
+  infoServerMessage += `🌐 *Rede e Conectividade:* 🔗\n`;
+  infoServerMessage += `├ 🔌 Interfaces: ${serverInterfaces}\n`;
+  infoServerMessage += networkDetails;
+  infoServerMessage += `├ 📡 Status: Online\n`;
+  infoServerMessage += `├ ⏱️ Latência de Rede: ${networkLatency}\n`; // Nova adição: Latência de Rede
+  infoServerMessage += `└ 🛡️ Firewall: Ativo\n\n`;
+
+  // Armazenamento (usando getDiskSpaceInfo)
+  const diskEmoji = diskUsagePercent > 80 ? '⚠️' : '✅';
+  const diskBar = '█'.repeat(diskUsagePercent / 10) + '-'.repeat(10 - diskUsagePercent / 10);
+  infoServerMessage += `💽 *Armazenamento:* 💿\n`;
+  infoServerMessage += `├ 🆓 Livre: ${diskFree} GB\n`;
+  infoServerMessage += `├ 📊 Total: ${diskTotal} GB\n`;
+  infoServerMessage += `├ 📈 Usado: ${diskUsed} GB\n`;
+  infoServerMessage += `└ ${diskEmoji} Uso: [${diskBar}] ${diskUsagePercent}%\n\n`;
+
+  // Latência e Tempo de Atividade
+  infoServerMessage += `⏰ *Tempo e Latência:* 🕐\n`;
+  infoServerMessage += `├ ⏱️ Latência do Bot: ${latency}ms\n`;
+  infoServerMessage += `└ 🚀 Nazuna online há: ${serverUptimeFormatted}\n`;
+
+  await reply(infoServerMessage);
+  break;
+      
   case 'statusbot':
   try {
     const uptime = process.uptime();
@@ -4227,12 +3620,12 @@ break;
           });
         };
       } catch (e) {
-        console.error(`💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao ler ${file}:`, e);
+        console.error(`Erro ao ler ${file}:`, e);
       };
     };
     const memoryUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2);
     const { version } = JSON.parse(fs.readFileSync(__dirname + '/../../package.json'));
-    const statusMessage = `📡 *Status do ${nomebot}* 📡\n\n⏳ *Tempo Online*: ${uptimeStr}\n👥 *Grupos*: ${totalGroups}\n💬 *Mensagens Totais*: ${totalMessages}\n⚒️ *Comandos ⚡ *Executado com perfeição!* ✨\n\n🌸 *Comando realizado com muito carinho!* 💕s*: ${totalCommands}\n🎨 *Figurinhas Enviadas*: ${totalStickers}\n🧠 *Ram Usada*: ${memoryUsage} MB\n📌 *Versão*: ${version}\n\n✨ *🎨 *Criado com amor!* ✨\n\n🌸 *Tudo feito especialmente para você!* 💕 por*: ${nomedono} ✨
+    const statusMessage = `📡 *Status do ${nomebot}* 📡\n\n⏳ *Tempo Online*: ${uptimeStr}\n👥 *Grupos*: ${totalGroups}\n💬 *Mensagens Totais*: ${totalMessages}\n⚒️ *Comandos Executados*: ${totalCommands}\n🎨 *Figurinhas Enviadas*: ${totalStickers}\n🧠 *Ram Usada*: ${memoryUsage} MB\n📌 *Versão*: ${version}\n\n✨ *Criado por*: ${nomedono} ✨
     `;
     await nazu.sendMessage(from, { text: statusMessage }, { quoted: info });
   } catch (e) {
@@ -4304,101 +3697,7 @@ break;
   }
   break;
   
-  case 'statusgp':
-      if (!isGroup) {
-        await reply('🚫 *Este comando é só para grupos!* 💬\n\n🌸 *Nazuna precisa estar em um grupo para mostrar as informações!*\nVenha me chamar em um grupo! ✨');
-        break;
-      }
-      
-      const gpCreationDate = new Date(groupMetadata.creation * 1000).toLocaleDateString('pt-BR');
-      const gpTotalMembers = AllgroupMembers.length;
-      const gpAdminCount = groupAdmins.length;
-      const gpMemberCount = gpTotalMembers - gpAdminCount;
-      
-      // Calcula estatísticas reais do grupo
-      const realGroupStats = getGroupStats(from);
-      const gpStats = {
-        mensagensHoje: realGroupStats.messagesToday,
-        totalMensagens: realGroupStats.totalMessages,
-        diasAtivo: Math.floor((Date.now() - (groupMetadata.creation * 1000)) / (1000 * 60 * 60 * 24)),
-        primeiroContato: realGroupStats.firstSeen,
-        ultimaAtividade: realGroupStats.lastActive
-      };
-      
-      // Define nível de atividade baseado em dados reais
-      let atividadeNivel = '😴 Dormindo';
-      if (gpStats.mensagensHoje > 100) atividadeNivel = '🔥 Super Ativo';
-      else if (gpStats.mensagensHoje > 50) atividadeNivel = '⚡ Muito Ativo';
-      else if (gpStats.mensagensHoje > 20) atividadeNivel = '😊 Ativo';
-      else if (gpStats.mensagensHoje > 5) atividadeNivel = '😐 Moderado';
-      
-      // Verifica recursos ativos
-      const recursos = [];
-      if (groupData.antilinkgp) recursos.push('🔗 Anti-Link');
-      if (groupData.antiporn) recursos.push('🚫 Anti-Porn');
-      if (groupData.modobrincadeira) recursos.push('🎮 Modo Brincadeira');
-      if (groupData.soadm) recursos.push('👑 Só Admin');
-      if (groupData.modolite) recursos.push('🌙 Modo Lite');
-      if (recursos.length === 0) recursos.push('📝 Padrão');
-      
-      // Status do aluguel
-      const rentalStatus = getGroupRentalStatus(from);
-      let aluguelInfo = '❌ Não ativo';
-      if (rentalStatus.active) {
-        if (rentalStatus.permanent) {
-          aluguelInfo = '💎 Permanente';
-        } else {
-          const expiryDate = new Date(rentalStatus.expiresAt).toLocaleDateString('pt-BR');
-          aluguelInfo = `✅ Ativo até ${expiryDate}`;
-        }
-      }
-      
-      let statusGpMessage = `🌸 ══════════════════════ 🌸\n`;
-      statusGpMessage += `     💖 *STATUS DO GRUPO* 💖\n`;
-      statusGpMessage += `🌸 ══════════════════════ 🌸\n\n`;
-      
-      statusGpMessage += `👥 *Informações Básicas:* ✨\n`;
-      statusGpMessage += `├ 🏷️ Nome: ${groupName}\n`;
-      statusGpMessage += `├ 🆔 ID: ${from.split('@')[0]}\n`;
-      statusGpMessage += `├ 📅 Criado em: ${gpCreationDate}\n`;
-      statusGpMessage += `├ ⏰ Idade: ${gpStats.diasAtivo} dias\n`;
-      statusGpMessage += `└ 📝 Descrição: ${groupMetadata.desc || 'Sem descrição'}\n\n`;
-      
-      statusGpMessage += `👤 *Membros e Hierarquia:* 👑\n`;
-      statusGpMessage += `├ 👥 Total de membros: ${gpTotalMembers}\n`;
-      statusGpMessage += `├ 👑 Administradores: ${gpAdminCount}\n`;
-      statusGpMessage += `├ 🌸 Membros comuns: ${gpMemberCount}\n`;
-      statusGpMessage += `├ 🤖 Nazuna é admin: ${isBotAdmin ? 'Sim ✅' : 'Não ❌'}\n`;
-      statusGpMessage += `└ 🏃‍♀️ Ativos hoje: ${gpStats.ativosHoje}\n\n`;
-      
-      statusGpMessage += `📊 *Atividade do Grupo:* 📈\n`;
-      statusGpMessage += `├ 💬 Mensagens hoje: ${gpStats.mensagensHoje}\n`;
-      statusGpMessage += `├ 📝 Total de mensagens: ${gpStats.totalMensagens}\n`;
-      statusGpMessage += `├ 📈 Nível de atividade: ${atividadeNivel}\n`;
-      statusGpMessage += `├ 📅 Primeiro contato: ${gpStats.primeiroContato}\n`;
-      statusGpMessage += `├ ⏰ Última atividade: ${gpStats.ultimaAtividade}\n`;
-      statusGpMessage += `└ 🏆 Ranking: ${gpStats.mensagensHoje > 50 ? 'Top 10%' : gpStats.mensagensHoje > 20 ? 'Top 30%' : 'Crescendo'}\n\n`;
-      
-      statusGpMessage += `🛡️ *Recursos Ativos:* 🔧\n`;
-      recursos.forEach((recurso, index) => {
-        statusGpMessage += `${index === recursos.length - 1 ? '└' : '├'} ${recurso}\n`;
-      });
-      statusGpMessage += `\n`;
-      
-      statusGpMessage += `💎 *Status Premium:* 💰\n`;
-      statusGpMessage += `├ 🎫 Aluguel: ${aluguelInfo}\n`;
-      statusGpMessage += `├ 🌟 Recursos premium: ${rentalStatus.active ? 'Liberados' : 'Limitados'}\n`;
-      statusGpMessage += `├ 🎮 Comandos extras: ${rentalStatus.active ? 'Disponíveis' : 'Bloqueados'}\n`;
-      statusGpMessage += `└ 💝 Suporte prioritário: ${rentalStatus.active ? 'Sim' : 'Não'}\n\n`;
-      
-      statusGpMessage += `🌸 *Relacionamento com Nazuna:* 💕\n`;
-      statusGpMessage += `├ 💖 Amizade: ${gpStats.comandosUsados > 100 ? 'Melhor amigo!' : gpStats.comandosUsados > 50 ? 'Amigo querido' : 'Novo amigo'}\n`;
-      statusGpMessage += `└ 🎵 Diversão: ${gpStats.mensagensHoje > 100 ? 'Máxima' : 'Boa'}\n`;
-      
-      await reply(statusGpMessage);
-      break;
-
-    case 'statusgp': case 'dadosgp': try {
+  case 'statusgp': case 'dadosgp': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     const groupInfo = await nazu.groupMetadata(from);
     const totalMembers = groupInfo.participants.length;
@@ -4415,12 +3714,12 @@ break;
       });
     };
     const settings = [
-      `🔞 Antiporn: ${isAntiPorn ? '🟢 *Ativado com sucesso!* ✨\n\n🌸 *Agora está funcionando perfeitamente!* 💕' : '🔴 *Desativado com sucesso!* ✨\n\n🌸 *Agora está desligado como você pediu!* 💕'}`,
-      `🔗 Antilink: ${isAntiLinkGp ? '🟢 *Ativado com sucesso!* ✨\n\n🌸 *Agora está funcionando perfeitamente!* 💕' : '🔴 *Desativado com sucesso!* ✨\n\n🌸 *Agora está desligado como você pediu!* 💕'}`,
-      `🎲 Modo Brincadeira: ${isModoBn ? '🟢 *Ativado com sucesso!* ✨\n\n🌸 *Agora está funcionando perfeitamente!* 💕' : '🔴 *Desativado com sucesso!* ✨\n\n🌸 *Agora está desligado como você pediu!* 💕'}`,
-      `👑 Apenas Admins: ${isOnlyAdmin ? '🟢 *Ativado com sucesso!* ✨\n\n🌸 *Agora está funcionando perfeitamente!* 💕' : '🔴 *Desativado com sucesso!* ✨\n\n🌸 *Agora está desligado como você pediu!* 💕'}`
+      `🔞 Antiporn: ${isAntiPorn ? 'Ativado' : 'Desativado'}`,
+      `🔗 Antilink: ${isAntiLinkGp ? 'Ativado' : 'Desativado'}`,
+      `🎲 Modo Brincadeira: ${isModoBn ? 'Ativado' : 'Desativado'}`,
+      `👑 Apenas Admins: ${isOnlyAdmin ? 'Ativado' : 'Desativado'}`
     ].join('\n');
-    const statsMessage = `\n📊 *Estatísticas do Grupo: ${groupName}* 📊\n\n👥 *Total de Membros*: ${totalMembers}\n👑 *Administradores*: ${totalAdmins}\n📅 *🎨 *Criado com amor!* ✨\n\n🌸 *Tudo feito especialmente para você!* 💕 em*: ${groupCreated}\n💬 *Mensagens Totais*: ${totalMessages}\n⚒️ *Comandos Usados*: ${totalCommands}\n🎨 *Figurinhas Enviadas*: ${totalStickers}\n\n⚙️ *Configurações*:\n${settings}\n\n✨ *Bot*: ${nomebot} by ${nomedono} ✨`;
+    const statsMessage = `\n📊 *Estatísticas do Grupo: ${groupName}* 📊\n\n👥 *Total de Membros*: ${totalMembers}\n👑 *Administradores*: ${totalAdmins}\n📅 *Criado em*: ${groupCreated}\n💬 *Mensagens Totais*: ${totalMessages}\n⚒️ *Comandos Usados*: ${totalCommands}\n🎨 *Figurinhas Enviadas*: ${totalStickers}\n\n⚙️ *Configurações*:\n${settings}\n\n✨ *Bot*: ${nomebot} by ${nomedono} ✨`;
     await nazu.sendMessage(from, { text: statsMessage }, { quoted: info });
   } catch (e) {
     console.error(e);
@@ -4434,7 +3733,7 @@ case 'dono':
     donoInfo += `🤖 *Nome do Bot*: ${nomebot}\n`;
     donoInfo += `👤 *Dono*: ${nomedono}\n`;
     donoInfo += `📱 *Número do Dono*: wa.me/${numerodono.replace(/\D/g, '')}\n`;
-    donoInfo += `👨‍💻 *🎨 *Criado com amor!* ✨\n\n🌸 *Tudo feito especialmente para você!* 💕r*: Hiudy\n`;
+    donoInfo += `👨‍💻 *Criador*: Hiudy\n`;
     donoInfo += `📡 *Prefixo*: ${prefix}\n`;
     await reply(donoInfo);
   } catch (e) {
@@ -4767,7 +4066,7 @@ case 'ping':
   if (!isGroupAdmin) return reply("você precisa ser adm 💔");
   try {
     const blockedUsers = groupData.blockedUsers ? Object.entries(groupData.blockedUsers).map(([user, data]) => `👤 *${user.split('@')[0]}* - Motivo: ${data.reason}`).join('\n') : 'Nenhum usuário bloqueado no grupo.';
-    const message = `🔒 *Usuários 🚫 *Bloqueado com sucesso!* ✨\n\n🌸 *Agora está protegido como você pediu!* 💕s no Grupo - ${groupName}* 🔒\n\n${blockedUsers}`;
+    const message = `🔒 *Usuários Bloqueados no Grupo - ${groupName}* 🔒\n\n${blockedUsers}`;
     await reply(message);
   } catch (e) {
     console.error(e);
@@ -4995,7 +4294,7 @@ case 'ping':
       reply('Nenhum membro online no momento.');
     };
   } catch (err) {
-    console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao processar comando "onlines":', err);
+    console.error('Erro ao processar comando "onlines":', err);
     reply('Ocorreu um erro ao obter a lista de membros online.');
   };
   break;
@@ -5203,7 +4502,7 @@ case 'ping':
         : info.message.imageMessage;
       const media = await getFileBuffer(imgMessage, 'image');
       const uploadResult = await upload(media);
-      if (!uploadResult) throw new Error('💥 *Oops! Não consegui* 😔\n\n🌸 *Houve uma falha ao fazer upload da imagem');
+      if (!uploadResult) throw new Error('Falha ao fazer upload da imagem');
       if (!groupData.welcome) groupData.welcome = {};
       groupData.welcome.image = uploadResult;
       fs.writeFileSync(__dirname + `/../database/grupos/${from}.json`, JSON.stringify(groupData, null, 2));
@@ -5225,7 +4524,7 @@ break;
          'image'
        );
        const uploadResult = await upload(media);
-       if (!uploadResult) throw new Error('💥 *Oops! Não consegui* 😔\n\n🌸 *Houve uma falha ao fazer upload da imagem');
+       if (!uploadResult) throw new Error('Falha ao fazer upload da imagem');
        if (!groupData.exit) groupData.exit = {};
        groupData.exit.image = uploadResult;
        fs.writeFileSync(__dirname + `/../database/grupos/${from}.json`, JSON.stringify(groupData, null, 2));
@@ -5348,7 +4647,7 @@ case 'listblacklist':
     if (Object.keys(groupData.blacklist).length === 0) return reply("📋 A blacklist está vazia.");
     let text = "📋 *Lista de Usuários na Blacklist*\n\n";
     for (const [user, data] of Object.entries(groupData.blacklist)) {
-      text += `👤 @${user.split('@')[0]}\n📝 Motivo: ${data.reason}\n🕒 ➕ *Adicionado com carinho!* ✨\n\n🌸 *Tudo certinho e no lugar!* 💕 em: ${new Date(data.timestamp).toLocaleString()}\n\n`;
+      text += `👤 @${user.split('@')[0]}\n📝 Motivo: ${data.reason}\n🕒 Adicionado em: ${new Date(data.timestamp).toLocaleString()}\n\n`;
     }
     reply(text, { mentions: Object.keys(groupData.blacklist) });
   } catch (e) {
@@ -5808,82 +5107,6 @@ case 'listadv':
   break;
   
   case 'perfil':
-      const perfilUser = sender_ou_n;
-      const perfilPushname = pushname || 'Usuário Anônimo';
-      const perfilIsOwner = isOwner;
-      const perfilIsSubOwner = isSubOwner;
-      const perfilIsPremium = isPremium;
-      const perfilIsGroupAdmin = isGroupAdmin;
-      
-      const perfilJoinDate = new Date().toLocaleDateString('pt-BR');
-      const perfilUserNumber = perfilUser.split('@')[0];
-      
-      // Carrega estatísticas reais do usuário
-      const userStatsData = loadJsonFile(USER_STATS_FILE, { activeUsers: {} });
-      const userData = userStatsData.activeUsers[perfilUser] || {};
-      
-      const perfilStats = {
-        comandosUsados: userData.commandCount || 0,
-        primeiroContato: userData.firstSeen || new Date().toDateString(),
-        ultimoUso: userData.lastSeen || new Date().toDateString(),
-        nivel: Math.min(Math.floor((userData.commandCount || 0) / 10) + 1, 50),
-        diasAtivo: userData.firstSeen ? Math.floor((Date.now() - new Date(userData.firstSeen).getTime()) / (1000 * 60 * 60 * 24)) + 1 : 1
-      };
-      
-      // Define badges baseado no status
-      let badges = [];
-      if (perfilIsOwner) badges.push('👑 DONO SUPREMO');
-      if (perfilIsSubOwner) badges.push('⭐ SUBDONO');
-      if (perfilIsPremium) badges.push('💎 PREMIUM');
-      if (perfilIsGroupAdmin && isGroup) badges.push('🛡️ ADMIN');
-      if (perfilStats.comandosUsados > 300) badges.push('🏆 VETERANO');
-      if (perfilStats.diasAtivo > 100) badges.push('💪 ATIVO');
-      if (badges.length === 0) badges.push('🌸 MEMBRO');
-      
-      // Define rank baseado no nível
-      let rank = '🥉 Iniciante';
-      if (perfilStats.nivel >= 40) rank = '👑 Lendário';
-      else if (perfilStats.nivel >= 30) rank = '💎 Diamante';
-      else if (perfilStats.nivel >= 20) rank = '🥇 Ouro';
-      else if (perfilStats.nivel >= 10) rank = '🥈 Prata';
-      
-      // Calcula barra de progresso
-      const progressBar = '█'.repeat(Math.floor(perfilStats.nivel / 5)) + '░'.repeat(10 - Math.floor(perfilStats.nivel / 5));
-      
-      let perfilMessage = `🌸 ════════════════════════ 🌸\n`;
-      perfilMessage += `      💖 *PERFIL DO USUÁRIO* 💖\n`;
-      perfilMessage += `🌸 ════════════════════════ 🌸\n\n`;
-      
-      perfilMessage += `👤 *Informações Pessoais:* ✨\n`;
-      perfilMessage += `├ 🌸 Nome: ${perfilPushname}\n`;
-      perfilMessage += `├ 📱 Número: +${perfilUserNumber}\n`;
-      perfilMessage += `├ 📅 Primeiro contato: ${perfilStats.primeiroContato}\n`;
-      perfilMessage += `├ ⏰ Último uso: ${perfilStats.ultimoUso}\n`;
-      perfilMessage += `└ 🌍 Status: ${perfilIsOwner ? 'Dono' : perfilIsPremium ? 'Premium' : 'Membro'}\n\n`;
-      
-      perfilMessage += `🏅 *Badges e Conquistas:* 🎖️\n`;
-      badges.forEach((badge, index) => {
-        perfilMessage += `${index === badges.length - 1 ? '└' : '├'} ${badge}\n`;
-      });
-      perfilMessage += `\n`;
-      
-      perfilMessage += `📊 *Estatísticas de Atividade:* 📈\n`;
-      perfilMessage += `├ 🎯 Comandos usados: ${perfilStats.comandosUsados}\n`;
-      perfilMessage += `├ 📅 Dias ativo: ${perfilStats.diasAtivo}\n`;
-      perfilMessage += `├ ⭐ Nível atual: ${perfilStats.nivel}/50\n`;
-      perfilMessage += `└ 🏆 Rank: ${rank}\n\n`;
-      
-      perfilMessage += `📈 *Progresso de Nível:* 🎮\n`;
-      perfilMessage += `├ Barra: [${progressBar}] ${perfilStats.nivel * 2}%\n`;
-      perfilMessage += `├ 🎯 Próximo nível: ${perfilStats.nivel + 1}\n`;
-      perfilMessage += `└ 💪 XP necessário: ${(51 - perfilStats.nivel) * 10}\n\n`;
-      
-      const card = await new Banner.ProfileCard().setUsername(pushname).setAvatar(profilePic).setBio(bio).setStatus("online").setAvatarBorderColor("#FFFFFF").setOverlayOpacity(0.4).setCustomField("Cargo", userStatus).build();
-    
-    await nazu.sendMessage(from, { image: card, caption: perfilMessage, mentions: [target] }, { quoted: info });
-      break;
-
-    case 'perfil':
   try {
     const target = menc_os2 || sender;
 
@@ -5910,7 +5133,7 @@ case 'listadv':
     try {
       profilePic = await nazu.profilePictureUrl(target, 'image');
     } catch (error) {
-      console.warn(`💥 *Oops! Não consegui* 😔\n\n🌸 *Houve uma falha ao obter foto do perfil de ${targetName}:`, error.message);
+      console.warn(`Falha ao obter foto do perfil de ${targetName}:`, error.message);
     }
 
     let bio = 'Sem bio disponível';
@@ -5926,7 +5149,7 @@ case 'listadv':
         });
       };
     } catch (error) {
-      console.warn(`💥 *Oops! Não consegui* 😔\n\n🌸 *Houve uma falha ao obter status/bio de ${targetName}:`, error.message);
+      console.warn(`Falha ao obter status/bio de ${targetName}:`, error.message);
     };
 
     const perfilText = `📋 Perfil de ${targetName} 📋\n\n👤 *Nome*: ${pushname || 'Desconhecido'}\n📱 *Número*: ${targetId}\n📜 *Bio*: ${bio}${bioSetAt ? `\n🕒 *Bio atualizada em*: ${bioSetAt}` : ''}\n💰 *Valor do Pacote*: ${pacoteValue} 🫦\n😸 *Humor*: ${randomHumor}\n\n🎭 *Níveis*:\n  • Puta: ${levels.puta}%\n  • Gado: ${levels.gado}%\n  • Corno: ${levels.corno}%\n  • Sortudo: ${levels.sortudo}%\n  • Carisma: ${levels.carisma}%\n  • Rico: ${levels.rico}%\n  • Gostosa: ${levels.gostosa}%\n  • Feio: ${levels.feio}%`.trim();
@@ -5937,7 +5160,7 @@ case 'listadv':
     
     await nazu.sendMessage(from, { image: card, caption: perfilText, mentions: [target] }, { quoted: info });
   } catch (error) {
-    console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao processar comando perfil:', error);
+    console.error('Erro ao processar comando perfil:', error);
     await reply('Ocorreu um erro ao gerar o perfil 💔');
   }
   break;
@@ -6565,11 +5788,11 @@ ${weatherEmoji} *${weatherDescription}*`;
       reply('🚀 Iniciando atualização completa do bot... O processo ocorrerá no console.');
       exec(`node ${__dirname}/.scripts/update.js`, (error, stdout, stderr) => {
         if (error) {
-          console.error(`💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao executar update.js: ${error}`);
-          reply(`❌ 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao iniciar a atualização completa: ${error.message}`);
+          console.error(`Erro ao executar update.js: ${error}`);
+          reply(`❌ Erro ao iniciar a atualização completa: ${error.message}`);
           return;
         }
-        // 🌸 Log otimizado removido para melhor performance da Nazuna
+        console.log(`Saída update.js: ${stdout}`);
         if (stderr) {
           console.error(`Erro stderr update.js: ${stderr}`);
         }
@@ -6582,11 +5805,11 @@ ${weatherEmoji} *${weatherDescription}*`;
       reply('🧠 Iniciando atualização inteligente dos módulos (Pro)... O processo ocorrerá no console.');
       exec(`node ${__dirname}/.scripts/update-pro.js`, (error, stdout, stderr) => {
         if (error) {
-          console.error(`💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao executar update-pro.js: ${error}`);
-          reply(`❌ 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao iniciar a atualização dos módulos: ${error.message}`);
+          console.error(`Erro ao executar update-pro.js: ${error}`);
+          reply(`❌ Erro ao iniciar a atualização dos módulos: ${error.message}`);
           return;
         }
-        // 🌸 Log otimizado removido para melhor performance da Nazuna
+        console.log(`Saída update-pro.js: ${stdout}`);
         if (stderr) {
           console.error(`Erro stderr update-pro.js: ${stderr}`);
         }
@@ -6611,7 +5834,7 @@ ${weatherEmoji} *${weatherDescription}*`;
       console.error('Grupo:', isGroup ? groupName : 'Mensagem privada');
       console.error('Remetente:', sender);
     } catch (logError) {
-      console.error('💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao registrar informações adicionais:', logError);
+      console.error('Erro ao registrar informações adicionais:', logError);
     }
   };
 };
@@ -6640,7 +5863,7 @@ function getDiskSpaceInfo() {
       if (freeLine) freeBytes = parseFloat(freeLine.split(':')[1].trim().replace(/\./g, ''));
       if (totalLine) totalBytes = parseFloat(totalLine.split(':')[1].trim().replace(/\./g, ''));
       } catch (winError) {
-        console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao obter espaço em disco no Windows:", winError);
+        console.error("Erro ao obter espaço em disco no Windows:", winError);
         return defaultResult;
       }
     } 
@@ -6659,7 +5882,7 @@ function getDiskSpaceInfo() {
           freeBytes = parseInt(parts[3]) * 1024;  // Disponível
         }
       } catch (unixError) {
-        console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao obter espaço em disco no Linux/macOS:", unixError);
+        console.error("Erro ao obter espaço em disco no Linux/macOS:", unixError);
         return defaultResult;
       }
     } 
@@ -6683,7 +5906,7 @@ function getDiskSpaceInfo() {
       return defaultResult;
     }
     } catch (error) {
-    console.error("💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao obter informações de disco:", error);
+    console.error("Erro ao obter informações de disco:", error);
     return { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A', percentUsed: 'N/A' };
   }
 }
@@ -6693,11 +5916,11 @@ const file = require.resolve(__filename);
 fs.watchFile(file, () => {
   try {
     fs.unwatchFile(file);
-    // 🌸 Log otimizado removido para melhor performance da Nazuna
+    console.log(`✅ Alterações detectadas em '${pathz.basename(__filename)}', recarregando...`);
     delete require.cache[file];
     require(file);
   } catch (error) {
-    console.error(`❌ 💥 *Ops! Algo deu errado!* 😅\n\n🌸 *Tivemos um probleminha ao recarregar '${pathz.basename(__filename)}':`, error);
+    console.error(`❌ Erro ao recarregar '${pathz.basename(__filename)}':`, error);
   }
 });
 
