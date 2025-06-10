@@ -4351,9 +4351,9 @@ break;
         }
       }
       
-      let statusGpMessage = `🌸 ═══════════════════════════════ 🌸\n`;
-      statusGpMessage += `          💖 *STATUS DO GRUPO* 💖\n`;
-      statusGpMessage += `🌸 ═══════════════════════════════ 🌸\n\n`;
+      let statusGpMessage = `🌸 ══════════════════════ 🌸\n`;
+      statusGpMessage += `     💖 *STATUS DO GRUPO* 💖\n`;
+      statusGpMessage += `🌸 ══════════════════════ 🌸\n\n`;
       
       statusGpMessage += `👥 *Informações Básicas:* ✨\n`;
       statusGpMessage += `├ 🏷️ Nome: ${groupName}\n`;
@@ -4391,14 +4391,7 @@ break;
       
       statusGpMessage += `🌸 *Relacionamento com Nazuna:* 💕\n`;
       statusGpMessage += `├ 💖 Amizade: ${gpStats.comandosUsados > 100 ? 'Melhor amigo!' : gpStats.comandosUsados > 50 ? 'Amigo querido' : 'Novo amigo'}\n`;
-      statusGpMessage += `├ 🎵 Diversão: ${gpStats.mensagensHoje > 100 ? 'Máxima' : 'Boa'}\n`;
-      statusGpMessage += `├ 🛡️ Proteção: ${recursos.length > 2 ? 'Alta' : 'Padrão'}\n`;
-      statusGpMessage += `└ 🌟 Satisfação: ${Math.floor(Math.random() * 20) + 80}%\n\n`;
-      
-      statusGpMessage += `🌸 ═══════════════════════════════ 🌸\n`;
-      statusGpMessage += `      ✨ *Grupo analisado com carinho!* ✨\n`;
-      statusGpMessage += `         💕 *Continuem se divertindo!* 💕\n`;
-      statusGpMessage += `🌸 ═══════════════════════════════ 🌸`;
+      statusGpMessage += `└ 🎵 Diversão: ${gpStats.mensagensHoje > 100 ? 'Máxima' : 'Boa'}\n`;
       
       await reply(statusGpMessage);
       break;
