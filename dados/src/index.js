@@ -3490,10 +3490,10 @@ case 'infoserver':
   } catch (error) {
     console.error('Erro ao obter informações de disco:', error);
   }
-  const diskFree = diskInfo.freeGb.toFixed(2);
-  const diskTotal = diskInfo.totalGb.toFixed(2);
-  const diskUsed = diskInfo.usedGb.toFixed(2);
-  const diskUsagePercent = diskInfo.percentUsed.toFixed(1);
+  const diskFree = diskInfo.freeGb;
+  const diskTotal = diskInfo.totalGb;
+  const diskUsed = diskInfo.usedGb;
+  const diskUsagePercent = diskInfo.percentUsed;
 
   // Item 3: Monitoramento em Tempo Real - Taxa de Uso da CPU
   const startUsage = process.cpuUsage();
