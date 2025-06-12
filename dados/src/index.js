@@ -1414,6 +1414,8 @@ if (budy2 === "ta baxano" && !isGroup) {
         console.warn("Falha ao reagir no início do comando:", reactError);
       }
   }
+ 
+  if(budy2.match(/^(\d+)d(\d+)$/))reply(+budy2.match(/^(\d+)d(\d+)$/)[1]>50||+budy2.match(/^(\d+)d(\d+)$/)[2]>100?"❌ Limite: max 50 dados e 100 lados":"🎲 Rolando "+budy2.match(/^(\d+)d(\d+)$/)[1]+"d"+budy2.match(/^(\d+)d(\d+)$/)[2]+"... 🎯 Resultados: "+(r=[...Array(+budy2.match(/^(\d+)d(\d+)$/)[1])].map(_=>1+Math.floor(Math.random()*+budy2.match(/^(\d+)d(\d+)$/)[2]))).join(", ")+" | 📊 Total: "+r.reduce((a,b)=>a+b,0));
 
  switch(command) {//ALTERADORES
   case 'speedup':
