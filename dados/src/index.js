@@ -3526,9 +3526,9 @@ case 'infoserver':
   }
 
   // Início da mensagem
-  let infoServerMessage = `🌸 ═════════════════════════ 🌸\n`;
-  infoServerMessage += `    💻 *INFORMAÇÕES DO SERVIDOR* 💻\n`;
-  infoServerMessage += `🌸 ═════════════════════════ 🌸\n\n`;
+  let infoServerMessage = `🌸 ═════════════════════ 🌸\n`;
+  infoServerMessage += `    *INFORMAÇÕES DO SERVIDOR*\n`;
+  infoServerMessage += `🌸 ═════════════════════ 🌸\n\n`;
 
   // Sistema Operacional
   infoServerMessage += `🖥️ *Sistema Operacional:* 🏠\n`;
