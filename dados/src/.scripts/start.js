@@ -14,6 +14,7 @@ const QR_CODE_DIR = path.join(process.cwd(), 'dados', 'database', 'qr-code');
 const CONNECT_FILE = path.join(process.cwd(), 'dados', 'src', 'connect.js');
 const RESTART_DELAY = 50; // milliseconds
 const isWindows = os.platform() === 'win32';
+const dualMode = process.argv.includes('dual');
 
 // Get version from package.json
 let version = 'Desconhecida';
@@ -152,9 +153,10 @@ function startBot(codeMode = false) {
   // Prepare arguments
   const args = ['--expose-gc', CONNECT_FILE];
   if (codeMode) args.push('--code');
+  if (dualMode) args.push('--dual');
   
   // Spawn the bot process
-  info(`🚀 Iniciando o bot ${codeMode ? 'com código' : 'com QR Code'}...`);
+  info(`🚀 Iniciando o bot ${codeMode ? 'com código' : 'com QR Code'}${dualMode ? ' (modo dual)' : ''}...`);
   
   botProcess = spawn('node', args, {
     stdio: 'inherit',
