@@ -4537,6 +4537,22 @@ break;
      };
    };
    break;
+ 
+   case 'limpar':
+  try {
+    // Gera 500 linhas em branco e adiciona a mensagem final
+    if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
+    if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
+    const linhasEmBranco = Array(500).fill('‎ ').join('\n');
+    const mensagem = `${linhasEmBranco}\n🧹 Limpeza concluída!`;
+    await reply(mensagem);
+    nazu.react('✅');
+  } catch (e) {
+    console.error(e);
+    await reply("Ocorreu um erro ao limpar o chat 💔");
+  }
+  break;
 
 case 'removerfotobv': case 'rmfotobv': case 'delfotobv':
   try {
