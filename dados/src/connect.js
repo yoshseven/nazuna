@@ -51,9 +51,9 @@ async function createBotSocket(authDir, isPrimary = true) {
     generateHighQualityLinkPreview: false,
     shouldSyncHistoryMessage: () => true,
     connectTimeoutMs: 180000,
-    keepAliveIntervalMs: 12000,
-    retryRequestDelayMs: 500,
-    defaultQueryTimeoutMs: undefined,
+    keepAliveIntervalMs: 6000,
+    retryRequestDelayMs: 2000,
+    defaultQueryTimeoutMs: 180000,
     msgRetryCounterCache,
     countryCode: 'BR',
     auth: state,
@@ -250,7 +250,7 @@ async function createBotSocket(authDir, isPrimary = true) {
           }
         }
 
-        await socket.end().catch(() => null);
+        await socket.end();
         console.log('🔄 Tentando reconectar conexão primária...');
         startNazu();
       }
