@@ -53,6 +53,8 @@ async function menuadm(prefix, botName = "MeuBot", userName = "Usuário", isLite
 ││
 ││◕⁠➜ ${prefix}del / ${prefix}d
 ││    ↳ Deletar mensagens
+││◕⁠➜ ${prefix}limpar
+││    ↳ Limpar o chat visualmente
 ││◕⁠➜ ${prefix}hidetag
 ││    ↳ Marcar todos escondido
 ││◕⁠➜ ${prefix}marcar
