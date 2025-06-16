@@ -1240,7 +1240,7 @@ if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
    // Informações do grupo ou usuário
    if (isGroup) {
      console.log(`👥 Grupo: "${groupName || 'Desconhecido'}"`);
-     console.log(`👤 Usuário: "${pushname || sender.split('@')[0]}"`);
+     console.log(`👤 Usuário: "${pushname || 'Sem Nome'}"`);
    } else {
      console.log(`👤 Usuário: "${pushname || 'Sem nome'}"`);
      console.log(`📲 Número: "${sender.split('@')[0]}"`);
