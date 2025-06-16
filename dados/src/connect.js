@@ -33,7 +33,7 @@ const ask = (question) => {
   return new Promise((resolve) => rl.question(question, (answer) => { rl.close(); resolve(answer.trim()); }));
 };
 
-const groupCache = new NodeCache({ stdTTL: 120, useClones: false, maxKeys: 100 });
+const groupCache = new NodeCache({stdTTL: 5 * 60, useClones: false})
 
 // Variável global para armazenar a conexão secundária
 let secondarySocket = null;

@@ -494,6 +494,8 @@ const getMessageText = (message) => {
  const q = args.join(' ');
  const budy2 = normalizar(body);
  
+ if(!budy2 || budy2.length < 1) return;
+ 
  const menc_prt = info.message?.extendedTextMessage?.contextInfo?.participant;
  const menc_jid = args.join(" ").replace("@", "") + "@s.whatsapp.net";
  const menc_jid2 = info.message?.extendedTextMessage?.contextInfo?.mentionedJid;
