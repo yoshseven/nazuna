@@ -301,10 +301,8 @@ function setupDualSending(primarySocket, secondarySocket) {
   let useSecondary = false;
   const originalSendMessage = primarySocket.sendMessage.bind(primarySocket);
   const secondarySendMessage = secondarySocket.sendMessage.bind(secondarySocket);
-
   primarySocket.sendMessage = async (jid, content, options) => {
-    useSecondary = !useSecondary; // Alternar entre true/false
-    
+    useSecondary = !useSecondary;
     try {
       if (useSecondary && secondarySocket && secondarySocket.user) {
         return await secondarySendMessage(jid, content, options);
