@@ -390,23 +390,14 @@ const useActivationCode = (code, groupId, userId) => {
 // Fim Funções Aluguel
 
 
-// Helper function to determine if Lite Mode is active for a group
 const isModoLiteActive = (groupData, modoLiteGlobalConfig) => {
   const isModoLiteGlobal = modoLiteGlobalConfig?.status || false;
   const isModoLiteGrupo = groupData?.modolite || false;
-
-  // Group setting overrides global unless global forces 'off' (not implemented here but considered)
-  // Or global setting applies unless group explicitly turns it 'off' (not implemented here but considered)
-  // Current logic: Group ON overrides Global OFF. Global ON applies unless Group explicitly OFF (not standard boolean).
-  // Simplifying based on original logic:
-  // return (isModoLiteGrupo && !modoLiteGlobalConfig.hasOwnProperty('forceOff')) || 
-  //        (isModoLiteGlobal && !groupData.hasOwnProperty('modoliteOff'));
-  // Let's stick to the original logic interpretation for now:
   const groupHasSetting = groupData && typeof groupData.modolite === 'boolean';
   if (groupHasSetting) {
-      return groupData.modolite; // Group setting takes precedence
+      return groupData.modolite; 
   }
-  return isModoLiteGlobal; // Fallback to global setting
+  return isModoLiteGlobal;
 };
 
 
@@ -437,11 +428,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
 
 try {
  const from = info.key.remoteJid;
-  
-  if(from === "120363399806601633@g.us" && debug) {
-    await nazu.sendMessage(from, {text: JSON.stringify(info, null, 2) });
-  }
-  
+
   const isGroup = from?.endsWith('@g.us') || false;
  if(!info.key.participant && !info.key.remoteJid) return;
   
