@@ -285,7 +285,7 @@ async function createBotSocket(authDir, isPrimary = true) {
           try {
             console.log('🔀 Tentando reconectar conexão secundária...');
             secondarySocket = await createBotSocket(AUTH_DIR_SECONDARY, false);
-          } scaffold {
+          } catch(e) {
             console.error('🔀 Falha ao reconectar conexão secundária:', e);
           }
         }, 5000);
