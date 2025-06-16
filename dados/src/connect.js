@@ -19,7 +19,7 @@ const logger = pino({ level: 'silent' });
 const AUTH_DIR_PRIMARY = path.join(__dirname, '..', 'database', 'qr-code');
 const AUTH_DIR_SECONDARY = path.join(__dirname, '..', 'database', 'qr-code-secondary');
 const DATABASE_DIR = path.join(__dirname, '..', 'database', 'grupos');
-const msgRetryCounterCache = new NodeCache({ stdTTL: 120, useClones: false }); 
+const msgRetryCounterCache = new NodeCache({ stdTTL: 120, useClones: false });
 const { prefixo, nomebot, nomedono, numerodono } = require('./config.json');
 
 const indexModule = require(path.join(__dirname, 'index.js'));
@@ -33,10 +33,11 @@ const ask = (question) => {
   return new Promise((resolve) => rl.question(question, (answer) => { rl.close(); resolve(answer.trim()); }));
 };
 
-const groupCache = new NodeCache({stdTTL: 5 * 60, useClones: false})
+const groupCache = new NodeCache({ stdTTL: 5 * 60, useClones: false });
 
 // Variável global para armazenar a conexão secundária
 let secondarySocket = null;
+let useSecondary = false; 
 
 // Função para criar um socket WhatsApp
 async function createBotSocket(authDir, isPrimary = true) {
@@ -81,7 +82,7 @@ async function createBotSocket(authDir, isPrimary = true) {
     console.log('📲 No WhatsApp, vá em "Aparelhos Conectados" -> "Conectar com Número de Telefone" e insira o código.\n');
   }
 
-  // Apenas a conexão primária recebe todos os eventos
+  // Apenas a conexão primária recebe eventos de grupos
   if (isPrimary) {
     socket.ev.on('groups.update', async ([ev]) => {
       const meta = await socket.groupMetadata(ev.id).catch(() => null);
@@ -211,7 +212,9 @@ async function createBotSocket(authDir, isPrimary = true) {
         if (typeof indexModule === 'function') {
           for (const info of m.messages) {
             if (!info.message || !info.key.remoteJid) continue;
-            await indexModule(socket, info, null, groupCache);
+            const activeSocket = dualMode && useSecondary && secondarySocket?.user ? secondarySocket : socket;
+            useSecondary = !useSecondary;
+            await indexModule(activeSocket, info, null, groupCache);
           }
         } else {
           console.error('O módulo index.js não exporta uma função válida.');
@@ -264,30 +267,30 @@ async function createBotSocket(authDir, isPrimary = true) {
     // Para conexão secundária, apenas gerenciar reconexão
     socket.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect } = update;
-      
+
       if (connection === 'open') {
         console.log('🔀 Conexão secundária estabelecida com sucesso!');
       }
-      
+
       if (connection === 'close') {
         const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
         console.log(`🔀 Conexão secundária fechada, motivo: ${reason}`);
-        
+
         if ([DisconnectReason.loggedOut, 401].includes(reason)) {
           await fs.rm(AUTH_DIR_SECONDARY, { recursive: true, force: true });
         }
-        
+
         // Tentar reconectar após 5 segundos
         setTimeout(async () => {
           try {
             console.log('🔀 Tentando reconectar conexão secundária...');
             secondarySocket = await createBotSocket(AUTH_DIR_SECONDARY, false);
-          } catch (e) {
+          } scaffold {
             console.error('🔀 Falha ao reconectar conexão secundária:', e);
           }
         }, 5000);
       }
-      
+
       if (connection === 'connecting') {
         console.log('🔀 Conectando sessão secundária...');
       }
@@ -297,30 +300,10 @@ async function createBotSocket(authDir, isPrimary = true) {
   return socket;
 }
 
-// Função para implementar round-robin no envio de mensagens
-function setupDualSending(primarySocket, secondarySocket) {
-  let useSecondary = false;
-  const originalSendMessage = primarySocket.sendMessage.bind(primarySocket);
-  const secondarySendMessage = secondarySocket.sendMessage.bind(secondarySocket);
-  primarySocket.sendMessage = async (jid, content, options) => {
-    useSecondary = !useSecondary;
-    try {
-      if (useSecondary && secondarySocket && secondarySocket.user) {
-        return await secondarySendMessage(jid, content, options);
-      } else {
-        return await originalSendMessage(jid, content, options);
-      }
-    } catch (err) {
-      console.error('🔀 Falha no envio via conexão secundária, usando primária:', err.message);
-      return await originalSendMessage(jid, content, options);
-    }
-  };
-}
-
 async function startNazu() {
   try {
     console.log(`🚀 Iniciando Nazuna ${dualMode ? '(Modo Dual)' : '(Modo Simples)'}...`);
-    
+
     // Sempre criar conexão primária
     const primarySocket = await createBotSocket(AUTH_DIR_PRIMARY, true);
 
@@ -328,7 +311,7 @@ async function startNazu() {
       console.log('🔀 Modo Dual ativado - Iniciando conexão secundária...');
       try {
         secondarySocket = await createBotSocket(AUTH_DIR_SECONDARY, false);
-        
+
         // Aguardar ambas as conexões estarem prontas
         const waitForConnection = (socket) => {
           return new Promise((resolve) => {
@@ -347,10 +330,7 @@ async function startNazu() {
           waitForConnection(secondarySocket)
         ]);
 
-        // Configurar sistema de envio dual
-        setupDualSending(primarySocket, secondarySocket);
-        console.log('🔀 Sistema dual configurado - Mensagens serão alternadas entre as conexões!');
-        
+        console.log('🔀 Ambas as conexões estabelecidas - Modo dual pronto!');
       } catch (err) {
         console.error('🔀 Erro ao iniciar conexão secundária:', err);
         console.log('🔀 Continuando apenas com conexão primária...');
