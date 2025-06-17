@@ -3591,36 +3591,76 @@ case 'infoserver':
   break;
       
   case 'statusbot':
+case 'infobot':
+case 'botinfo':
   try {
-    const uptime = process.uptime();
-    const uptimeStr = `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`;
-    const groups = await nazu.groupFetchAllParticipating();
-    const totalGroups = Object.keys(groups).length;
-    let totalMessages = 0;
+    const botUptime = formatUptime(process.uptime(), true);
+    const botMemUsage = process.memoryUsage();
+    const memUsed = (botMemUsage.heapUsed / 1024 / 1024).toFixed(2);
+    const memTotal = (botMemUsage.heapTotal / 1024 / 1024).toFixed(2);
+
+    const allGroups = await nazu.groupFetchAllParticipating();
+    const totalGroups = Object.keys(allGroups).length;
+    let totalUsers = 0;
+    Object.values(allGroups).forEach(group => {
+      totalUsers += group.participants.length;
+    });
+
+    const botStatus = botState.status === 'on' ? '✅ Online' : '❌ Offline';
+    const rentalMode = isRentalModeActive() ? '✅ Ativo' : '❌ Desativo';
+    const nodeVersion = process.version;
+    const platform = os.platform();
+
     let totalCommands = 0;
-    let totalStickers = 0;
-    const groupFiles = fs.readdirSync(__dirname + '/../database/grupos').filter(file => file.endsWith('.json'));
-    for (const file of groupFiles) {
-      try {
-        const groupData = JSON.parse(fs.readFileSync(__dirname + `/../database/grupos/${file}`));
-        if (groupData.contador && Array.isArray(groupData.contador)) {
-          groupData.contador.forEach(user => {
-            totalMessages += (user.msg || 0);
-            totalCommands += (user.cmd || 0);
-            totalStickers += (user.figu || 0);
-          });
-        };
-      } catch (e) {
-        console.error(`Erro ao ler ${file}:`, e);
-      };
-    };
-    const memoryUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2);
-    const { version } = JSON.parse(fs.readFileSync(__dirname + '/../../package.json'));
-    const statusMessage = `📡 *Status do ${nomebot}* 📡\n\n⏳ *Tempo Online*: ${uptimeStr}\n👥 *Grupos*: ${totalGroups}\n💬 *Mensagens Totais*: ${totalMessages}\n⚒️ *Comandos Executados*: ${totalCommands}\n🎨 *Figurinhas Enviadas*: ${totalStickers}\n🧠 *Ram Usada*: ${memoryUsage} MB\n📌 *Versão*: ${version}\n\n✨ *Criado por*: ${nomedono} ✨
-    `;
-    await nazu.sendMessage(from, { text: statusMessage }, { quoted: info });
+    try {
+      const indexContent = fs.readFileSync(__dirname + '/index.js', 'utf-8');
+      const comandos = [...indexContent.matchAll(/case [`'"](\w+)[`'"]/g)].map(m => m[1]);
+      totalCommands = comandos.length;
+    } catch (e) {
+      totalCommands = 'N/A';
+    }
+    
+    const premiumUsers = Object.keys(premiumListaZinha).filter(key => key.includes('@s.whatsapp.net')).length;
+    const premiumGroups = Object.keys(premiumListaZinha).filter(key => key.includes('@g.us')).length;
+    const blockedUsers = Object.keys(globalBlocks.users || {}).length;
+    const blockedCommands = Object.keys(globalBlocks.commands || {}).length;
+    
+    const currentTime = new Date().toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo'
+    });
+
+    const lines = [
+      "╭───🤖 STATUS DO BOT ───╮",
+      `│ 🏷️ Nome: ${nomebot}`,
+      `│ 👨‍💻 Dono: ${nomedono}`,
+      `│ 🆚 Versão: ${botVersion}`,
+      `│ 🟢 Status: ${botStatus}`,
+      `│ ⏰ Online há: ${botUptime}`,
+      `│ 🖥️ Plataforma: ${platform}`,
+      `│ 🟢 Node.js: ${nodeVersion}`,
+      "│",
+      "│ 📊 *Estatísticas:*",
+      `│ • 👥 Grupos: ${totalGroups}`,
+      `│ • 👤 Usuários: ${totalUsers}`,
+      `│ • ⚒️ Comandos: ${totalCommands}`,
+      `│ • 💎 Users Premium: ${premiumUsers}`,
+      `│ • 💎 Grupos Premium: ${premiumGroups}`,
+      "│",
+      "│ 🛡️ *Segurança:*",
+      `│ • 🚫 Users Bloqueados: ${blockedUsers}`,
+      `│ • 🚫 Cmds Bloqueados: ${blockedCommands}`,
+      `│ • 🏠 Modo Aluguel: ${rentalMode}`,
+      "│",
+      "│ 💾 *Sistema:*",
+      `│ • 🧠 RAM Usada: ${memUsed}MB`,
+      `│ • 📦 RAM Total: ${memTotal}MB`,
+      `│ • 🕐 Hora Atual: ${currentTime}`,
+      "╰─────────────────────╯"
+    ].join("\n");
+    
+    await reply(lines);
   } catch (e) {
-    console.error(e);
+    console.error("Erro em statusbot:", e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
@@ -3688,47 +3728,85 @@ case 'infoserver':
   }
   break;
   
-  case 'statusgp': case 'dadosgp': try {
-    if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    const groupInfo = await nazu.groupMetadata(from);
-    const totalMembers = groupInfo.participants.length;
-    const totalAdmins = groupAdmins.length;
-    const groupCreated = groupInfo.creation ? new Date(groupInfo.creation * 1000).toLocaleDateString('pt-BR') : 'Desconhecida';
-    let totalMessages = 0;
-    let totalCommands = 0;
-    let totalStickers = 0;
-    if (groupData.contador && Array.isArray(groupData.contador)) {
-      groupData.contador.forEach(user => {
-        totalMessages += (user.msg || 0);
-        totalCommands += (user.cmd || 0);
-        totalStickers += (user.figu || 0);
-      });
-    };
-    const settings = [
-      `🔞 Antiporn: ${isAntiPorn ? 'Ativado' : 'Desativado'}`,
-      `🔗 Antilink: ${isAntiLinkGp ? 'Ativado' : 'Desativado'}`,
-      `🎲 Modo Brincadeira: ${isModoBn ? 'Ativado' : 'Desativado'}`,
-      `👑 Apenas Admins: ${isOnlyAdmin ? 'Ativado' : 'Desativado'}`
-    ].join('\n');
-    const statsMessage = `\n📊 *Estatísticas do Grupo: ${groupName}* 📊\n\n👥 *Total de Membros*: ${totalMembers}\n👑 *Administradores*: ${totalAdmins}\n📅 *Criado em*: ${groupCreated}\n💬 *Mensagens Totais*: ${totalMessages}\n⚒️ *Comandos Usados*: ${totalCommands}\n🎨 *Figurinhas Enviadas*: ${totalStickers}\n\n⚙️ *Configurações*:\n${settings}\n\n✨ *Bot*: ${nomebot} by ${nomedono} ✨`;
-    await nazu.sendMessage(from, { text: statsMessage }, { quoted: info });
-  } catch (e) {
-    console.error(e);
-    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  }
-break;
+  case 'statusgp':
+  case 'dadosgp':
+    try {
+      if (!isGroup) 
+        return reply("❌ Este comando só funciona em grupos!");
 
-case 'dono':
-  try {
-    let donoInfo = `👑 *Informações do Dono & Bot* 👑\n\n`;
-    donoInfo += `🤖 *Nome do Bot*: ${nomebot}\n`;
-    donoInfo += `👤 *Dono*: ${nomedono}\n`;
-    donoInfo += `📱 *Número do Dono*: wa.me/${numerodono.replace(/\D/g, '')}\n`;
-    donoInfo += `👨‍💻 *Criador*: Hiudy\n`;
-    donoInfo += `📡 *Prefixo*: ${prefix}\n`;
-    await reply(donoInfo);
-  } catch (e) {
-    console.error(e);
+      const meta = await nazu.groupMetadata(from);
+      const subject   = meta.subject || "—";
+      const desc      = meta.desc?.toString() || "Sem descrição";
+      const createdAt = meta.creation
+        ? new Date(meta.creation * 1000).toLocaleString('pt-BR')
+        : "Desconhecida";
+
+      const ownerJid =
+        meta.owner ||
+        meta.participants.find(p => p.admin && p.isCreator)?.id ||
+        "unknown@s.whatsapp.net";
+      const ownerTag = `@${ownerJid.split('@')[0]}`;
+
+      const totalMembers = meta.participants.length;
+      const totalAdmins  = groupAdmins.length;
+
+      let totalMsgs = 0, totalCmds = 0, totalFigs = 0;
+      (groupData.contador || []).forEach(u => {
+        totalMsgs += u.msg   || 0;
+        totalCmds += u.cmd   || 0;
+        totalFigs += u.figu  || 0;
+      });
+
+      const rentGlob   = isRentalModeActive();
+      const rentInfo   = getGroupRentalStatus(from);
+      const rentStatus = rentGlob
+        ? (rentInfo.active
+           ? `✅ Ativo até ${rentInfo.permanent 
+               ? 'Permanente' 
+               : new Date(rentInfo.expiresAt).toLocaleDateString('pt-BR')}`
+           : "❌ Expirado")
+        : "❌ Desativado";
+      const isPremGp = !!premiumListaZinha[from] ? "✅" : "❌";
+
+      const toggles = [
+        ["Antiporn",       isAntiPorn],
+        ["AntiLink",       isAntiLinkGp],
+        ["AntiLinkHard",   groupData.antilinkhard],
+        ["AntiDoc",        groupData.antidoc],
+        ["AntiLoc",        groupData.antiloc],
+        ["AutoDL",         groupData.autodl],
+        ["AutoSticker",    groupData.autoSticker],
+        ["Modo Brincadeira", isModoBn],
+        ["Só Admins",      groupData.soadm],
+        ["Modo Lite",      isModoLite]
+      ].filter(([_,v]) => typeof v === 'boolean').map(([k,v]) => `│ ${v ? '✅':'❌'} ${k}`).join('\n');
+      
+      const lines = [
+        "╭───📊 STATUS DO GRUPO ───╮",
+        `│ 📝 Nome: ${subject}`,
+        `│ 🆔 ID: ${from.split('@')[0]}`,
+        `│ 👑 Dono: ${ownerTag}`,
+        `│ 📅 Criado: ${createdAt}`,
+        `│ 📄 Desc: ${desc.slice(0,35)}${desc.length>35?'...':''}`,
+        `│ 👥 Membros: ${totalMembers}`,
+        `│ 👮 Admins: ${totalAdmins}`,
+        `│ 💎 Premium: ${isPremGp}`,
+        `│ 🏠 Aluguel: ${rentStatus}`,
+        "│",
+        "│ 📊 *Estatísticas:*",
+        `│ • 💬 Mensagens: ${totalMsgs}`,
+        `│ • ⚒️ Comandos: ${totalCmds}`,
+        `│ • 🎨 Figurinhas: ${totalFigs}`,
+        "│",
+        "│ ⚙️ *Configurações:*",
+        toggles,
+        "╰────────────────────────╯"
+      ].join("\n");
+
+      // envia com menção ao dono
+      await reply(lines, { mentions: [ ownerJid ] });
+    } catch (e) {
+      console.error("Erro em statusgp:", e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
