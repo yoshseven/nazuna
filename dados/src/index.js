@@ -5193,7 +5193,7 @@ case 'listadv':
   
   case 'perfil':
   try {
-    const target = menc_os2 || sender;
+    const target = sender;
 
     const targetId = target.split('@')[0];
     const targetName = `@${targetId}`;
