@@ -1436,6 +1436,7 @@ if (budy2 === "ta baxano" && !isGroup) {
             if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para rebaixar admins 🙄');
             await reply(respAssist.mensagem_aguarde);
             await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'demote');
+          };
         } else if(respAssist.acao === 'ABRIR_GRUPO') {
           if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para abrir ou fechar o grupo 🙄');
           await reply(respAssist.mensagem_aguarde);
