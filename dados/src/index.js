@@ -1451,7 +1451,7 @@ if (budy2 === "ta baxano" && !isGroup) {
             videoInfo = await youtube.search(respAssist.dados.musica);
             const caption = `📌 *Título:* ${videoInfo.data.title}\n👤 *Artista/Canal:* ${videoInfo.data.author.name}\n⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)\n\n🎧 *Baixando e processando sua música, aguarde...*`;
             await reply(caption);
-            const dlRes = await youtube.mp3(videoUrl);
+            const dlRes = await youtube.mp3(videoInfo.url);
             if (!dlRes.ok) {
               return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
             };
