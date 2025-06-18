@@ -1433,6 +1433,13 @@ if (budy2 === "ta baxano" && !isGroup) {
             await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'promote');
             await reply(respAssist.mensagem_sucesso);
           };
+        } else if(respAssist.acao === 'REBAIXAR_USUARIO') {
+          if(respAssist.dados && respAssist.dados.usuario_id) {
+            if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para rebaixar admins 🙄');
+            await reply(respAssist.mensagem_aguarde);
+            await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'demote');
+            await reply(respAssist.mensagem_sucesso);
+          };
         };
       };
     };
