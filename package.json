@@ -19,7 +19,7 @@
   "author": "Hiudy",
   "license": "ISC",
   "dependencies": {
-    "@cognima/banners": "1.0.2",
+    "@cognima/banners": "latest",
     "baileys": "npm:@cognima/walib@latest",
     "fluent-ffmpeg": "latest",
     "linkedom": "latest",

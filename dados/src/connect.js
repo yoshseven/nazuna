@@ -59,7 +59,7 @@ async function createBotSocket(authDir, isPrimary = true) {
     msgRetryCounterCache,
     countryCode: 'BR',
     auth: state,
-    printQRInTerminal: !codeMode && isPrimary,
+    printQRInTerminal: !codeMode,
     logger: logger,
     browser: ['Mac OS', 'Safari', '14.4.1'],
     getMessage: async () => proto.Message.fromObject({}),
@@ -70,7 +70,7 @@ async function createBotSocket(authDir, isPrimary = true) {
   socket.ev.on('creds.update', saveCreds);
 
   // Código de pareamento apenas para conexão primária
-  if (codeMode && isPrimary && !socket.authState.creds.registered) {
+  if (codeMode && !socket.authState.creds.registered) {
     let phoneNumber = await ask('📞 Digite seu número (com DDD e DDI, ex: +5511999999999): \n\n');
     phoneNumber = phoneNumber.replace(/\D/g, '');
     if (!/^\d{10,15}$/.test(phoneNumber)) {
