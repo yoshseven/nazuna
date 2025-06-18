@@ -175,19 +175,6 @@ function startBot(codeMode = false) {
     }
   });
   
-  // Log memory usage periodically
-  const memoryInterval = setInterval(() => {
-    const memoryUsage = process.memoryUsage();
-    const mbUsed = Math.round(memoryUsage.heapUsed / 1024 / 1024 * 100) / 100;
-    const mbTotal = Math.round(memoryUsage.heapTotal / 1024 / 1024 * 100) / 100;
-    detalhe(`📊 Uso de memória: ${mbUsed}MB / ${mbTotal}MB`);
-  }, 300000); // Every 5 minutes
-  
-  // Clear interval if process exits
-  botProcess.on('close', () => {
-    clearInterval(memoryInterval);
-  });
-  
   return botProcess;
 }
 
