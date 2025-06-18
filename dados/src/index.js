@@ -1445,6 +1445,18 @@ if (budy2 === "ta baxano" && !isGroup) {
           if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para abrir ou fechar o grupo 🙄');
           await reply(respAssist.mensagem_aguarde);
           await nazu.groupSettingUpdate(from, 'announcement');
+        } else if(respAssist.acao === 'TOCAR_MUSICA') {
+          if(respAssist.dados && respAssist.dados.musica) {
+            await reply(respAssist.mensagem_aguarde);
+            videoInfo = await youtube.search(respAssist.dados.musica);
+            const caption = `📌 *Título:* ${videoInfo.data.title}\n👤 *Artista/Canal:* ${videoInfo.data.author.name}\n⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)\n\n🎧 *Baixando e processando sua música, aguarde...*`;
+            await reply(caption);
+            const dlRes = await youtube.mp3(videoUrl);
+            if (!dlRes.ok) {
+              return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
+            };
+            await nazu.sendMessage(from, { audio: dlRes.buffer,  mimetype: 'audio/mpeg' }, { quoted: info });
+          };
         };
       };
     };
