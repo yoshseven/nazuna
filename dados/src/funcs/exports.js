@@ -77,7 +77,8 @@ const downloadModuleUrls = {
   FilmesDL: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/filmes.js',
   apkMod: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/apkmod.js',
   tictactoe: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/games/tictactoe.js',
-  styleText: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/gerarnick.js'
+  styleText: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/gerarnick.js',
+  ia: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/private/ia.js'
 };
 
 // Carregamento dos outros módulos
@@ -100,6 +101,7 @@ module.exports = (async () => {
     apkMod: undefined,
     styleText: undefined,
     tictactoe: undefined,
+    ia: undefined
   };
 
   try {

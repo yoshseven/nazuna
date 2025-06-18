@@ -406,7 +406,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
     youtube, tiktok, pinterest, igdl, sendSticker, 
     FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, 
     toolsJson, vabJson, apkMod, google, Lyrics,
-    commandStats
+    commandStats, ia
   } = await require(__dirname+'/funcs/exports.js');
     
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
