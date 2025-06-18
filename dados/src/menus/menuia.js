@@ -22,30 +22,17 @@ async function menuIa(prefix, botName = "MeuBot", userName = "Usuário") {
 ││    ↳ Usar ChatGPT
 ││◕⁠➜ ${prefix}gpt4
 ││    ↳ Usar GPT-4
-││◕⁠➜ ${prefix}llama
-││    ↳ Usar LLaMA
-││◕⁠➜ ${prefix}llama3
-││    ↳ Usar LLaMA 3
-││◕⁠➜ ${prefix}cognimai / ${prefix}cog
+││◕⁠➜ ${prefix}cog
 ││    ↳ Usar CognimAI
-││◕⁠➜ ${prefix}qwen
-││    ↳ Usar Qwen
 ││◕⁠➜ ${prefix}gemma
 ││    ↳ Usar Gemma
-││◕⁠➜ ${prefix}gecko
-││    ↳ Usar Gecko
-││◕⁠➜ ${prefix}resumir
-││    ↳ Resumir Textos
-│
-│╭─▸ *IAs de Imagem:*
-││
-││◕⁠➜ ${prefix}imagine
-││    ↳ Gerar imagens com IA
 │
 │╭─▸ *IAs de Ferramentas:*
 ││
 ││◕⁠➜ ${prefix}code-gen
 ││    ↳ Gerar código com IA
+││◕⁠➜ ${prefix}resumir
+││    ↳ Resumir Textos
 │
 ╰══════════════════════╯
 `;

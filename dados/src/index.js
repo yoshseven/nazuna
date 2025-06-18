@@ -1406,6 +1406,30 @@ if (budy2 === "ta baxano" && !isGroup) {
  
   if(budy2.match(/^(\d+)d(\d+)$/))reply(+budy2.match(/^(\d+)d(\d+)$/)[1]>50||+budy2.match(/^(\d+)d(\d+)$/)[2]>100?"❌ Limite: max 50 dados e 100 lados":"🎲 Rolando "+budy2.match(/^(\d+)d(\d+)$/)[1]+"d"+budy2.match(/^(\d+)d(\d+)$/)[2]+"...\n🎯 Resultados: "+(r=[...Array(+budy2.match(/^(\d+)d(\d+)$/)[1])].map(_=>1+Math.floor(Math.random()*+budy2.match(/^(\d+)d(\d+)$/)[2]))).join(", ")+"\n📊 Total: "+r.reduce((a,b)=>a+b,0));
 
+  if(budy2.includes('@'+nazu.user.id.split(':')[0]) && !isCmd) {
+    if(budy2.replaceAll('@'+nazu.user.id.split(':')[0], '').length > 2) {
+      jSoNzIn = {
+        mensagem_original: budy2.replaceAll('@'+nazu.user.id.split(':')[0], ''),
+        usuario_id: sender.split('@')[0]
+      };
+      let { participant, quotedMessage } = info.message?.extendedTextMessage?.contextInfo || {}, jsonO = { participant, quotedMessage, texto: quotedMessage?.conversation || quotedMessage?.extendedTextMessage?.text || quotedMessage?.imageMessage?.caption || quotedMessage?.videoMessage?.caption || quotedMessage?.documentMessage?.caption || "" };
+      if(jsonO && jsonO.participant && jsonO.texto && jsonO.texto.length > 0) {
+        jSoNzIn.mensagem_citada = jsonO.texto;
+        jSoNzIn.usuario_mencionado_id = jsonO.participant.split('@')[0];
+      };
+      const respAssist = await ia.makeAssistentRequest(jSoNzIn);
+      if(respAssist.acao && respAssist.dados && respAssist.mensagem_aguarde && respAssist.mensagem_sucesso) {
+        if(respAssist.acao === 'BANIR_USUARIO') {
+          if(respAssist.dados && respAssist.dados.usuario_id) {
+            await reply(respAssist.mensagem_aguarde);
+            await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'remove');
+            await reply(respAssist.mensagem_sucesso);
+          };
+        };
+      };
+    };
+  };
+  
  switch(command) {//ALTERADORES
   case 'speedup':
   case 'vozmenino':
@@ -1526,12 +1550,9 @@ if (budy2 === "ta baxano" && !isGroup) {
   
   case 'nazu': case 'nazuna': case 'ai': 
     if (!q) return reply(`🤔 O que você gostaria de me perguntar ou pedir? É só digitar depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} qual a previsão do tempo?`);
-    nazu.react('💖'); // Reação fofinha!
     try {
-      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { message: q, chat_id: `nazuninha_${sender.split('@')[0]}`, model_name: "nazuninha", })).data;
-      await reply(`🌸 Nazuninha responde:
-
-${bahz.reply}`);
+      const bahz = await ia.makeCognimaRequest('nazuninha', q, `nazuninha_${sender.split('@')[0]}`);
+      await reply(`${bahz.reply}`);
     } catch (e) {
       console.error("Erro na API Nazuninha:", e);
       await reply("🌸 Awnn... Minha conexão mental falhou por um instante! 🧠⚡️ Poderia repetir sua pergunta, por favorzinho? 🥺");
@@ -1540,75 +1561,20 @@ ${bahz.reply}`);
   
   case 'gpt': case 'gpt4': case 'chatgpt':
     if (!q) return reply(`🤔 Qual pergunta você quer fazer para o GPT? Digite depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} me explique sobre buracos negros.`);
-    nazu.react("🧠"); // Reação inteligente!
-    try {      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { message: q, chat_id: `gpt_${sender.split('@')[0]}`, model_name: "gpt", })).data;      await reply(`💡 Resposta do GPT:
-
-${bahz.reply}`);
+    try {      
+    const bahz = await ia.makeCognimaRequest('gpt', q, `gpt_${sender.split('@')[0]}`);
+    await reply(`${bahz.reply}`);
     } catch (e) {
       console.error("Erro na API GPT:", e);
       await reply("Puxa! 🥺 Parece que o GPT está tirando uma sonequinha... Tente novamente em instantes, tá? 💔");
-    }reak;
-  
-  case 'llama': case 'llama3': case 'llamachat':
-    if (!q) return reply(`🤔 O que você quer perguntar ao Llama? É só digitar depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} crie uma história curta.`);
-    nazu.react("🦙"); // Reação de Llama!
-    try {
-      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-        message: q, 
-        chat_id: `llama_${sender.split('@')[0]}`, 
-        model_name: "llama" 
-      })).data;
-      await reply(`🦙 O Llama respondeu:
-
-${bahz.reply}`);
-    } catch (e) {
-      console.error("Erro na API Llama:", e);
-      await reply("Ai, ai... 🥺 O Llama parece estar pastando em outro lugar agora... Tente chamá-lo de novo daqui a pouquinho, tá? 💔");
-    }
-  break;
-  
-  case 'cognimai': case 'cog-base':
-    if (!q) return reply(`🤔 Qual sua dúvida para a Cognima AI? Digite depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} como funciona a fotossíntese?`);
-    nazu.react("🤖"); // Reação robótica fofa!
-    try {
-      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-        message: q, 
-        chat_id: `cog_${sender.split('@')[0]}`, 
-        model_name: "cognimai" 
-      })).data;
-      await reply(`🤖 A Cognima AI responde:\n\n${bahz.reply}`);
-    } catch (e) {
-      console.error("Erro na API Cognima AI:", e);
-      await reply("Ops! 🥺 A Cognima AI parece estar processando outras coisas... Tente de novo daqui a pouquinho, tá? 💔");
-    }
-  break;
-  
-  case 'qwen': case 'qwen2': case 'qwenchat':
-    if (!q) return reply(`🤔 O que você quer perguntar ao Qwen? É só digitar depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} me dê ideias para o jantar.`);
-    nazu.react("🌠"); // Reação estelar!
-    try {
-      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-        message: q, 
-        chat_id: `qwen_${sender.split('@')[0]}`, 
-        model_name: "qwen"
-      })).data;
-      await reply(`🌠 Resposta do Qwen:\n\n${bahz.reply}`);
-    } catch (e) {
-      console.error("Erro na API Qwen:", e);
-      await reply("Xi... 🥺 O Qwen parece estar viajando por outras galáxias agora... Tente chamá-lo de novo daqui a pouquinho, tá? 💔");
     }
   break;
   
   case 'gemma': case 'gemma2': case 'gecko':
     if (!q) return reply(`🤔 Qual sua pergunta para o Gemma? Digite depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} quem descobriu o Brasil?`);
-    nazu.react("💎"); // Reação preciosa!
     try {
-      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-        message: q, 
-        chat_id: `gemma_${sender.split('@')[0]}`, 
-        model_name: "gemma"
-      })).data;
-      await reply(`💎 Resposta do Gemma:\n\n${bahz.reply}`);
+      const bahz = await ia.makeCognimaRequest('gemma', q, `gemma_${sender.split('@')[0]}`);
+      await reply(`${bahz.reply}`);
     } catch (e) {
       console.error("Erro na API Gemma:", e);
       await reply("Ah, que pena! 🥺 O Gemma parece estar brilhando em outro lugar agora... Tente chamá-lo de novo daqui a pouquinho, tá? 💔");
@@ -1617,15 +1583,11 @@ ${bahz.reply}`);
   
   case 'resumir':
     if (!q) return reply(`📝 Quer que eu faça um resuminho? Me envie o texto logo após o comando ${prefix}resumir! 😊`);
-    nazu.react('📝'); // Reação de resumo!
+    nazu.react('📝');
     try {
-      const prompt = `Resuma o seguinte texto em poucos parágrafos, de forma clara e fofa, mantendo as informações mais importantes:\n\n${q}`;
-      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-        message: prompt, 
-        chat_id: `resumo_${sender.split('@')[0]}`, 
-        model_name: "cognimai"  // Usando o modelo Cognima para resumos
-      })).data;
-      await reply(`📃✨ *Aqui está o resuminho fofo que preparei para você:*\n\n${bahz.reply}`);
+      const prompt = `Resuma o seguinte texto em poucos parágrafos, de forma clara, mantendo as informações mais importantes:\n\n${q}`;
+      const bahz = await ia.makeCognimaRequest('cognimai', prompt, `resumo_${sender.split('@')[0]}`);
+      await reply(`${bahz.reply}`);
     } catch (e) {
       console.error("Erro ao resumir texto:", e);
       await reply("Puxa vida! 🥺 Tive um probleminha para fazer o resumo... Poderia tentar de novo? 💔");
@@ -1635,7 +1597,7 @@ ${bahz.reply}`);
   case 'tradutor':
     if (!q) return reply(`🌍 Quer traduzir algo? Me diga o idioma e o texto assim: ${prefix}tradutor idioma | texto
 Exemplo: ${prefix}tradutor inglês | Bom dia! 😊`);
-    nazu.react('🌍'); // Reação de tradução!
+    nazu.react('🌍');
     try {
       const partes = q.split('|');
       if (partes.length < 2) {
@@ -1645,20 +1607,17 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       const idioma = partes[0].trim();
       const texto = partes.slice(1).join('|').trim();
       const prompt = `Traduza o seguinte texto para ${idioma}:\n\n${texto}\n\nForneça apenas a tradução, sem explicações adicionais.`;
-      const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-        message: prompt, 
-        chat_id: `tradutor_${sender.split('@')[0]}`, 
-        model_name: "cognimai"
-      })).data;
+      const bahz = await ia.makeCognimaRequest('cognimai', prompt, `tradutor_${sender.split('@')[0]}`);
       await reply(`🌐✨ *Prontinho! Sua tradução para ${idioma.toUpperCase()} está aqui:*\n\n${bahz.reply}`);
     } catch (e) {
       console.error("Erro ao traduzir texto:", e);
       await reply("Awnn... 🥺 Não consegui fazer a tradução agora... Poderia tentar de novo, por favorzinho? 💔");
     }
   break;
+  
    case 'qrcode':
     if (!q) return reply(`📲 Quer gerar um QR Code? Me envie o texto ou link depois do comando ${prefix}qrcode! 😊`);
-    nazu.react('📲'); // Reação de QR Code!
+    nazu.react('📲');
     try {
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(q)}`;
       await nazu.sendMessage(from, { 
@@ -1673,11 +1632,9 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   
   case 'wikipedia':
     if (!q) return reply(`📚 O que você quer pesquisar na Wikipédia? Me diga o termo após o comando ${prefix}wikipedia! 😊`);
-    nazu.react('📚'); // Reação de livrinho!
     reply("📚 Consultando a Wikipédia... Só um instante! ⏳");
     try {
       let found = false;
-      // Tenta buscar em Português primeiro
       try {
         const respPT = await axios.get(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`);
         if (respPT.data && respPT.data.extract) {
@@ -1697,7 +1654,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         console.log("Busca PT falhou, tentando EN...");
       }
 
-      // Se não encontrou em PT, tenta em Inglês
       if (!found) {
         try {
           const respEN = await axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`);
@@ -1731,13 +1687,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   
   case 'dicionario':
     if (!q) return reply(`📔 Qual palavra você quer procurar no dicionário? Me diga após o comando ${prefix}dicionario! 😊`);
-    nazu.react('📔'); // Reação de dicionário!
     reply("📔 Procurando no dicionário... Aguarde um pouquinho! ⏳");
     try {
       const palavra = q.trim().toLowerCase();
       let definicaoEncontrada = false;
-
-      // Tenta a API primária
       try {
         const resp = await axios.get(`https://significado.herokuapp.com/${encodeURIComponent(palavra)}`);
         if (resp.data && resp.data.length > 0 && resp.data[0].meanings) {
@@ -1762,17 +1715,11 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       } catch (apiError) {
         console.log("API primária do dicionário falhou, tentando IA...");
       }
-
-      // Se a API primária falhar ou não retornar significados, usa a IA como fallback
       if (!definicaoEncontrada) {
         const prompt = `Defina a palavra "${palavra}" em português de forma completa e fofa. Inclua a classe gramatical, os principais significados e um exemplo de uso em uma frase curta e bonitinha.`;
-        const bahz = (await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", { 
-          message: prompt, 
-          chat_id: `dicionario_fallback_${sender.split('@')[0]}`, 
-          model_name: "cognimai"
-        })).data;
-        await reply(`🧠✨ *Não achei na API, mas a IA me ajudou com "${palavra.toUpperCase()}":*\n\n${bahz.reply}`);
-        definicaoEncontrada = true; // Considera encontrado via IA
+        const bahz = await ia.makeCognimaRequest('cognimai', prompt, `dicionario_${sender.split('@')[0]}`);
+        await reply(`${bahz.reply}`);
+        definicaoEncontrada = true;
       }
 
     } catch (e) {
@@ -2210,48 +2157,6 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   }
   break;
   
-  case 'imagine': case 'img':
-  try {
-    const modelos = [
-      "cognimai-realism",
-      "cognimai-anime", 
-      "cognimai-3d",
-      "cognimai-cablyai",
-      "cognimai-turbo",
-      "cognimai-pro",
-      "cognimai"
-    ];
-    if (!q) {
-      let ajuda = `🖼️ *GERADOR DE IMAGENS* 🖼️\n\n`+`⚠️ Use: *${prefix}imagine modelo/prompt*\n\n`+`📝 *Modelos disponíveis:*\n`+`• realism (Padrão)\n`+`• anime\n`+`• 3d\n`+`• cablyai\n`+`• turbo\n`+`• pro\n\n`+`Exemplo: *${prefix}imagine anime/gato samurai*`;
-      return reply(ajuda);
-    };
-    nazu.react('🔄');
-    const [inputModelo, ...promptArray] = q.split('/');
-    const prompt = promptArray.join('/').trim() || inputModelo.trim();
-    const modeloEscolhido = inputModelo.trim().toLowerCase();
-    const modelosParaTestar = modeloEscolhido && modelos.includes(`cognimai-${modeloEscolhido}`)
-      ? [`cognimai-${modeloEscolhido}`]
-      : modelos;
-    for (const model of modelosParaTestar) {
-      try {
-        const url = `https://api.cognima.com.br/api/ia/image/generate?key=CognimaTeamFreeKey&prompt=${encodeURIComponent(prompt)}&model_name=${model}`;
-        await nazu.sendMessage(from, { image: { url }, caption: `🎨 Modelo: ${model.replace('cognimai-', '') || 'padrão'}\n📌 Prompt: ${prompt}`});
-        nazu.react('✅');
-        return;
-      } catch (e) {
-        console.log(`❌ ${model} falhou, tentando próximo...`);
-      }
-    }
-
-    await reply('❌ Todos os modelos falharam. Tente um prompt diferente.');
-    nazu.react('❌');
-
-  } catch (e) {
-    console.error('Erro grave:', e);
-    reply("ocorreu um erro 💔");
-  }
-  break;
-  
   case 'code-gen': try {
   if(!isPremium) return reply('Apenas usuários premium.');
   if(!q) return reply("Falta digitar o prompt 🤔");
@@ -2279,32 +2184,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   try {
     if(!isPremium) return reply('Apenas usuários premium.');
     if (!q) return nazu.react('❌');
-
-
-    const response = await axios.post("https://api.cognima.com.br/api/ia/chat?key=CognimaTeamFreeKey", {
-      message: q,
-      chat_id: `cog_${sender.split('@')[0]}`,
-      model_name: "cognimai",
-    });
-
-    const resultPriv = response.data;
+    const resultPriv = await ia.makeCognimaRequest('cognimai', q, `cog_${sender.split('@')[0]}`);
     if (!resultPriv.success) return reply("ocorreu um erro 💔");
-
     let responseText = resultPriv.reply;
-    if (resultPriv.sources.length > 0) {
-      responseText += `\n\nFontes utilizadas:\n${resultPriv.sources.join('\n')}`;
-    };
-
-    if (resultPriv.file?.content) {
-      await nazu.sendMessage(from, {
-        document: Buffer.from(resultPriv.file.content, "utf-8"),
-        fileName: resultPriv.file.filename,
-        mimetype: resultPriv.file.mimetype,
-        caption: responseText
-    }, { quoted: info });
-    } else {
-      await reply(responseText);
-    }
+    await reply(responseText);
   } catch (e) {
     console.error(e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
