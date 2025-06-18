@@ -1421,6 +1421,7 @@ if (budy2 === "ta baxano" && !isGroup) {
       if(respAssist.acao && respAssist.dados && respAssist.mensagem_aguarde && respAssist.mensagem_sucesso) {
         if(respAssist.acao === 'BANIR_USUARIO') {
           if(respAssist.dados && respAssist.dados.usuario_id) {
+            if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para banir membros 🙄');
             await reply(respAssist.mensagem_aguarde);
             await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'remove');
             await reply(respAssist.mensagem_sucesso);
