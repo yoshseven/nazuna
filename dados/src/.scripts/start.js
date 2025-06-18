@@ -142,13 +142,6 @@ async function checkPrerequisites() {
 
 // Function to start the bot with improved error handling
 function startBot(codeMode = false) {
-  // Reset restart count after some time to prevent infinite restart loops
-  setTimeout(() => {
-    if (restartCount > 0) {
-      restartCount = 0;
-      detalhe("🔄 Contador de reinícios resetado");
-    }
-  }, RESTART_COUNT_RESET_INTERVAL);
   
   // Prepare arguments
   const args = ['--expose-gc', CONNECT_FILE];
