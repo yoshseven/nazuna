@@ -23,9 +23,9 @@ const GameState = {
     for (const [groupId, invitation] of this.pendingInvitations) {
       if (now - invitation.timestamp > CONFIG.INVITATION_TIMEOUT) {
         this.pendingInvitations.delete(groupId);
-      };
-    };
-  };
+      }
+    }
+  }
 };
 
 
