@@ -250,7 +250,7 @@ async function main() {
     const hasSession = await checkAutoConnect();
     if (hasSession) {
       mensagem("📡 QR Code já detectado! Iniciando conexão automática...");
-      startBot(true);
+      startBot(false);
     } else {
       const { method } = await promptConnectionMethod();
       startBot(method === 'code');

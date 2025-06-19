@@ -1158,7 +1158,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
               await reply(respAssist.mensagem_aguarde);
               await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'demote');
             };
-          } else if(respAssist.acao === 'GRUPO') {
+          } else if(respAssist.acao === 'ABRIR_GRUPO') {
             if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para abrir ou fechar o grupo 🙄');
             await reply(respAssist.mensagem_aguarde);
             await nazu.groupSettingUpdate(from, 'not_announcement');
