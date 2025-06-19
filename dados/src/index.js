@@ -1176,7 +1176,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
               if (!dlRes.ok) {
                 return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
               };
-              await nazu.sendMessage(from, { audio: dlRes.buffer,  mimetype: 'audio/mpeg' }, { quoted: info });
+              await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
             };
           } else if(respAssist.acao === 'CRIAR_ENQUETE') {
             if(respAssist.dados && respAssist.dados.pergunta && respAssist.dados.opcoes) {
@@ -1822,8 +1822,8 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   case 'shazam':
   try {
     if ((isMedia && !info.message.imageMessage && !info.message.videoMessage) || isQuotedAudio) {
-      await reply('Aguarde um momentinho... ☀️');
       const muk = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
+      await reply('Aguarde um momentinho... ☀️');
       const buffi = await getFileBuffer(muk, 'audio');
       const Slakzin = await ia.Shazam(buffi);
       const videoInfo = await youtube.search(`${Slakzin.result.title} - ${Slakzin.result.artist}`);
