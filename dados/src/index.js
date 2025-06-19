@@ -1181,7 +1181,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
           } else if(respAssist.acao === 'CRIAR_ENQUETE') {
             if(respAssist.dados && respAssist.dados.pergunta && respAssist.dados.opcoes) {
               await reply(respAssist.mensagem_aguarde);
-              await nazu.sendMessage(from, {poll: {name: respAssist.dados.pergunta,values: respAssist.dados.opcoes, selectableCount: 1}, messageContextInfo: { messageSecret: Math.random()}}, {from, options: { userJid: nazu?.user?.id }});
+              await nazu.sendMessage(from, {poll: {name: respAssist.dados.pergunta,values: respAssist.dados.opcoes.split('_'), selectableCount: 1}, messageContextInfo: { messageSecret: Math.random()}}, {from, options: { userJid: nazu?.user?.id }});
             };
           } else if(respAssist.acao === 'DELETAR_MENSAGEM') {
             let stanzaId, participant;
