@@ -5116,6 +5116,7 @@ function getDiskSpaceInfo() {
 };
 
 
+(async () => {
 cron.schedule('* * * * *', () => {
   const DIR_PROGRAM = pathz.join(DATABASE_DIR, 'prog_actions.json');
   if (!fs.existsSync(DIR_PROGRAM)) {
@@ -5140,6 +5141,7 @@ cron.schedule('* * * * *', () => {
   }
   fs.writeFileSync(DIR_PROGRAM, JSON.stringify(ACTIONS, null, 2));
 });
+})();
 
 
 module.exports = NazuninhaBotExec;
