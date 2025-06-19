@@ -1881,6 +1881,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           throw audioError;
         };
       };
+      return
     } else {
       videoInfo = await youtube.search(q);
       if (!videoInfo.ok) {
@@ -1951,6 +1952,7 @@ case 'ytmp4':
         throw videoError;
       }
     }
+    return
     } else {
       const searchResult = await youtube.search(q);
       if (!searchResult.ok) return reply(searchResult.msg);
