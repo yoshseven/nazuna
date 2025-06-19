@@ -144,7 +144,7 @@ const addSubdono = (userId) => {
   let currentSubdonos = loadSubdonos();
   if (currentSubdonos.includes(userId)) {
       return { success: false, message: '✨ Este usuário já é um subdono! Não precisa adicionar de novo. 😊' };
-  }!
+  };
   const nmrdn_check = numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net';
   if (userId === nmrdn_check) {
       return { success: false, message: '🤔 O Dono principal já tem todos os superpoderes! Não dá pra adicionar como subdono. 😉' };
