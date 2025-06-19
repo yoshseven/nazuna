@@ -1184,6 +1184,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
               await nazu.sendMessage(from, {poll: {name: respAssist.dados.pergunta,values: respAssist.dados.opcoes.split('_'), selectableCount: 1}, messageContextInfo: { messageSecret: Math.random()}}, {from, options: { userJid: nazu?.user?.id }});
             };
           } else if(respAssist.acao === 'DELETAR_MENSAGEM') {
+            if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para deletar mensagens 🙄');
             let stanzaId, participant;
             if (info.message.extendedTextMessage) {
               stanzaId = info.message.extendedTextMessage.contextInfo.stanzaId;
@@ -1227,6 +1228,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
             };
           } else if(respAssist.acao === 'PROGRAMAR_GRUPO') {
             if(respAssist.dados && respAssist.dados.acao && respAssist.dados.data_hora ) {
+              if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para abrir ou fechar o grupo 🙄');
               await reply(respAssist.mensagem_aguarde);
               const Data = respAssist.dados.data_hora;
               const JsonAc = { tipo: 'grupo', acao: respAssist.dados.acao, from, sender, data: { ano: Data.split('-')[0], mes: Data.split('-')[1], dia: Data.split('-').pop().split(' ')[0] }, hora: { hora: Data.split(' ').pop().split(':')[0], minuto: Data.split(':').pop() } };
