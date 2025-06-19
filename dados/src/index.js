@@ -1,93 +1,90 @@
 // ====================
 // Nazuna Bot - Index principal
 // Criado por: Hiudy
-// Versão: 3.0.0
+// Versão: 4.0.0
 // ====================
 
-// Importações principais
-const { downloadContentFromMessage } = require('baileys');
+
+const { downloadContentFromMessage } = require('@cognima/walib');
 const { exec, execSync } = require('child_process');
 const axios = require('axios');
 const pathz = require('path');
 const fs = require('fs');
 const os = require('os');
 const https = require('https'); 
-
 const Banner = require("@cognima/banners");
+const cron = require('node-cron');
 
-// Carrega a versão do bot do package.json
+
+let SocketActions = null;
+
+
 const { version: botVersion } = JSON.parse(fs.readFileSync(pathz.join(__dirname, '..', '..', 'package.json')));
 
-// Importa os menus
+
 const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuAlterador, menuLogos, menuTopCmd } = require(`${__dirname}/menus/index.js`);
 
-// Carrega as configurações do bot
+
 const config = JSON.parse(fs.readFileSync(__dirname+'/config.json'));
 const { numerodono, nomedono, nomebot, prefixo, debug } = config;
-const prefix = prefixo; // Alias para compatibilidade
+const prefix = prefixo; 
+
 
 const DATABASE_DIR = __dirname + '/../database';
 const GRUPOS_DIR = DATABASE_DIR + '/grupos';
 const USERS_DIR = DATABASE_DIR + '/users';
 const DONO_DIR = DATABASE_DIR + '/dono';
 
+
 function formatUptime(seconds, longFormat = false, showZero = false) {
   const d = Math.floor(seconds / (24 * 3600));
   const h = Math.floor((seconds % (24 * 3600)) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
-  
   const formats = longFormat ? { d: (val) => `${val} ${val === 1 ? 'dia' : 'dias'}`, h: (val) => `${val} ${val === 1 ? 'hora' : 'horas'}`, m: (val) => `${val} ${val === 1 ? 'minuto' : 'minutos'}`, s: (val) => `${val} ${val === 1 ? 'segundo' : 'segundos'}` } : { d: (val) => `${val}d`, h: (val) => `${val}h`, m: (val) => `${val}m`, s: (val) => `${val}s` };
-  
   const uptimeStr = [];
-  
   if (d > 0 || showZero) uptimeStr.push(formats.d(d));
   if (h > 0 || showZero) uptimeStr.push(formats.h(h));
   if (m > 0 || showZero) uptimeStr.push(formats.m(m));
   if (s > 0 || showZero) uptimeStr.push(formats.s(s));
-  
-  // Retorna a string formatada ou "0s" se vazia
-  return uptimeStr.length > 0 
-    ? uptimeStr.join(longFormat ? ', ' : ' ') 
-    : (longFormat ? '0 segundos' : '0s');
-}
+  return uptimeStr.length > 0 ? uptimeStr.join(longFormat ? ', ' : ' ') : (longFormat ? '0 segundos' : '0s');
+};
+
 
 const normalizar = (texto, keepCase = false) => {
   if (!texto || typeof texto !== 'string') return '';
-  
   const normalizedText = texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  
   return keepCase ? normalizedText : normalizedText.toLowerCase();
 };
+
 
 function ensureDirectoryExists(dirPath) {
   try {
     if (!fs.existsSync(dirPath)) {
       fs.mkdirSync(dirPath, { recursive: true });
-      console.log(`✅ Diretório criado: ${dirPath}`);
-    }
+    };
     return true;
   } catch (error) {
     console.error(`❌ Erro ao criar diretório ${dirPath}:`, error);
     return false;
-  }
-}
+  };
+};
+
 
 function ensureJsonFileExists(filePath, defaultContent = {}) {
   try {
     if (!fs.existsSync(filePath)) {
       const dirPath = pathz.dirname(filePath);
       ensureDirectoryExists(dirPath);
-      
       fs.writeFileSync(filePath, JSON.stringify(defaultContent, null, 2));
-      console.log(`✅ Arquivo JSON criado: ${filePath}`);
-    }
+    };
     return true;
   } catch (error) {
     console.error(`❌ Erro ao criar arquivo JSON ${filePath}:`, error);
     return false;
-  }
-}
+  };
+};
+
 
 const loadJsonFile = (path, defaultValue = {}) => {
     try {
@@ -98,9 +95,11 @@ const loadJsonFile = (path, defaultValue = {}) => {
     }
 };
 
+
 ensureDirectoryExists(GRUPOS_DIR);
 ensureDirectoryExists(USERS_DIR);
 ensureDirectoryExists(DONO_DIR);
+
 
 ensureJsonFileExists(DATABASE_DIR + '/antiflood.json');
 ensureJsonFileExists(DATABASE_DIR + '/cmdlimit.json');
@@ -110,15 +109,15 @@ ensureJsonFileExists(DONO_DIR + '/bangp.json');
 ensureJsonFileExists(DATABASE_DIR + '/globalBlocks.json', { commands: {}, users: {} });
 ensureJsonFileExists(DATABASE_DIR + '/botState.json', { status: 'on' });
 
-// Funções para Gerenciamento de Subdonos
 
 const SUBDONOS_FILE = pathz.join(DONO_DIR, 'subdonos.json');
+ensureJsonFileExists(SUBDONOS_FILE, { subdonos: [] });
 
-ensureJsonFileExists(SUBDONOS_FILE, { subdonos: [] }); // Inicializa com uma lista vazia
 
 const loadSubdonos = () => {
   return loadJsonFile(SUBDONOS_FILE, { subdonos: [] }).subdonos || [];
 };
+
 
 const saveSubdonos = (subdonoList) => {
   try {
@@ -128,36 +127,36 @@ const saveSubdonos = (subdonoList) => {
   } catch (error) {
     console.error('❌ Erro ao salvar subdonos:', error);
     return false;
-  }
+  };
 };
+
 
 const isSubdono = (userId) => {
   const currentSubdonos = loadSubdonos(); 
   return currentSubdonos.includes(userId);
 };
 
+
 const addSubdono = (userId) => {
   if (!userId || typeof userId !== 'string' || !userId.includes('@s.whatsapp.net')) {
       return { success: false, message: 'ID de usuário inválido. Use o formato completo (ex: 1234567890@s.whatsapp.net) ou marque o usuário.' };
-  }
+  };
   let currentSubdonos = loadSubdonos();
   if (currentSubdonos.includes(userId)) {
       return { success: false, message: '✨ Este usuário já é um subdono! Não precisa adicionar de novo. 😊' };
-  }
-  
-  // Verifica se o usuário a ser adicionado é o dono principal
-  const nmrdn_check = numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net'; // Renomeado para evitar conflito de escopo
+  }!
+  const nmrdn_check = numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net';
   if (userId === nmrdn_check) {
       return { success: false, message: '🤔 O Dono principal já tem todos os superpoderes! Não dá pra adicionar como subdono. 😉' };
-  }
-
+  };
   currentSubdonos.push(userId);
   if (saveSubdonos(currentSubdonos)) {
     return { success: true, message: '🎉 Pronto! Novo subdono adicionado com sucesso! ✨' };
   } else {
     return { success: false, message: '😥 Oops! Tive um probleminha para salvar a lista de subdonos. Tente novamente, por favor!' };
-  }
+  };
 };
+
 
 const removeSubdono = (userId) => {
   if (!userId || typeof userId !== 'string' || !userId.includes('@s.whatsapp.net')) {
@@ -166,39 +165,37 @@ const removeSubdono = (userId) => {
   let currentSubdonos = loadSubdonos();
   if (!currentSubdonos.includes(userId)) {
       return { success: false, message: '🤔 Este usuário não está na lista de subdonos.' };
-  }
-
+  };
   const initialLength = currentSubdonos.length;
   currentSubdonos = currentSubdonos.filter(id => id !== userId);
-
   if (currentSubdonos.length === initialLength) {
       return { success: false, message: 'Usuário não encontrado na lista (erro inesperado). 🤷' };
-  }
-
+  };
   if (saveSubdonos(currentSubdonos)) {
     return { success: true, message: '👋 Pronto! Subdono removido com sucesso! ✨' };
   } else {
     return { success: false, message: '😥 Oops! Tive um probleminha para salvar a lista após remover o subdono. Tente novamente!' };
-  }
+  };
 };
+
 
 const getSubdonos = () => {
-  return [...loadSubdonos()]; // Retorna uma cópia atualizada
+  return [...loadSubdonos()];
 };
 
-// Fim Funções Subdonos
-
-// Funções para Gerenciamento de Aluguel
 
 const ALUGUEIS_FILE = pathz.join(DONO_DIR, 'alugueis.json');
 const CODIGOS_ALUGUEL_FILE = pathz.join(DONO_DIR, 'codigos_aluguel.json');
 
-ensureJsonFileExists(ALUGUEIS_FILE, { globalMode: false, groups: {} }); // globalMode: false (desativado por padrão), groups: { groupId: { expiresAt: null | 'permanent' | ISOString } }
-ensureJsonFileExists(CODIGOS_ALUGUEL_FILE, { codes: {} }); // codes: { code: { duration: number | 'permanent', targetGroup: null | string, used: false, usedBy: null, usedAt: null } }
+
+ensureJsonFileExists(ALUGUEIS_FILE, { globalMode: false, groups: {} });
+ensureJsonFileExists(CODIGOS_ALUGUEL_FILE, { codes: {} });
+
 
 const loadRentalData = () => {
   return loadJsonFile(ALUGUEIS_FILE, { globalMode: false, groups: {} });
 };
+
 
 const saveRentalData = (data) => {
   try {
@@ -211,64 +208,60 @@ const saveRentalData = (data) => {
   }
 };
 
+
 const isRentalModeActive = () => {
   const rentalData = loadRentalData();
   return rentalData.globalMode === true;
 };
 
+
 const setRentalMode = (isActive) => {
   let rentalData = loadRentalData();
-  rentalData.globalMode = !!isActive; // Garante que seja booleano
+  rentalData.globalMode = !!isActive;
   return saveRentalData(rentalData);
 };
+
 
 const getGroupRentalStatus = (groupId) => {
   const rentalData = loadRentalData();
   const groupInfo = rentalData.groups[groupId];
-
   if (!groupInfo) {
-    return { active: false, expiresAt: null, permanent: false }; // Grupo não tem aluguel registrado
+    return { active: false, expiresAt: null, permanent: false };
   }
-
   if (groupInfo.expiresAt === 'permanent') {
-    return { active: true, expiresAt: 'permanent', permanent: true }; // Aluguel permanente
+    return { active: true, expiresAt: 'permanent', permanent: true };
   }
-
   if (groupInfo.expiresAt) {
     const expirationDate = new Date(groupInfo.expiresAt);
     if (expirationDate > new Date()) {
-      return { active: true, expiresAt: groupInfo.expiresAt, permanent: false }; // Aluguel ativo e dentro do prazo
+      return { active: true, expiresAt: groupInfo.expiresAt, permanent: false };
     } else {
-      return { active: false, expiresAt: groupInfo.expiresAt, permanent: false }; // Aluguel expirado
+      return { active: false, expiresAt: groupInfo.expiresAt, permanent: false };
     }
   }
-
-  return { active: false, expiresAt: null, permanent: false }; // Caso inválido ou sem data de expiração definida
+  return { active: false, expiresAt: null, permanent: false };
 };
+
 
 const setGroupRental = (groupId, durationDays) => {
   if (!groupId || typeof groupId !== 'string' || !groupId.endsWith('@g.us')) {
     return { success: false, message: '🤔 ID de grupo inválido! Verifique se o ID está correto (geralmente termina com @g.us).' };
   }
-
   let rentalData = loadRentalData();
   let expiresAt = null;
   let message = '';
-
   if (durationDays === 'permanent') {
     expiresAt = 'permanent';
-    message = `✅ Aluguel permanente ativado para o grupo ${groupId}!`;
+    message = `✅ Aluguel permanente ativado!`;
   } else if (typeof durationDays === 'number' && durationDays > 0) {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + durationDays);
     expiresAt = expirationDate.toISOString();
-    message = `✅ Aluguel ativado para o grupo ${groupId} por ${durationDays} dias! Expira em: ${expirationDate.toLocaleDateString('pt-BR')}.`;
+    message = `✅ Aluguel ativado por ${durationDays} dias! Expira em: ${expirationDate.toLocaleDateString('pt-BR')}.`;
   } else {
     return { success: false, message: '🤔 Duração inválida! Use um número de dias (ex: 30) ou a palavra "permanente".' };
   }
-
   rentalData.groups[groupId] = { expiresAt };
-
   if (saveRentalData(rentalData)) {
     return { success: true, message: message };
   } else {
@@ -276,9 +269,11 @@ const setGroupRental = (groupId, durationDays) => {
   }
 };
 
+
 const loadActivationCodes = () => {
   return loadJsonFile(CODIGOS_ALUGUEL_FILE, { codes: {} });
 };
+
 
 const saveActivationCodes = (data) => {
   try {
@@ -291,41 +286,30 @@ const saveActivationCodes = (data) => {
   }
 };
 
+
 const generateActivationCode = (durationDays, targetGroupId = null) => {
   const crypto = require('crypto');
   let code = '';
   let codesData = loadActivationCodes();
-  
   do {
-    code = crypto.randomBytes(4).toString('hex').toUpperCase(); // Gera código de 8 caracteres
-  } while (codesData.codes[code]); // Garante unicidade
-
+    code = crypto.randomBytes(4).toString('hex').toUpperCase();
+  } while (codesData.codes[code]);
   if (durationDays !== 'permanent' && (typeof durationDays !== 'number' || durationDays <= 0)) {
       return { success: false, message: '🤔 Duração inválida para o código! Use um número de dias (ex: 7) ou "permanente".' };
   }
-  
   if (targetGroupId && (typeof targetGroupId !== 'string' || !targetGroupId.endsWith('@g.us'))) {
-      // Permite targetGroupId nulo, mas se fornecido, deve ser válido
-      // Vamos permitir códigos sem grupo alvo específico por enquanto
-      console.warn(`Gerando código ${code} sem grupo alvo específico, embora um ID inválido (${targetGroupId}) tenha sido fornecido.`);
-      targetGroupId = null; // Ignora ID inválido
+      targetGroupId = null;
   }
-
   codesData.codes[code] = {
-    duration: durationDays, // 'permanent' ou número de dias
-    targetGroup: targetGroupId, // null ou ID do grupo
+    duration: durationDays,
+    targetGroup: targetGroupId,
     used: false,
     usedBy: null,
     usedAt: null,
     createdAt: new Date().toISOString()
   };
-
   if (saveActivationCodes(codesData)) {
-    let message = `🔑 Código de ativação gerado: 
-
-*${code}*
-
-`;
+    let message = `🔑 Código de ativação gerado:\n\n*${code}*\n\n`;
     if (durationDays === 'permanent') {
         message += `Duração: Permanente ✨\n`;
     } else {
@@ -341,9 +325,10 @@ const generateActivationCode = (durationDays, targetGroupId = null) => {
   }
 };
 
+
 const validateActivationCode = (code) => {
   const codesData = loadActivationCodes();
-  const codeInfo = codesData.codes[code?.toUpperCase()]; // Compara em maiúsculas
+  const codeInfo = codesData.codes[code?.toUpperCase()];
 
   if (!codeInfo) {
     return { valid: false, message: '🤷 Código de ativação inválido ou não encontrado!' };
@@ -351,34 +336,29 @@ const validateActivationCode = (code) => {
   if (codeInfo.used) {
     return { valid: false, message: `😕 Este código já foi usado em ${new Date(codeInfo.usedAt).toLocaleDateString('pt-BR')} por ${codeInfo.usedBy?.split('@')[0] || 'alguém'}!` };
   }
-  
   return { valid: true, ...codeInfo };
 };
+
 
 const useActivationCode = (code, groupId, userId) => {
   const validation = validateActivationCode(code);
   if (!validation.valid) {
     return { success: false, message: validation.message };
   }
-
   const codeInfo = validation;
-  code = code.toUpperCase(); // Garante que estamos usando a chave correta
-
+  code = code.toUpperCase();
   if (codeInfo.targetGroup && codeInfo.targetGroup !== groupId) {
     return { success: false, message: '🔒 Este código de ativação é específico para outro grupo!' };
-  }
-
+  };
   const rentalResult = setGroupRental(groupId, codeInfo.duration);
   if (!rentalResult.success) {
     return { success: false, message: `😥 Oops! Erro ao ativar o aluguel com este código: ${rentalResult.message}` };
   }
-
   let codesData = loadActivationCodes();
   codesData.codes[code].used = true;
   codesData.codes[code].usedBy = userId;
   codesData.codes[code].usedAt = new Date().toISOString();
-  codesData.codes[code].activatedGroup = groupId; // Guarda qual grupo ativou
-
+  codesData.codes[code].activatedGroup = groupId;
   if (saveActivationCodes(codesData)) {
     return { success: true, message: `🎉 Código *${code}* ativado com sucesso! ${rentalResult.message}` };
   } else {
@@ -386,8 +366,6 @@ const useActivationCode = (code, groupId, userId) => {
     return { success: false, message: '🚨 Erro Crítico! O aluguel foi ativado, mas não consegui marcar o código como usado. Por favor, contate o suporte informando o código!' };
   }
 };
-
-// Fim Funções Aluguel
 
 
 const isModoLiteActive = (groupData, modoLiteGlobalConfig) => {
@@ -402,12 +380,9 @@ const isModoLiteActive = (groupData, modoLiteGlobalConfig) => {
 
 
 async function NazuninhaBotExec(nazu, info, store, groupCache) {
-  const { 
-    youtube, tiktok, pinterest, igdl, sendSticker, 
-    FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, 
-    toolsJson, vabJson, apkMod, google, Lyrics,
-    commandStats, ia
-  } = await require(__dirname+'/funcs/exports.js');
+  SocketActions = nazu;
+  
+  const { youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, apkMod, google, Lyrics, commandStats, ia } = await require(__dirname+'/funcs/exports.js');
     
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
   const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json');
@@ -422,1047 +397,859 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
   
   if (!fs.existsSync(modoLiteFile)) {
     fs.writeFileSync(modoLiteFile, JSON.stringify(modoLiteGlobal, null, 2));
-  }
+  };
 
   global.autoStickerMode = global.autoStickerMode || 'default';
 
-try {
- const from = info.key.remoteJid;
+  try {
+    const from = info.key.remoteJid;
+    const isGroup = from?.endsWith('@g.us') || false;
+    if(!info.key.participant && !info.key.remoteJid) return;  
+    const sender = isGroup ? (info.key.participant?.includes(':') ? info.key.participant.split(':')[0] + '@s.whatsapp.net' : info.key.participant) : info.key.remoteJid;
+    const pushname = info.pushName || '';
+    const isStatus = from?.endsWith('@broadcast') || false;  
+    const nmrdn = numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net';  
+    const subDonoList = loadSubdonos();
+    const isSubOwner = isSubdono(sender);
+    const isOwner = (nmrdn === sender) || info.key.fromMe || isSubOwner;
+    const isOwnerOrSub = isOwner || isSubOwner;
+ 
+    const WaLib = require('@cognima/walib');
+    const type = WaLib.getContentType(info.message);
+ 
+    const isMedia = ["imageMessage", "videoMessage", "audioMessage"].includes(type);
+    const isImage = type === 'imageMessage';
+    const isVideo = type === 'videoMessage';
+    const isVisuU2 = type === 'viewOnceMessageV2';
+    const isVisuU = type === 'viewOnceMessage';
+ 
+    const getMessageText = (message) => {
+      if (!message) return '';
+      return message.conversation || message.extendedTextMessage?.text || message.imageMessage?.caption || message.videoMessage?.caption || message.documentWithCaptionMessage?.message?.documentMessage?.caption || message.viewOnceMessage?.message?.imageMessage?.caption || message.viewOnceMessage?.message?.videoMessage?.caption || message.viewOnceMessageV2?.message?.imageMessage?.caption || message.viewOnceMessageV2?.message?.videoMessage?.caption || message.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text || message.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption || '';
+    };
 
-  const isGroup = from?.endsWith('@g.us') || false;
- if(!info.key.participant && !info.key.remoteJid) return;
-  
-  const sender = isGroup 
-    ? (info.key.participant?.includes(':') 
-       ? info.key.participant.split(':')[0] + '@s.whatsapp.net'
-       : info.key.participant)
-    : info.key.remoteJid;
-  
-  const isStatus = from?.endsWith('@broadcast') || false;
-  
-  const nmrdn = numerodono.replace(/[^\d]/g, "") + '@s.whatsapp.net';
-  
-  const subDonoList = loadSubdonos();
-  const isSubOwner = isSubdono(sender);
-  const isOwner = (nmrdn === sender) || info.key.fromMe || isSubOwner;
-  const isOwnerOrSub = isOwner || isSubOwner;
+    const body = getMessageText(info.message) || info?.text || '';
+    
+    const args = body.trim().split(/ +/).slice(1);
+    const q = args.join(' ');
+    const budy2 = normalizar(body);
  
- const baileys = require('baileys');
- const type = baileys.getContentType(info.message);
+    if(!budy2 || budy2.length < 1) return;
  
- const isMedia = ["imageMessage", "videoMessage", "audioMessage"].includes(type);
- const isImage = type === 'imageMessage';
- const isVideo = type === 'videoMessage';
- const isVisuU2 = type === 'viewOnceMessageV2';
- const isVisuU = type === 'viewOnceMessage';
- 
- const pushname = info.pushName || '';
- 
- // Função auxiliar para obter o texto da mensagem de forma segura
-const getMessageText = (message) => {
-  if (!message) return '';
-  return message.conversation || 
-         message.extendedTextMessage?.text || 
-         message.imageMessage?.caption || 
-         message.videoMessage?.caption || 
-         message.documentWithCaptionMessage?.message?.documentMessage?.caption ||
-         message.viewOnceMessage?.message?.imageMessage?.caption ||
-         message.viewOnceMessage?.message?.videoMessage?.caption ||
-         message.viewOnceMessageV2?.message?.imageMessage?.caption ||
-         message.viewOnceMessageV2?.message?.videoMessage?.caption ||
-         message.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text ||
-         message.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption ||
-         ''; // Retorna string vazia se nenhum texto for encontrado
-};
+    const menc_prt = info.message?.extendedTextMessage?.contextInfo?.participant;
+    const menc_jid = args.join(" ").replace("@", "") + "@s.whatsapp.net";
+    const menc_jid2 = info.message?.extendedTextMessage?.contextInfo?.mentionedJid;
+    const menc_os2 = q.includes("@") ? menc_jid : menc_prt;
+    const sender_ou_n = q.includes("@") ? menc_jid : (menc_prt || sender);
 
- const body = getMessageText(info.message) || info?.text || '';
+    const isCmd = body.trim().startsWith(prefix);
+    const command = isCmd ? budy2.trim().slice(1).split(/ +/).shift().trim().replace(/\s+/g, '') : null;
  
- const args = body.trim().split(/ +/).slice(1);
- const q = args.join(' ');
- const budy2 = normalizar(body);
- 
- if(!budy2 || budy2.length < 1) return;
- 
- const menc_prt = info.message?.extendedTextMessage?.contextInfo?.participant;
- const menc_jid = args.join(" ").replace("@", "") + "@s.whatsapp.net";
- const menc_jid2 = info.message?.extendedTextMessage?.contextInfo?.mentionedJid;
- const menc_os2 = q.includes("@") ? menc_jid : menc_prt;
- const sender_ou_n = q.includes("@") ? menc_jid : (menc_prt || sender);
+    if (!isGroup) {
+      if (antipvData.mode === 'antipv' && !isOwner) {
+        return;
+      };
+      if (antipvData.mode === 'antipv2' && isCmd && !isOwner) {
+        await reply('🚫 Este comando só funciona em grupos!');
+        return;
+      };
+      if (antipvData.mode === 'antipv3' && isCmd && !isOwner) {
+        await nazu.updateBlockStatus(sender, 'block');
+        await reply('🚫 Você foi bloqueado por usar comandos no privado!');
+        return;
+      };
+    };
 
- const isCmd = body.trim().startsWith(prefix);
- const command = isCmd ? budy2.trim().slice(1).split(/ +/).shift().trim().replace(/\s+/g, '') : null;
+    const isPremium = premiumListaZinha[sender] || premiumListaZinha[from] || isOwner;
  
- if (!isGroup) {
-   if (antipvData.mode === 'antipv' && !isOwner) {
-     return;
-   }
-   
-   if (antipvData.mode === 'antipv2' && isCmd && !isOwner) {
-     await reply('🚫 Este comando só funciona em grupos!');
-     return;
-   }
-   
-   if (antipvData.mode === 'antipv3' && isCmd && !isOwner) {
-  await nazu.updateBlockStatus(sender, 'block');
-     await reply('🚫 Você foi bloqueado por usar comandos no privado!');
-     return;
-   }
- }
-
- const isPremium = premiumListaZinha[sender] || premiumListaZinha[from] || isOwner;
+    if (isGroup && banGpIds[from] && !isOwner && !isPremium) {
+      return;
+    };
  
-  if (isGroup && banGpIds[from] && !isOwner && !isPremium) {
-    return;
-  }
- 
-  const groupMetadata = !isGroup ? {} : await nazu.groupMetadata(from).catch(() => ({}));
-  const groupName = groupMetadata?.subject || '';
-  const AllgroupMembers = !isGroup ? [] : groupMetadata.participants?.map(p => p.id) || [];
-  const groupAdmins = !isGroup ? [] : groupMetadata.participants?.filter(p => p.admin).map(p => p.id) || [];
+    const groupMetadata = !isGroup ? {} : await nazu.groupMetadata(from).catch(() => ({}));
+    const groupName = groupMetadata?.subject || '';
+    const AllgroupMembers = !isGroup ? [] : groupMetadata.participants?.map(p => p.id) || [];
+    const groupAdmins = !isGroup ? [] : groupMetadata.participants?.filter(p => p.admin).map(p => p.id) || [];
   
-  const botNumber = nazu.user.id.split(':')[0] + '@s.whatsapp.net';
-  const isBotAdmin = !isGroup ? false : groupAdmins.includes(botNumber);
+    const botNumber = nazu.user.id.split(':')[0] + '@s.whatsapp.net';
+    const isBotAdmin = !isGroup ? false : groupAdmins.includes(botNumber);
   
-  const groupFile = pathz.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
-  let groupData = {};
-  if (isGroup) {
+    const groupFile = pathz.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
+    let groupData = {};
+    if (isGroup) {
+      if (!fs.existsSync(groupFile)) {
+        fs.writeFileSync(groupFile, JSON.stringify({ 
+          mark: {},
+          createdAt: new Date().toISOString(),
+          groupName: groupName
+        }, null, 2));
+      };
+      
+      try {
+        groupData = JSON.parse(fs.readFileSync(groupFile));
+      } catch (error) {
+        console.error(`Erro ao carregar dados do grupo ${from}:`, error);
+        groupData = { mark: {} };
+      };
     
-    if (!fs.existsSync(groupFile)) {
-      fs.writeFileSync(groupFile, JSON.stringify({ 
-        mark: {},
-        createdAt: new Date().toISOString(),
-        groupName: groupName
-      }, null, 2));
-    }
+      groupData.moderators = groupData.moderators || [];
+      groupData.allowedModCommands = groupData.allowedModCommands || [];
+      groupData.mutedUsers = groupData.mutedUsers || {};
     
-    try {
-      groupData = JSON.parse(fs.readFileSync(groupFile));
-    } catch (error) {
-      console.error(`Erro ao carregar dados do grupo ${from}:`, error);
-      groupData = { mark: {} };
-    }
-    
-  groupData.moderators = groupData.moderators || [];
-  groupData.allowedModCommands = groupData.allowedModCommands || [];
-    groupData.mutedUsers = groupData.mutedUsers || {};
-    
-    if (groupName && groupData.groupName !== groupName) {
-      groupData.groupName = groupName;
-      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
-    }
-  }
+      if (groupName && groupData.groupName !== groupName) {
+        groupData.groupName = groupName;
+        fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      };
+    };
   
-  let isGroupAdmin = false;
-  if (isGroup) {
+    let isGroupAdmin = false;
+    if (isGroup) {
       const isModeratorActionAllowed = groupData.moderators?.includes(sender) && groupData.allowedModCommands?.includes(command);
       isGroupAdmin = groupAdmins.includes(sender) || isOwner || isModeratorActionAllowed;
-  }
+    };
   
-  const isModoBn = groupData.modobrincadeira;
-  const isOnlyAdmin = groupData.soadm;
-  const isAntiPorn = groupData.antiporn;
-  const isMuted = groupData.mutedUsers?.[sender];
-  const isAntiLinkGp = groupData.antilinkgp;
-  const isModoLite = isGroup && isModoLiteActive(groupData, modoLiteGlobal);
+    const isModoBn = groupData.modobrincadeira;
+    const isOnlyAdmin = groupData.soadm;
+    const isAntiPorn = groupData.antiporn;
+    const isMuted = groupData.mutedUsers?.[sender];
+    const isAntiLinkGp = groupData.antilinkgp;
+    const isModoLite = isGroup && isModoLiteActive(groupData, modoLiteGlobal);
   
-  if (isGroup && isOnlyAdmin && !isGroupAdmin) {
-    return; // Silenciosamente ignora mensagens de não-admins quando soadm está ativo
-  }
+    if (isGroup && isOnlyAdmin && !isGroupAdmin) {
+      return;
+    };
   
-  if (isGroup && isCmd && !isGroupAdmin && 
+    if (isGroup && isCmd && !isGroupAdmin && 
       groupData.blockedCommands && groupData.blockedCommands[command]) {
-    await reply('⛔ Este comando foi bloqueado pelos administradores do grupo.');
-    return;
-  }
+      await reply('⛔ Este comando foi bloqueado pelos administradores do grupo.');
+      return;
+    };
   
-  if (isGroup && groupData.afkUsers && groupData.afkUsers[sender]) {
-    try {
-    const afkReason = groupData.afkUsers[sender].reason;
-      const afkSince = new Date(groupData.afkUsers[sender].since || Date.now()).toLocaleString('pt-BR');
-      
-    delete groupData.afkUsers[sender];
+    if (isGroup && groupData.afkUsers && groupData.afkUsers[sender]) {
+      try {
+        const afkReason = groupData.afkUsers[sender].reason;
+        const afkSince = new Date(groupData.afkUsers[sender].since || Date.now()).toLocaleString('pt-BR');
+        delete groupData.afkUsers[sender];
+        fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+        await reply(`👋 *Bem-vindo(a) de volta!*\nSeu status AFK foi removido.\nVocê estava ausente desde: ${afkSince}`);
+      } catch (error) {
+        console.error("Erro ao processar remoção de AFK:", error);
+      };
+    };
 
-    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
-      
-      await reply(`👋 *Bem-vindo(a) de volta!*\nSeu status AFK foi removido.\nVocê estava ausente desde: ${afkSince}`);
-    } catch (error) {
-      console.error("Erro ao processar remoção de AFK:", error);
-    }
-  }
-
-  if (isGroup && isMuted) {
-    try {
-      await nazu.sendMessage(from, {
-        text: `🤫 *Usuário mutado detectado*\n\n@${sender.split("@")[0]}, você está tentando falar enquanto está mutado neste grupo. Você será removido conforme as regras.`, 
-        mentions: [sender]
-      }, {quoted: info});
-      
-      await nazu.sendMessage(from, {
-        delete: {
-          remoteJid: from, 
-          fromMe: false, 
-          id: info.key.id, 
-          participant: sender
-        }
-      });
-      
-      if (isBotAdmin) {
- await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-      } else {
-        await reply("⚠️ Não posso remover o usuário porque não sou administrador.");
-      }
-      
- delete groupData.mutedUsers[sender];
-
-      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
-      
-      return; // Encerra o processamento para este usuário
-    } catch (error) {
-      console.error("Erro ao processar usuário mutado:", error);
-    }
-  }
- 
- const rentalModeOn = isRentalModeActive();
- let groupHasActiveRental = false;
- let rentalStatusChecked = false; // Flag para evitar checagem dupla
-
- if (isGroup && rentalModeOn) {
-    const rentalStatus = getGroupRentalStatus(from);
-    groupHasActiveRental = rentalStatus.active;
-    rentalStatusChecked = true;
-    
-    const allowedCommandsBypass = [
-        // Comandos de Aluguel
-        'modoaluguel',
-        'addaluguel',
-        'gerarcodigo',
-        // Comandos de Subdono
-        'addsubdono',
-        'remsubdono',
-        'listasubdonos'
-    ];
-
-    if (!groupHasActiveRental && isCmd && !isOwnerOrSub && !allowedCommandsBypass.includes(command)) {
-        await reply("⏳ Oops! Parece que o aluguel deste grupo expirou ou não está ativo. Para usar os comandos, ative com um código ou peça para o dono renovar! 😊");
-        return; // Impede o processamento de outros comandos
-    }
- }
-
- if (isGroup && !isCmd && body && /\b[A-F0-9]{8}\b/.test(body.toUpperCase())) {
-    const potentialCode = body.match(/\b[A-F0-9]{8}\b/)[0].toUpperCase();
-    const validation = validateActivationCode(potentialCode); // Valida sem tentar usar ainda
-    if (validation.valid) {
-        try {
-            const activationResult = useActivationCode(potentialCode, from, sender);
-            await reply(activationResult.message);
-            if (activationResult.success) {
-                return; 
-            }
-        } catch (e) {
-            console.error(`Erro ao tentar usar código de ativação ${potentialCode} no grupo ${from}:`, e);
-        }
-    } 
- }
-
- if (isGroup) {
-   try {
-     groupData.contador = groupData.contador || [];
-     
-     const userIndex = groupData.contador.findIndex(user => user.id === sender);
-     
-     if (userIndex !== -1) {
-       const userData = groupData.contador[userIndex];
-       
-       if (isCmd) {
-         userData.cmd = (userData.cmd || 0) + 1;
-       } else if (type === "stickerMessage") {
-         userData.figu = (userData.figu || 0) + 1;
-       } else {
-         userData.msg = (userData.msg || 0) + 1;
-       }
-       
-       if (pushname && userData.pushname !== pushname) {
-         userData.pushname = pushname;
-       }
-       
-       userData.lastActivity = new Date().toISOString();
-     } else {
-       groupData.contador.push({
-         id: sender,
-         msg: isCmd ? 0 : 1,
-         cmd: isCmd ? 1 : 0,
-         figu: type === "stickerMessage" ? 1 : 0,
-         pushname: pushname || 'Usuário Desconhecido',
-         firstSeen: new Date().toISOString(),
-         lastActivity: new Date().toISOString()
-       });
-     }
-
-     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
-   } catch (error) {
-     console.error("Erro no sistema de contagem de mensagens:", error);
-   }
- }
- 
- async function reply(text, options = {}) {
-   try {
-     const { 
-       mentions = [], 
-       noForward = false, 
-       noQuote = false,
-       buttons = null
-     } = options;
-     
-     const messageContent = {
-       text: text.trim(),
-       mentions: mentions
-     };
-     
-     if (buttons) {
-       messageContent.buttons = buttons;
-       messageContent.headerType = 1;
-     }
-     
-     const sendOptions = {
-       sendEphemeral: true
-     };
-     
-     if (!noForward) {
-       sendOptions.contextInfo = { 
-         forwardingScore: 50, 
-         isForwarded: true, 
-         externalAdReply: { 
-           showAdAttribution: true 
-         }
-       };
-     }
-     
-     if (!noQuote) {
-       sendOptions.quoted = info;
-     }
-     
-     const result = await nazu.sendMessage(from, messageContent, sendOptions);
-     return result;
-   } catch (error) {
-     console.error("Erro ao enviar mensagem:", error);
-     return null;
-   }
- }
- nazu.reply = reply;
- 
- const reagir = async (emj, options = {}) => {
-   try {
-     const messageKey = options.key || info.key;
-     const delay = options.delay || 500;
-     
-     if (!messageKey) {
-       console.error("Chave de mensagem inválida para reação");
-       return false;
-     }
-     
-     if (typeof emj === 'string') {
-       if (emj.length < 1 || emj.length > 5) {
-         console.warn("Emoji inválido para reação:", emj);
-         return false;
-       }
-       
-       await nazu.sendMessage(from, { 
-         react: { 
-           text: emj, 
-           key: messageKey 
-         } 
-       });
-       
-       return true;
-     } 
-     else if (Array.isArray(emj) && emj.length > 0) {
-       for (const emoji of emj) {
-         if (typeof emoji !== 'string' || emoji.length < 1 || emoji.length > 5) {
-           console.warn("Emoji inválido na sequência:", emoji);
-           continue;
-         }
-         
-         await nazu.sendMessage(from, { 
-           react: { 
-             text: emoji, 
-             key: messageKey 
-           } 
-         });
-         
-         if (delay > 0 && emj.indexOf(emoji) < emj.length - 1) {
-           await new Promise(resolve => setTimeout(resolve, delay));
-         }
-       }
-       
-       return true;
-     }
-     
-     return false;
-   } catch (error) {
-     console.error("Erro ao reagir com emoji:", error);
-     return false;
-   }
- }
- nazu.react = reagir;
- 
- const getFileBuffer = async (mediakey, mediaType, options = {}) => {
-   try {
-     if (!mediakey) {
-       throw new Error('Chave de mídia inválida');
-     }
-     
-     const stream = await downloadContentFromMessage(mediakey, mediaType);
-     
-     let buffer = Buffer.from([]);
-     
-     const MAX_BUFFER_SIZE = 50 * 1024 * 1024;
-     let totalSize = 0;
-     
-     for await (const chunk of stream) {
-       buffer = Buffer.concat([buffer, chunk]);
-       totalSize += chunk.length;
-       
-       if (totalSize > MAX_BUFFER_SIZE) {
-         throw new Error(`Tamanho máximo de buffer excedido (${MAX_BUFFER_SIZE / (1024 * 1024)}MB)`);
-       }
-     }
-     
-     if (options.saveToTemp) {
-       try {
-         const tempDir = pathz.join(__dirname, '..', 'database', 'tmp');
-         ensureDirectoryExists(tempDir);
-         
-         const fileName = options.fileName || `${Date.now()}_${Math.floor(Math.random() * 10000)}`;
-         const extensionMap = {
-           image: '.jpg',
-           video: '.mp4',
-           audio: '.mp3',
-           document: '.bin' // Default for documents
-         };
-         const extension = extensionMap[mediaType] || '.dat'; // Fallback extension
-         
-         const filePath = pathz.join(tempDir, fileName + extension);
-         
-         fs.writeFileSync(filePath, buffer);
-         
-         return filePath;
-       } catch (fileError) {
-         console.error('Erro ao salvar arquivo temporário:', fileError);
-       }
-     }
-     
-     return buffer;
-   } catch (error) {
-     console.error(`Erro ao obter buffer de ${mediaType}:`, error);
-     throw error;
-   }
- }
-
-// Helper function to get media message object and type
-const getMediaInfo = (message) => {
-  if (!message) return null;
-  if (message.imageMessage) return { media: message.imageMessage, type: 'image' };
-  if (message.videoMessage) return { media: message.videoMessage, type: 'video' };
-  // Stickers might not be checkable by the API, excluding for now
-  // if (message.stickerMessage) return { media: message.stickerMessage, type: 'sticker' };
-  if (message.viewOnceMessage?.message?.imageMessage) return { media: message.viewOnceMessage.message.imageMessage, type: 'image' };
-  if (message.viewOnceMessage?.message?.videoMessage) return { media: message.viewOnceMessage.message.videoMessage, type: 'video' };
-  if (message.viewOnceMessageV2?.message?.imageMessage) return { media: message.viewOnceMessageV2.message.imageMessage, type: 'image' };
-  if (message.viewOnceMessageV2?.message?.videoMessage) return { media: message.viewOnceMessageV2.message.videoMessage, type: 'video' };
-  return null;
-};
-
-
- if (isGroup && info.message?.extendedTextMessage?.contextInfo?.mentionedJid) {
-    const mentioned = info.message.extendedTextMessage.contextInfo.mentionedJid;
-    if (groupData.afkUsers) {
-      for (const jid of mentioned) {
-        if (groupData.afkUsers[jid]) {
-          const afkData = groupData.afkUsers[jid];
-          const afkSince = new Date(afkData.since).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-          let afkMsg = `😴 @${jid.split('@')[0]} está AFK desde ${afkSince}.`;
-          if (afkData.reason) {
-            afkMsg += `
-Motivo: ${afkData.reason}`;
-          }
-          await reply(afkMsg, { mentions: [jid] });
-        }
-      }
-    }
-  }
-// Anti-Porn Check
-if (isGroup && isAntiPorn) {
-  const mediaInfo = getMediaInfo(info.message);
-
-  // Only check images for now, as the API URL suggests image classification
-  if (mediaInfo && mediaInfo.type === 'image') {
-    try {
-      const imageBuffer = await getFileBuffer(mediaInfo.media, 'image'); // Get buffer for the image
-      const mediaURL = await upload(imageBuffer, true); // Upload the buffer
-
-      if (mediaURL) {
-        const apiResponse = await axios.get(`https://nsfw-demo.sashido.io/api/image/classify?url=${encodeURIComponent(mediaURL)}`); // Ensure URL is encoded
-
-        // Process the response safely, assuming structure [{ className: '...', probability: ... }, ...]
-        let scores = { Porn: 0, Hentai: 0 };
-        if (Array.isArray(apiResponse.data)) {
-           scores = apiResponse.data.reduce((acc, item) => {
-             if (item && typeof item.className === 'string' && typeof item.probability === 'number') {
-               // Only accumulate relevant scores
-               if (item.className === 'Porn' || item.className === 'Hentai') {
-                  acc[item.className] = Math.max(acc[item.className] || 0, item.probability); // Take max probability if duplicates exist
-               }
-             }
-             return acc;
-           }, { Porn: 0, Hentai: 0 }); // Initialize accumulator correctly
+    if (isGroup && isMuted) {
+      try {
+        await nazu.sendMessage(from, { text: `🤫 *Usuário mutado detectado*\n\n@${sender.split("@")[0]}, você está tentando falar enquanto está mutado neste grupo. Você será removido conforme as regras.`, mentions: [sender] }, {quoted: info});
+        await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }});      
+        if (isBotAdmin) {
+          await nazu.groupParticipantsUpdate(from, [sender], 'remove');
         } else {
-            console.warn("Anti-porn API response format unexpected:", apiResponse.data);
+          await reply("⚠️ Não posso remover o usuário porque não sou administrador.");
+        };
+        delete groupData.mutedUsers[sender];
+        fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+        return;
+      } catch (error) {
+        console.error("Erro ao processar usuário mutado:", error);
+      };
+    };
+ 
+    const rentalModeOn = isRentalModeActive();
+    let groupHasActiveRental = false;
+    let rentalStatusChecked = false;
+
+    if (isGroup && rentalModeOn) {
+      const rentalStatus = getGroupRentalStatus(from);
+      groupHasActiveRental = rentalStatus.active;
+      rentalStatusChecked = true;
+    
+      const allowedCommandsBypass = ['modoaluguel', 'addaluguel', 'gerarcodigo', 'addsubdono', 'remsubdono', 'listasubdonos'];
+
+      if (!groupHasActiveRental && isCmd && !isOwnerOrSub && !allowedCommandsBypass.includes(command)) {
+        await reply("⏳ Oops! Parece que o aluguel deste grupo expirou ou não está ativo. Para usar os comandos, ative com um código ou peça para o dono renovar! 😊");
+        return;
+      };
+    };
+
+    if (isGroup && !isCmd && body && /\b[A-F0-9]{8}\b/.test(body.toUpperCase())) {
+      const potentialCode = body.match(/\b[A-F0-9]{8}\b/)[0].toUpperCase();
+      const validation = validateActivationCode(potentialCode);
+      if (validation.valid) {
+        try {
+          const activationResult = useActivationCode(potentialCode, from, sender);
+          await reply(activationResult.message);
+          if (activationResult.success) {
+            return;
+          };
+        } catch (e) {
+          console.error(`Erro ao tentar usar código de ativação ${potentialCode} no grupo ${from}:`, e);
+        };
+      };
+    };
+
+    if (isGroup) {
+      try {
+        groupData.contador = groupData.contador || [];
+     
+        const userIndex = groupData.contador.findIndex(user => user.id === sender);
+     
+        if (userIndex !== -1) {
+          const userData = groupData.contador[userIndex];       
+          if (isCmd) {
+            userData.cmd = (userData.cmd || 0) + 1;
+          } else if (type === "stickerMessage") {
+            userData.figu = (userData.figu || 0) + 1;
+          } else {
+            userData.msg = (userData.msg || 0) + 1;
+          };       
+          if (pushname && userData.pushname !== pushname) {
+            userData.pushname = pushname;
+          };
+          userData.lastActivity = new Date().toISOString();
+        } else {
+          groupData.contador.push({ id: sender, msg: isCmd ? 0 : 1, cmd: isCmd ? 1 : 0, figu: type === "stickerMessage" ? 1 : 0, pushname: pushname || 'Usuário Desconhecido', firstSeen: new Date().toISOString(), lastActivity: new Date().toISOString()});
+        };
+        fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      } catch (error) {
+        console.error("Erro no sistema de contagem de mensagens:", error);
+      };
+    };
+ 
+    async function reply(text, options = {}) {
+      try {
+        const { 
+          mentions = [], 
+          noForward = false, 
+          noQuote = false,
+          buttons = null
+        } = options;
+     
+        const messageContent = {
+          text: text.trim(),
+          mentions: mentions
+        };
+     
+        if (buttons) {
+          messageContent.buttons = buttons;
+          messageContent.headerType = 1;
         }
+     
+        const sendOptions = {
+          sendEphemeral: true
+        };
+     
+        if (!noForward) {
+          sendOptions.contextInfo = { 
+            forwardingScore: 50, 
+            isForwarded: true, 
+            externalAdReply: { 
+              showAdAttribution: true 
+            }
+          };
+        }
+     
+        if (!noQuote) {
+          sendOptions.quoted = info;
+        }
+     
+        const result = await nazu.sendMessage(from, messageContent, sendOptions);
+        return result;
+      } catch (error) {
+        console.error("Erro ao enviar mensagem:", error);
+        return null;
+      }
+    }
+    
+    nazu.reply = reply;
+ 
+    const reagir = async (emj, options = {}) => {
+      try {
+        const messageKey = options.key || info.key;
+        const delay = options.delay || 500;
+     
+        if (!messageKey) {
+          console.error("Chave de mensagem inválida para reação");
+          return false;
+        }
+     
+        if (typeof emj === 'string') {
+          if (emj.length < 1 || emj.length > 5) {
+            console.warn("Emoji inválido para reação:", emj);
+            return false;
+          }
+       
+          await nazu.sendMessage(from, { 
+            react: { 
+              text: emj, 
+              key: messageKey 
+            } 
+          });
+       
+          return true;
+        } else if (Array.isArray(emj) && emj.length > 0) {
+          for (const emoji of emj) {
+            if (typeof emoji !== 'string' || emoji.length < 1 || emoji.length > 5) {
+              console.warn("Emoji inválido na sequência:", emoji);
+              continue;
+            }
+         
+            await nazu.sendMessage(from, { 
+              react: { 
+                text: emoji, 
+                key: messageKey 
+              } 
+            });
+         
+            if (delay > 0 && emj.indexOf(emoji) < emj.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
+       
+          return true;
+        }
+     
+        return false;
+      } catch (error) {
+        console.error("Erro ao reagir com emoji:", error);
+        return false;
+      }
+    };
+    
+    nazu.react = reagir;
+ 
+ 
+    const getFileBuffer = async (mediakey, mediaType, options = {}) => {
+      try {
+        if (!mediakey) {
+          throw new Error('Chave de mídia inválida');
+        }     
+        const stream = await downloadContentFromMessage(mediakey, mediaType);     
+        let buffer = Buffer.from([]);    
+        const MAX_BUFFER_SIZE = 50 * 1024 * 1024;
+        let totalSize = 0;
+        for await (const chunk of stream) {
+          buffer = Buffer.concat([buffer, chunk]);
+          totalSize += chunk.length;       
+          if (totalSize > MAX_BUFFER_SIZE) {
+            throw new Error(`Tamanho máximo de buffer excedido (${MAX_BUFFER_SIZE / (1024 * 1024)}MB)`);
+          }
+        }
+     
+        if (options.saveToTemp) {
+          try {
+            const tempDir = pathz.join(__dirname, '..', 'database', 'tmp');
+            ensureDirectoryExists(tempDir);
+            const fileName = options.fileName || `${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+            const extensionMap = {
+              image: '.jpg',
+              video: '.mp4',
+              audio: '.mp3',
+              document: '.bin'
+            };
+      
+            const extension = extensionMap[mediaType] || '.dat';
+         
+            const filePath = pathz.join(tempDir, fileName + extension);
+         
+            fs.writeFileSync(filePath, buffer);
+         
+            return filePath;
+          } catch (fileError) {
+            console.error('Erro ao salvar arquivo temporário:', fileError);
+          }
+        }
+     
+        return buffer;
+      } catch (error) {
+        console.error(`Erro ao obter buffer de ${mediaType}:`, error);
+        throw error;
+      }
+    }
 
 
-        const pornThreshold = 0.7; // Define threshold
-        const hentaiThreshold = 0.7; // Define threshold
+    const getMediaInfo = (message) => {
+      if (!message) return null;
+      if (message.imageMessage) return { media: message.imageMessage, type: 'image' };
+      if (message.videoMessage) return { media: message.videoMessage, type: 'video' };
+      if (message.viewOnceMessage?.message?.imageMessage) return { media: message.viewOnceMessage.message.imageMessage, type: 'image' };
+      if (message.viewOnceMessage?.message?.videoMessage) return { media: message.viewOnceMessage.message.videoMessage, type: 'video' };
+      if (message.viewOnceMessageV2?.message?.imageMessage) return { media: message.viewOnceMessageV2.message.imageMessage, type: 'image' };
+      if (message.viewOnceMessageV2?.message?.videoMessage) return { media: message.viewOnceMessageV2.message.videoMessage, type: 'video' };
+      return null;
+    };
 
-        const isPorn = scores.Porn >= pornThreshold;
-        const isHentai = scores.Hentai >= hentaiThreshold;
 
-        if (isPorn || isHentai) {
-          const reason = isPorn ? 'Pornografia' : 'Hentai';
-          await reply(`🚨 Conteúdo impróprio detectado! (${reason})`);
-          if (isBotAdmin) {
-            try {
-              await nazu.sendMessage(from, { delete: info.key });
-              await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-              await reply(`🔞 Oops! @${sender.split('@')[0]}, conteúdo impróprio não é permitido e você foi removido(a).`,  { mentions: [sender] });
-            } catch (adminError) {
-              console.error(`Erro ao remover usuário por anti-porn: ${adminError}`);
-              await reply(`⚠️ Não consegui remover @${sender.split('@')[0]} automaticamente após detectar conteúdo impróprio. Admins, por favor, verifiquem!`,  { mentions: [sender] });
+    if (isGroup && info.message?.extendedTextMessage?.contextInfo?.mentionedJid) {
+      const mentioned = info.message.extendedTextMessage.contextInfo.mentionedJid;
+      if (groupData.afkUsers) {
+        for (const jid of mentioned) {
+          if (groupData.afkUsers[jid]) {
+            const afkData = groupData.afkUsers[jid];
+            const afkSince = new Date(afkData.since).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+            let afkMsg = `😴 @${jid.split('@')[0]} está AFK desde ${afkSince}.`;
+            if (afkData.reason) {
+              afkMsg += `\nMotivo: ${afkData.reason}`;
+            }
+            await reply(afkMsg, { mentions: [jid] });
+          }
+        }
+      }
+    }
+
+
+    if (isGroup && isAntiPorn) {
+      const mediaInfo = getMediaInfo(info.message);
+      if (mediaInfo && mediaInfo.type === 'image') {
+        try {
+          const imageBuffer = await getFileBuffer(mediaInfo.media, 'image');
+          const mediaURL = await upload(imageBuffer, true);
+          if (mediaURL) {
+            const apiResponse = await axios.get(`https://nsfw-demo.sashido.io/api/image/classify?url=${encodeURIComponent(mediaURL)}`);
+            let scores = { Porn: 0, Hentai: 0 };
+            if (Array.isArray(apiResponse.data)) {
+              scores = apiResponse.data.reduce((acc, item) => {
+                if (item && typeof item.className === 'string' && typeof item.probability === 'number') {
+                  if (item.className === 'Porn' || item.className === 'Hentai') {
+                    acc[item.className] = Math.max(acc[item.className] || 0, item.probability);
+                  }
+                }
+                return acc;
+              }, { Porn: 0, Hentai: 0 });
+            } else {
+              console.warn("Anti-porn API response format unexpected:", apiResponse.data);
+            };
+            const pornThreshold = 0.7;
+            const hentaiThreshold = 0.7;
+            const isPorn = scores.Porn >= pornThreshold;
+            const isHentai = scores.Hentai >= hentaiThreshold;
+            if (isPorn || isHentai) {
+              const reason = isPorn ? 'Pornografia' : 'Hentai';
+              await reply(`🚨 Conteúdo impróprio detectado! (${reason})`);
+              if (isBotAdmin) {
+                try {
+                  await nazu.sendMessage(from, { delete: info.key });
+                  await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+                  await reply(`🔞 Oops! @${sender.split('@')[0]}, conteúdo impróprio não é permitido e você foi removido(a).`,  { mentions: [sender] });
+                } catch (adminError) {
+                  console.error(`Erro ao remover usuário por anti-porn: ${adminError}`);
+                  await reply(`⚠️ Não consegui remover @${sender.split('@')[0]} automaticamente após detectar conteúdo impróprio. Admins, por favor, verifiquem!`,  { mentions: [sender] });
+                };
+              } else {
+                await reply(`@${sender.split('@')[0]} enviou conteúdo impróprio (${reason}), mas não posso removê-lo sem ser admin.`, { mentions: [sender] });
+              }
             }
           } else {
-            await reply(`@${sender.split('@')[0]} enviou conteúdo impróprio (${reason}), mas não posso removê-lo sem ser admin.`, { mentions: [sender] });
+             console.warn("Falha no upload da imagem para verificação anti-porn.");
+          }
+        } catch (error) {
+          console.error("Erro na verificação anti-porn:", error);
+        };
+      };
+    };
+
+
+    if (isGroup && groupData.antiloc && !isGroupAdmin && type === 'locationMessage') {
+      await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+      await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+      await reply(`🗺️ Ops! @${sender.split('@')[0]}, parece que localizações não são permitidas aqui e você foi removido(a).`,  { mentions: [sender] });
+    };
+
+
+    if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
+      antifloodData[from].users = antifloodData[from].users || {};
+      const now = Date.now();
+      const lastCmd = antifloodData[from].users[sender]?.lastCmd || 0;
+      const interval = antifloodData[from].interval * 1000;
+      if (now - lastCmd < interval) {
+        return reply(`⏳ Calma aí, apressadinho(a)! 😊 Espere ${Math.ceil((interval - (now - lastCmd)) / 1000)} segundos para usar outro comando, por favor! ✨`);
+      };
+      antifloodData[from].users[sender] = { lastCmd: now };
+      fs.writeFileSync(__dirname + '/../database/antiflood.json', JSON.stringify(antifloodData, null, 2));
+    };
+
+
+    if (isGroup && groupData.antidoc && !isGroupAdmin && (type === 'documentMessage' || type === 'documentWithCaptionMessage')) {
+      await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+      await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+      await reply(`📄 Oops! @${sender.split('@')[0]}, parece que documentos não são permitidos aqui e você foi removido(a).`,  { mentions: [sender] });
+    };
+
+
+    if (isGroup && cmdLimitData[from]?.enabled && isCmd && !isGroupAdmin) {
+      cmdLimitData[from].users = cmdLimitData[from].users || {};
+      const today = new Date().toISOString().split('T')[0];
+      cmdLimitData[from].users[sender] = cmdLimitData[from].users[sender] || { date: today, count: 0 };
+      if (cmdLimitData[from].users[sender].date !== today) {
+        cmdLimitData[from].users[sender] = { date: today, count: 0 };
+      }
+      if (cmdLimitData[from].users[sender].count >= cmdLimitData[from].limit) {
+        return reply(`🚫 Oops! Você já usou seus ${cmdLimitData[from].limit} comandos de hoje. Tente novamente amanhã! 😊`);
+      }
+      cmdLimitData[from].users[sender].count++;
+      fs.writeFileSync(__dirname + '/../database/cmdlimit.json', JSON.stringify(cmdLimitData, null, 2));
+    };
+
+
+    if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
+      const urlMatch = body.match(/(https?:\/\/[^\s]+)/g);
+      if (urlMatch) {
+        for (const url of urlMatch) {
+          try {
+            if (url.includes('tiktok.com')) {
+              const datinha = await tiktok.dl(url);
+              if (datinha.ok) {
+                await nazu.sendMessage(from, { [datinha.type]: { url: datinha.urls[0] }, caption: '🎵 Download automático do TikTok!' }, { quoted: info });
+              }
+            } else if (url.includes('instagram.com')) {
+              const datinha = await igdl.dl(url);
+              if (datinha.ok) {
+                await nazu.sendMessage(from, { [datinha.data[0].type]: datinha.data[0].buff, caption: '📸 Download automático do Instagram!' }, { quoted: info });
+              }
+            } else if (url.includes('pinterest.com') || url.includes('pin.it') ) {
+              const datinha = await pinterest.dl(url);
+              if (datinha.ok) {
+                await nazu.sendMessage(from, { [datinha.type]: { url: datinha.urls[0] }, caption: '📌 Download automático do Pinterest!' }, { quoted: info });
+              }
+            }
+          } catch (e) {
+            console.error('Erro no autodl:', e);
           }
         }
-      } else {
-         console.warn("Falha no upload da imagem para verificação anti-porn.");
       }
-    } catch (error) {
-      console.error("Erro na verificação anti-porn:", error);
     }
-  }
-}
 
-if (isGroup && groupData.antiloc && !isGroupAdmin && type === 'locationMessage') {
-  await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
-  await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-  await reply(`🗺️ Ops! @${sender.split('@')[0]}, parece que localizações não são permitidas aqui e você foi removido(a).`,  { mentions: [sender] });
-};
 
-if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
-  antifloodData[from].users = antifloodData[from].users || {};
-  const now = Date.now();
-  const lastCmd = antifloodData[from].users[sender]?.lastCmd || 0;
-  const interval = antifloodData[from].interval * 1000;
-  if (now - lastCmd < interval) {
-    return reply(`⏳ Calma aí, apressadinho(a)! 😊 Espere ${Math.ceil((interval - (now - lastCmd)) / 1000)} segundos para usar outro comando, por favor! ✨`);
-  }
-  antifloodData[from].users[sender] = { lastCmd: now };
-  fs.writeFileSync(__dirname + '/../database/antiflood.json', JSON.stringify(antifloodData, null, 2));
-};
-
-if (isGroup && groupData.antidoc && !isGroupAdmin && (type === 'documentMessage' || type === 'documentWithCaptionMessage')) {
-  await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
-  await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-  await reply(`📄 Oops! @${sender.split('@')[0]}, parece que documentos não são permitidos aqui e você foi removido(a).`,  { mentions: [sender] });
-};
-
-if (isGroup && cmdLimitData[from]?.enabled && isCmd && !isGroupAdmin) {
-  cmdLimitData[from].users = cmdLimitData[from].users || {};
-  const today = new Date().toISOString().split('T')[0];
-  cmdLimitData[from].users[sender] = cmdLimitData[from].users[sender] || { date: today, count: 0 };
-  if (cmdLimitData[from].users[sender].date !== today) {
-    cmdLimitData[from].users[sender] = { date: today, count: 0 };
-  }
-  if (cmdLimitData[from].users[sender].count >= cmdLimitData[from].limit) {
-    return reply(`🚫 Oops! Você já usou seus ${cmdLimitData[from].limit} comandos de hoje. Tente novamente amanhã! 😊`);
-  }
-  cmdLimitData[from].users[sender].count++;
-  fs.writeFileSync(__dirname + '/../database/cmdlimit.json', JSON.stringify(cmdLimitData, null, 2));
-}
-
-if (isGroup && groupData.autodl && budy2.includes('http') && !isCmd) {
-  const urlMatch = body.match(/(https?:\/\/[^\s]+)/g);
-  if (urlMatch) {
-    for (const url of urlMatch) {
+    if (isGroup && groupData.autoSticker && !info.key.fromMe) {
       try {
-        if (url.includes('tiktok.com')) {
-          const datinha = await tiktok.dl(url);
-          if (datinha.ok) {
-            await nazu.sendMessage(from, { [datinha.type]: { url: datinha.urls[0] }, caption: '🎵 Download automático do TikTok!' }, { quoted: info });
-          }
-        } else if (url.includes('instagram.com')) {
-          const datinha = await igdl.dl(url);
-          if (datinha.ok) {
-            await nazu.sendMessage(from, { [datinha.data[0].type]: datinha.data[0].buff, caption: '📸 Download automático do Instagram!' }, { quoted: info });
-          }
-        } else if (url.includes('pinterest.com') || url.includes('pin.it') ) {
-          const datinha = await pinterest.dl(url);
-          if (datinha.ok) {
-            await nazu.sendMessage(from, { [datinha.type]: { url: datinha.urls[0] }, caption: '📌 Download automático do Pinterest!' }, { quoted: info });
-          }
+        const mediaImage = info.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage;                      
+        const mediaVideo = info.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage;     
+        if (mediaImage || mediaVideo) {
+          const isVideo = !!mediaVideo;     
+          if (isVideo && mediaVideo.seconds > 9.9) {
+            return;
+          }       
+          const buffer = await getFileBuffer(
+            isVideo ? mediaVideo : mediaImage, 
+            isVideo ? 'video' : 'image'
+          );
+          const shouldForceSquare = global.autoStickerMode === 'square';
+       
+          await sendSticker(nazu, from, { sticker: buffer, author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`, packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫', type: isVideo ? 'video' : 'image', forceSquare: shouldForceSquare }, { quoted: info });
         }
       } catch (e) {
-        console.error('Erro no autodl:', e);
+        console.error("Erro ao converter mídia em figurinha automática:", e);
       }
+    };
+
+
+    if (isGroup && groupData.antilinkhard && !isGroupAdmin && budy2.includes('http') && !isOwner) {
+      try {
+        await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }});
+        if (isBotAdmin) {
+          await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+          await reply(`🔗 Ops! @${sender.split('@')[0]}, links não são permitidos aqui e você foi removido(a).`,  { mentions: [sender] });
+        } else {
+          await reply(`🔗 Atenção, @${sender.split('@')[0]}! Links não são permitidos aqui. Não consigo remover você, mas por favor, evite enviar links. 😉`,  { mentions: [sender] });
+        };     
+        return;
+      } catch (error) {
+        console.error("Erro no sistema antilink hard:", error);
+      };
+    };
+
+
+    let quotedMessageContent = null;
+    if (type === 'extendedTextMessage' && info.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+      quotedMessageContent = info.message.extendedTextMessage.contextInfo.quotedMessage;
     }
-  }
-}
+ 
+    const isQuotedMsg = !!quotedMessageContent?.conversation;
+    const isQuotedMsg2 = !!quotedMessageContent?.extendedTextMessage?.text;
+    const isQuotedImage = !!quotedMessageContent?.imageMessage;
+    const isQuotedVisuU = !!quotedMessageContent?.viewOnceMessage;
+    const isQuotedVisuU2 = !!quotedMessageContent?.viewOnceMessageV2;
+    const isQuotedVideo = !!quotedMessageContent?.videoMessage;
+    const isQuotedDocument = !!quotedMessageContent?.documentMessage;
+    const isQuotedDocW = !!quotedMessageContent?.documentWithCaptionMessage;
+    const isQuotedAudio = !!quotedMessageContent?.audioMessage;
+    const isQuotedSticker = !!quotedMessageContent?.stickerMessage;
+    const isQuotedContact = !!quotedMessageContent?.contactMessage;
+    const isQuotedLocation = !!quotedMessageContent?.locationMessage;
+    const isQuotedProduct = !!quotedMessageContent?.productMessage;
+ 
+ 
+    if (body.startsWith('$')) {
+      if (!isOwner) return;
+      try {
+        exec(q, (err, stdout) => {
+          if (err) {
+            return reply(`❌ *Erro na execução*\n\n${err}`);
+          };
+          if (stdout) {
+            reply(`✅ *Resultado do comando*\n\n${stdout}`);
+          };
+      });
+      } catch (error) {
+        reply(`❌ *Erro ao executar comando*\n\n${error}`);
+      };
+    };
+ 
 
- if (isGroup && groupData.autoSticker && !info.key.fromMe) {
-   try {
-     const mediaImage = info.message?.imageMessage || 
-                      info.message?.viewOnceMessageV2?.message?.imageMessage || 
-                      info.message?.viewOnceMessage?.message?.imageMessage;
-                      
-     const mediaVideo = info.message?.videoMessage || 
-                      info.message?.viewOnceMessageV2?.message?.videoMessage || 
-                      info.message?.viewOnceMessage?.message?.videoMessage;
-     
-     if (mediaImage || mediaVideo) {
-       const isVideo = !!mediaVideo;
-       
-       if (isVideo && mediaVideo.seconds > 9.9) {
-         return;
-       }
-       
-       const buffer = await getFileBuffer(
-         isVideo ? mediaVideo : mediaImage, 
-         isVideo ? 'video' : 'image'
-       );
-       
-       // Configurações da figurinha
-       const packname = nomebot ? nomebot.trim() : 'NazuninhaBot';
-       const author = nomedono ? nomedono.trim() : 'Hiudy';
-       const shouldForceSquare = global.autoStickerMode === 'square';
-       
-       // Envia a figurinha
-         await sendSticker(nazu, from, { 
-             sticker: buffer, 
-             author: author, 
-             packname: packname, 
-         type: isVideo ? 'video' : 'image', 
-         forceSquare: shouldForceSquare
-         }, { quoted: info });
-     }
-   } catch (e) {
-     console.error("Erro ao converter mídia em figurinha automática:", e);
-   }
- };
-
- // SISTEMA ANTILINK HARD - Remove qualquer link enviado por não-admins
- if (isGroup && groupData.antilinkhard && !isGroupAdmin && budy2.includes('http') && !isOwner) {
-   try {
-     // Apaga a mensagem com o link
-     await nazu.sendMessage(from, { 
-       delete: { 
-         remoteJid: from, 
-         fromMe: false, 
-         id: info.key.id, 
-         participant: sender 
-       } 
-     });
-     
-     // Remove o usuário se o bot for admin
-     if (isBotAdmin) {
-  await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-       await reply(`🔗 Ops! @${sender.split('@')[0]}, links não são permitidos aqui e você foi removido(a).`,  { 
-         mentions: [sender] 
-       });
-     } else {
-       await reply(`🔗 Atenção, @${sender.split('@')[0]}! Links não são permitidos aqui. Não consigo remover você, mas por favor, evite enviar links. 😉`,  {
-         mentions: [sender]
-       });
-     }
-     
-     return; // Encerra o processamento para este usuário
-   } catch (error) {
-     console.error("Erro no sistema antilink hard:", error);
-   }
- };
-
- //DEFINIÇÕES DE ISQUOTED
- // const content = JSON.stringify(info.message);
- let quotedMessageContent = null;
- if (type === 'extendedTextMessage' && info.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
-   quotedMessageContent = info.message.extendedTextMessage.contextInfo.quotedMessage;
- }
- 
- const isQuotedMsg = !!quotedMessageContent?.conversation;
- const isQuotedMsg2 = !!quotedMessageContent?.extendedTextMessage?.text; // Check if the quoted message itself is an extendedTextMessage with text
- const isQuotedImage = !!quotedMessageContent?.imageMessage;
- const isQuotedVisuU = !!quotedMessageContent?.viewOnceMessage;
- const isQuotedVisuU2 = !!quotedMessageContent?.viewOnceMessageV2;
- const isQuotedVideo = !!quotedMessageContent?.videoMessage;
- const isQuotedDocument = !!quotedMessageContent?.documentMessage;
- const isQuotedDocW = !!quotedMessageContent?.documentWithCaptionMessage;
- const isQuotedAudio = !!quotedMessageContent?.audioMessage;
- const isQuotedSticker = !!quotedMessageContent?.stickerMessage;
- const isQuotedContact = !!quotedMessageContent?.contactMessage;
- const isQuotedLocation = !!quotedMessageContent?.locationMessage;
- const isQuotedProduct = !!quotedMessageContent?.productMessage;
- 
- // SISTEMA DE EXECUÇÃO PARA DONO - Permite execução de comandos do sistema e código JavaScript
- // Execução de comandos do sistema com $
- if (body.startsWith('$')) {
-   // Verifica se é o dono
-   if (!isOwner) return;
-   
-   try {
-     // Executa o comando
-     exec(q, (err, stdout) => {
-       if (err) {
-         return reply(`❌ *Erro na execução*\n\n${err}`);
-       }
-       
-       if (stdout) {
-         reply(`✅ *Resultado do comando*\n\n${stdout}`);
-       }
-     });
-   } catch (error) {
-     reply(`❌ *Erro ao executar comando*\n\n${error}`);
-   }
- }
- 
- // Execução de código JavaScript com >>
- if (body.startsWith('>>')) {
-   // Verifica se é o dono
-   if (!isOwner) return;
-   
-   try {
-     (async () => {
-       try {
-         // Processa o código para retornar o resultado
-         const codeLines = body.slice(2).trim().split('\n');
-         
-         // Adiciona 'return' na última linha se não existir
-         if (codeLines.length > 1) {
-           if (!codeLines[codeLines.length - 1].includes('return')) {
-             codeLines[codeLines.length - 1] = 'return ' + codeLines[codeLines.length - 1];
-           }
-         } else {
-           if (!codeLines[0].includes('return')) {
-             codeLines[0] = 'return ' + codeLines[0];
-           }
-         }
-         
-         // Executa o código
-         const result = await eval(`(async () => { ${codeLines.join('\n')} })()`);
-         
-         // Formata o resultado
-         let output;
-         if (typeof result === 'object' && result !== null) {
-           output = JSON.stringify(result, null, 2);
-         } else if (typeof result === 'function') {
-           output = result.toString();
-         } else {
-           output = String(result);
-         }
-         
-         // Envia o resultado
-         return reply(`✅ *Resultado da execução*\n\n${output}`).catch(e => reply(String(e)));
-       } catch (e) {
-         return reply(`❌ *Erro na execução*\n\n${String(e)}`);
-       }
-     })();
-   } catch (e) {
-     reply(`❌ *Erro crítico*\n\n${String(e)}`);
-   }
- }
- 
- // SISTEMA ANTILINK DE GRUPOS - Detecta e remove links de grupos do WhatsApp
- if (isGroup && isAntiLinkGp && !isGroupAdmin && budy2.includes('chat.whatsapp.com')) {
-   try {
-     // Ignora se for o dono do bot
-     if (isOwner) return;
-     
-     // Permite link do próprio grupo
-     const link_dgp = await nazu.groupInviteCode(from);
-     if (budy2.includes(link_dgp)) return;
-     
-     // Apaga a mensagem
-     await nazu.sendMessage(from, { 
-       delete: { 
-         remoteJid: from, 
-         fromMe: false, 
-         id: info.key.id, 
-         participant: sender
-       }
-     });
-     
-     // Verifica se o usuário ainda está no grupo
-     if (!AllgroupMembers.includes(sender)) return;
-     
-     // Remove o usuário se o bot for admin
-     if (isBotAdmin) {
-       await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-       await reply(`🔗 Ops! @${sender.split('@')[0]}, links de outros grupos não são permitidos aqui e você foi removido(a).`,  {
-         mentions: [sender]
-       });
-     } else {
-       await reply(`🔗 Atenção, @${sender.split('@')[0]}! Links de outros grupos não são permitidos. Não consigo remover você, mas por favor, evite compartilhar esses links. 😉`,  {
-         mentions: [sender]
-       });
-     }
-     
-     return; // Encerra o processamento para este usuário
-   } catch (error) {
-     console.error("Erro no sistema antilink de grupos:", error);
-   }
- };
- 
- //BOT OFF
-  const botStateFile = __dirname + '/../database/botState.json';
-  if (botState.status === 'off' && !isOwner) return;
-
- // SISTEMA DE LOGS - Registra atividades no console para monitoramento
- try {
-   // Cabeçalho do log
- console.log(`=========================================`);
-   
-   // Tipo de mensagem (comando ou mensagem normal)
- console.log(`${isCmd ? '⚒️ Comando' : '🗨️ Mensagem'} ${isGroup ? 'em grupo 👥' : 'no privado 👤'}`);
-   
-   // Conteúdo da mensagem (limitado para evitar logs muito grandes)
-   const messagePreview = isCmd 
-     ? `${prefix}${command} ${q.length > 0 ? q.substring(0, 20) + (q.length > 20 ? '...' : '') : ''}`
-     : budy2.substring(0, 30) + (budy2.length > 30 ? '...' : '');
-   console.log(`${isCmd ? '⚒️ Comando' : '🗨️ Mensagem'}: "${messagePreview}"`);
-   
-   // Informações do grupo ou usuário
-   if (isGroup) {
-     console.log(`👥 Grupo: "${groupName || 'Desconhecido'}"`);
-     console.log(`👤 Usuário: "${pushname || 'Sem Nome'}"`);
-   } else {
-     console.log(`👤 Usuário: "${pushname || 'Sem nome'}"`);
-     console.log(`📲 Número: "${sender.split('@')[0]}"`);
-   }
-   
-   // Timestamp para rastreamento
-   console.log(`🕒 Hora: ${new Date().toLocaleTimeString('pt-BR')}`);
-   
-   // Rodapé do log
- console.log(`=========================================`);
- } catch (error) {
-   console.error("Erro ao gerar logs:", error);
- }
- 
-   // SISTEMA DE JOGO DA VELHA - Implementa jogo interativo nos grupos
- if (isGroup) {
-    try {
-      // Processa respostas a convites para o jogo
-    if (tictactoe.hasPendingInvitation(from) && budy2) {
-        const normalizedResponse = budy2.toLowerCase().trim();
-        const result = tictactoe.processInvitationResponse(from, sender, normalizedResponse);
-        
-        if (result.success) {
-            await nazu.sendMessage(from, { 
-                text: result.message, 
-                mentions: result.mentions || [] 
-            });
-        }
-      }
-      
-      // Processa jogos ativos
-    if (tictactoe.hasActiveGame(from) && budy2) {
-        // Comandos para encerrar o jogo
-        if (['tttend', 'rv', 'fimjogo'].includes(budy2)) {
-          // Apenas admins podem encerrar jogos forçadamente
-          if (!isGroupAdmin) {
-            await reply("✋ Somente os administradores do grupo podem encerrar um jogo da velha em andamento! 😊");
-            return;
+    if (body.startsWith('>>')) {
+      if (!isOwner) return;
+      try {
+        (async () => {
+          try {
+            const codeLines = body.slice(2).trim().split('\n');
+            if (codeLines.length > 1) {
+              if (!codeLines[codeLines.length - 1].includes('return')) {
+                codeLines[codeLines.length - 1] = 'return ' + codeLines[codeLines.length - 1];
+              };
+            } else {
+              if (!codeLines[0].includes('return')) {
+                codeLines[0] = 'return ' + codeLines[0];
+              };
+            };
+            const result = await eval(`(async () => { ${codeLines.join('\n')} })()`);
+            let output;
+            if (typeof result === 'object' && result !== null) {
+              output = JSON.stringify(result, null, 2);
+            } else if (typeof result === 'function') {
+              output = result.toString();
+            } else {
+              output = String(result);
+            };
+            return reply(`✅ *Resultado da execução*\n\n${output}`).catch(e => reply(String(e)));
+          } catch (e) {
+            return reply(`❌ *Erro na execução*\n\n${String(e)}`);
           }
-          
+        })();
+      } catch (e) {
+        reply(`❌ *Erro crítico*\n\n${String(e)}`);
+      };
+    };
+ 
+
+    if (isGroup && isAntiLinkGp && !isGroupAdmin && budy2.includes('chat.whatsapp.com')) {
+      try {
+        if (isOwner) return;
+        const link_dgp = await nazu.groupInviteCode(from);
+        if (budy2.includes(link_dgp)) return;
+        await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }});
+        if (!AllgroupMembers.includes(sender)) return;
+        if (isBotAdmin) {
+          await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+          await reply(`🔗 Ops! @${sender.split('@')[0]}, links de outros grupos não são permitidos aqui e você foi removido(a).`,  { mentions: [sender] });
+        } else {
+          await reply(`🔗 Atenção, @${sender.split('@')[0]}! Links de outros grupos não são permitidos. Não consigo remover você, mas por favor, evite compartilhar esses links. 😉`,  { mentions: [sender] });
+        }     
+        return;
+      } catch (error) {
+        console.error("Erro no sistema antilink de grupos:", error);
+      }
+    };
+ 
+
+    const botStateFile = __dirname + '/../database/botState.json';
+    if (botState.status === 'off' && !isOwner) return;
+
+
+    try {
+      console.log(`=========================================`);
+      console.log(`${isCmd ? '⚒️ Comando' : '🗨️ Mensagem'} ${isGroup ? 'em grupo 👥' : 'no privado 👤'}`);
+      const messagePreview = isCmd ? `${prefix}${command} ${q.length > 0 ? q.substring(0, 20) + (q.length > 20 ? '...' : '') : ''}` : budy2.substring(0, 30) + (budy2.length > 30 ? '...' : '');
+      console.log(`${isCmd ? '⚒️ Comando' : '🗨️ Mensagem'}: "${messagePreview}"`);
+      if (isGroup) {
+        console.log(`👥 Grupo: "${groupName || 'Desconhecido'}"`);
+        console.log(`👤 Usuário: "${pushname || 'Sem Nome'}"`);
+      } else {
+        console.log(`👤 Usuário: "${pushname || 'Sem nome'}"`);
+        console.log(`📲 Número: "${sender.split('@')[0]}"`);
+      };
+      console.log(`🕒 Hora: ${new Date().toLocaleTimeString('pt-BR')}`);
+      console.log(`=========================================`);
+    } catch (error) {
+      console.error("Erro ao gerar logs:", error);
+    };
+
+
+    if (isGroup) {
+      try {
+        if (tictactoe.hasPendingInvitation(from) && budy2) {
+          const normalizedResponse = budy2.toLowerCase().trim();
+          const result = tictactoe.processInvitationResponse(from, sender, normalizedResponse);
+          if (result.success) {
+            await nazu.sendMessage(from, { text: result.message, mentions: result.mentions || [] });
+          }
+        };
+        
+        if (tictactoe.hasActiveGame(from) && budy2) {
+          if (['tttend', 'rv', 'fimjogo'].includes(budy2)) {
+            if (!isGroupAdmin) {
+              await reply("✋ Somente os administradores do grupo podem encerrar um jogo da velha em andamento! 😊");
+              return;
+            };
             const result = tictactoe.endGame(from);
             await reply(result.message);
             return;
-        }
-        
-        // Processa jogadas (números de 1-9)
-        const position = parseInt(budy2.trim());
-        if (!isNaN(position)) {
-            const result = tictactoe.makeMove(from, sender, position);
-          
+          };
+          const position = parseInt(budy2.trim());
+          if (!isNaN(position)) {
+            const result = tictactoe.makeMove(from, sender, position);          
             if (result.success) {
-                await nazu.sendMessage(from, { 
-                    text: result.message, 
-                    mentions: result.mentions || [sender] 
-                });
-          } else if (result.message) {
-            // Se houver mensagem de erro, envia como resposta
-            await reply(result.message);
-          }
-        }
-        
-        // Interrompe o processamento para não interferir com o jogo
-        return;
-      }
-    } catch (error) {
-      console.error("Erro no sistema de jogo da velha:", error);
-    }
-  }
-
-//VERIFICAR USUÁRIOS BLOQUEADOS (GRUPO)
-if (isGroup && groupData.blockedUsers && (groupData.blockedUsers[sender] || groupData.blockedUsers[sender.split('@')[0]]) && isCmd) {
-  return reply(`🚫 Oops! Parece que você não pode usar comandos neste grupo.
-Motivo: ${groupData.blockedUsers[sender] ? groupData.blockedUsers[sender].reason : groupData.blockedUsers[sender.split('@')[0]].reason}`);
-};
-
-//VERIFICAR BLOQUEIOS (GLOBAL)
-if (globalBlocks.users && (globalBlocks.users[sender.split('@')[0]] || globalBlocks.users[sender]) && isCmd) {
-  return reply(`🚫 Parece que você está bloqueado de usar meus comandos globalmente.
-Motivo: ${globalBlocks.users[sender] ? globalBlocks.users[sender].reason : globalBlocks.users[sender.split('@')[0]].reason}`);
-};
-if (isCmd && globalBlocks.commands && globalBlocks.commands[command]) {
-  return reply(`🚫 O comando *${command}* está temporariamente desativado globalmente.
-Motivo: ${globalBlocks.commands[command].reason}`);
-};
-
-// SISTEMA DE RECUPERAÇÃO DE MÍDIA - Comando especial para recuperar mídias
-if (budy2 === "ta baxano" && !isGroup) {
-  try {
-    // Obtém a mensagem citada
-    const quotedMsg = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-    
-    if (!quotedMsg) {
-      return;
-    }
-    
-    // Detecta o tipo de mídia na mensagem
-    const imageMedia = quotedMsg?.imageMessage || 
-                      info.message?.imageMessage || 
-                      quotedMsg?.viewOnceMessageV2?.message?.imageMessage || 
-                      info.message?.viewOnceMessageV2?.message?.imageMessage || 
-                      info.message?.viewOnceMessage?.message?.imageMessage || 
-                      quotedMsg?.viewOnceMessage?.message?.imageMessage;
-                      
-    const videoMedia = quotedMsg?.videoMessage || 
-                      info.message?.videoMessage || 
-                      quotedMsg?.viewOnceMessageV2?.message?.videoMessage || 
-                      info.message?.viewOnceMessageV2?.message?.videoMessage || 
-                      info.message?.viewOnceMessage?.message?.videoMessage || 
-                      quotedMsg?.viewOnceMessage?.message?.videoMessage;
-                      
-    const audioMedia = quotedMsg?.audioMessage || 
-                      info.message?.audioMessage || 
-                      quotedMsg?.viewOnceMessageV2?.message?.audioMessage || 
-                      info.message?.viewOnceMessageV2?.message?.audioMessage || 
-                      info.message?.viewOnceMessage?.message?.audioMessage || 
-                      quotedMsg?.viewOnceMessage?.message?.audioMessage;
-    
-    // Processa a mídia encontrada
-    if (videoMedia) {
-      // Recupera vídeo
-      const mediaObj = { ...videoMedia };
-      mediaObj.viewOnce = false;
-      mediaObj.video = { url: mediaObj.url };
-      
-      // Envia para o bot (para armazenamento temporário)
-      await nazu.sendMessage(botNumber, mediaObj, { quoted: info });
-    } else if (imageMedia) {
-      // Recupera imagem
-      const mediaObj = { ...imageMedia };
-      mediaObj.viewOnce = false;
-      mediaObj.image = { url: mediaObj.url };
-      
-      // Envia para o bot
-      await nazu.sendMessage(botNumber, mediaObj, { quoted: info });
-    } else if (audioMedia) {
-      // Recupera áudio
-      const mediaObj = { ...audioMedia };
-      mediaObj.viewOnce = false;
-      mediaObj.audio = { url: mediaObj.url };
-      
-      // Envia para o bot
-      await nazu.sendMessage(botNumber, mediaObj, { quoted: info });
-    } else {
-    }
-  } catch (error) {
-    console.error("Erro ao recuperar mídia:", error);
-  }
-  }
-  
-  // Registra o uso do comando para estatísticas global
-  if (isCmd && commandStats && commandStats.trackCommandUsage && command && command.length>0) {
-    commandStats.trackCommandUsage(command, sender);
-  };
-
-  // Adiciona uma única reação no início do processamento do comando, se for um comando válido
-  if (isCmd) {
-      try {
-        await nazu.react('⏳', { key: info.key });
-      } catch (reactError) {
-        console.warn("Falha ao reagir no início do comando:", reactError);
-      }
-  }
- 
-  if(budy2.match(/^(\d+)d(\d+)$/))reply(+budy2.match(/^(\d+)d(\d+)$/)[1]>50||+budy2.match(/^(\d+)d(\d+)$/)[2]>100?"❌ Limite: max 50 dados e 100 lados":"🎲 Rolando "+budy2.match(/^(\d+)d(\d+)$/)[1]+"d"+budy2.match(/^(\d+)d(\d+)$/)[2]+"...\n🎯 Resultados: "+(r=[...Array(+budy2.match(/^(\d+)d(\d+)$/)[1])].map(_=>1+Math.floor(Math.random()*+budy2.match(/^(\d+)d(\d+)$/)[2]))).join(", ")+"\n📊 Total: "+r.reduce((a,b)=>a+b,0));
-
-  if(budy2.includes('@'+nazu.user.id.split(':')[0]) && !isCmd) {
-    if(budy2.replaceAll('@'+nazu.user.id.split(':')[0], '').length > 2) {
-      jSoNzIn = {
-        mensagem_original: budy2.replaceAll('@'+nazu.user.id.split(':')[0], ''),
-        usuario_id: sender.split('@')[0]
-      };
-      let { participant, quotedMessage } = info.message?.extendedTextMessage?.contextInfo || {}, jsonO = { participant, quotedMessage, texto: quotedMessage?.conversation || quotedMessage?.extendedTextMessage?.text || quotedMessage?.imageMessage?.caption || quotedMessage?.videoMessage?.caption || quotedMessage?.documentMessage?.caption || "" };
-      if(jsonO && jsonO.participant && jsonO.texto && jsonO.texto.length > 0) {
-        jSoNzIn.mensagem_citada = jsonO.texto;
-        jSoNzIn.usuario_mencionado_id = jsonO.participant.split('@')[0];
-      };
-      const respAssist = await ia.makeAssistentRequest(jSoNzIn);
-      if(respAssist.acao && respAssist.dados && respAssist.mensagem_aguarde && respAssist.mensagem_sucesso) {
-        if(respAssist.acao === 'BANIR_USUARIO') {
-          if(respAssist.dados && respAssist.dados.usuario_id) {
-            if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para banir membros 🙄');
-            await reply(respAssist.mensagem_aguarde);
-            await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'remove');
-          };
-        } else if(respAssist.acao === 'PROMOVER_USUARIO') {
-          if(respAssist.dados && respAssist.dados.usuario_id) {
-            if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para promover membros 🙄');
-            await reply(respAssist.mensagem_aguarde);
-            await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'promote');
-          };
-        } else if(respAssist.acao === 'REBAIXAR_USUARIO') {
-          if(respAssist.dados && respAssist.dados.usuario_id) {
-            if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para rebaixar admins 🙄');
-            await reply(respAssist.mensagem_aguarde);
-            await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'demote');
-          };
-        } else if(respAssist.acao === 'ABRIR_GRUPO') {
-          if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para abrir ou fechar o grupo 🙄');
-          await reply(respAssist.mensagem_aguarde);
-          await nazu.groupSettingUpdate(from, 'not_announcement');
-        } else if(respAssist.acao === 'FECHAR_GRUPO') {
-          if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para abrir ou fechar o grupo 🙄');
-          await reply(respAssist.mensagem_aguarde);
-          await nazu.groupSettingUpdate(from, 'announcement');
-        } else if(respAssist.acao === 'TOCAR_MUSICA') {
-          if(respAssist.dados && respAssist.dados.musica) {
-            await reply(respAssist.mensagem_aguarde);
-            videoInfo = await youtube.search(respAssist.dados.musica);
-            const caption = `📌 *Título:* ${videoInfo.data.title}\n👤 *Artista/Canal:* ${videoInfo.data.author.name}\n⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)\n\n🎧 *Baixando e processando sua música, aguarde...*`;
-            await reply(caption);
-            const dlRes = await youtube.mp3(videoInfo.url);
-            if (!dlRes.ok) {
-              return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
+              await nazu.sendMessage(from, { text: result.message, mentions: result.mentions || [sender] });
+            } else if (result.message) {
+              await reply(result.message);
             };
-            await nazu.sendMessage(from, { audio: dlRes.buffer,  mimetype: 'audio/mpeg' }, { quoted: info });
+          };
+          return;
+        };
+      } catch (error) {
+        console.error("Erro no sistema de jogo da velha:", error);
+      };
+    };
+
+
+    if (isGroup && groupData.blockedUsers && (groupData.blockedUsers[sender] || groupData.blockedUsers[sender.split('@')[0]]) && isCmd) {
+      return reply(`🚫 Oops! Parece que você não pode usar comandos neste grupo.\nMotivo: ${groupData.blockedUsers[sender] ? groupData.blockedUsers[sender].reason : groupData.blockedUsers[sender.split('@')[0]].reason}`);
+    };
+
+    if (globalBlocks.users && (globalBlocks.users[sender.split('@')[0]] || globalBlocks.users[sender]) && isCmd) {
+      return reply(`🚫 Parece que você está bloqueado de usar meus comandos globalmente.\nMotivo: ${globalBlocks.users[sender] ? globalBlocks.users[sender].reason : globalBlocks.users[sender.split('@')[0]].reason}`);
+    };
+    
+    if (isCmd && globalBlocks.commands && globalBlocks.commands[command]) {
+      return reply(`🚫 O comando *${command}* está temporariamente desativado globalmente.\nMotivo: ${globalBlocks.commands[command].reason}`);
+    };
+
+
+    if (isCmd && commandStats && commandStats.trackCommandUsage && command && command.length>0) {
+      commandStats.trackCommandUsage(command, sender);
+    };
+ 
+ 
+    if(budy2.match(/^(\d+)d(\d+)$/))reply(+budy2.match(/^(\d+)d(\d+)$/)[1]>50||+budy2.match(/^(\d+)d(\d+)$/)[2]>100?"❌ Limite: max 50 dados e 100 lados":"🎲 Rolando "+budy2.match(/^(\d+)d(\d+)$/)[1]+"d"+budy2.match(/^(\d+)d(\d+)$/)[2]+"...\n🎯 Resultados: "+(r=[...Array(+budy2.match(/^(\d+)d(\d+)$/)[1])].map(_=>1+Math.floor(Math.random()*+budy2.match(/^(\d+)d(\d+)$/)[2]))).join(", ")+"\n📊 Total: "+r.reduce((a,b)=>a+b,0));
+
+    if(budy2.includes('@'+nazu.user.id.split(':')[0]) && !isCmd) {
+      if(budy2.replaceAll('@'+nazu.user.id.split(':')[0], '').length > 2) {
+        jSoNzIn = { mensagem_original: budy2.replaceAll('@'+nazu.user.id.split(':')[0], ''), usuario_id: sender.split('@')[0] };
+        let { participant, quotedMessage } = info.message?.extendedTextMessage?.contextInfo || {}, jsonO = { participant, quotedMessage, texto: quotedMessage?.conversation || quotedMessage?.extendedTextMessage?.text || quotedMessage?.imageMessage?.caption || quotedMessage?.videoMessage?.caption || quotedMessage?.documentMessage?.caption || "" };
+        if(jsonO && jsonO.participant && jsonO.texto && jsonO.texto.length > 0) {
+          jSoNzIn.mensagem_citada = jsonO.texto;
+          jSoNzIn.usuario_mencionado_id = jsonO.participant.split('@')[0];
+        };
+        const respAssist = await ia.makeAssistentRequest(jSoNzIn);
+        if(respAssist.acao && respAssist.dados && respAssist.mensagem_aguarde) {
+          if(respAssist.acao === 'BANIR_USUARIO') {
+            if(respAssist.dados && respAssist.dados.usuario_id) {
+              if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para banir membros 🙄');
+              await reply(respAssist.mensagem_aguarde);
+              await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'remove');
+            };
+          } else if(respAssist.acao === 'PROMOVER_USUARIO') {
+            if(respAssist.dados && respAssist.dados.usuario_id) {
+              if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para promover membros 🙄');
+              await reply(respAssist.mensagem_aguarde);
+              await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'promote');
+            };
+          } else if(respAssist.acao === 'REBAIXAR_USUARIO') {
+            if(respAssist.dados && respAssist.dados.usuario_id) {
+              if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para rebaixar admins 🙄');
+              await reply(respAssist.mensagem_aguarde);
+              await nazu.groupParticipantsUpdate(from, [`${respAssist.dados.usuario_id}@s.whatsapp.net`], 'demote');
+            };
+          } else if(respAssist.acao === 'GRUPO') {
+            if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para abrir ou fechar o grupo 🙄');
+            await reply(respAssist.mensagem_aguarde);
+            await nazu.groupSettingUpdate(from, 'not_announcement');
+          } else if(respAssist.acao === 'FECHAR_GRUPO') {
+            if (!isGroupAdmin && !isOwner) return reply('Apenas admins me dão ordem para abrir ou fechar o grupo 🙄');
+            await reply(respAssist.mensagem_aguarde);
+            await nazu.groupSettingUpdate(from, 'announcement');
+          } else if(respAssist.acao === 'TOCAR_MUSICA') {
+            if(respAssist.dados && respAssist.dados.musica) {
+              await reply(respAssist.mensagem_aguarde);
+              videoInfo = await youtube.search(respAssist.dados.musica);
+              const caption = `📌 *Título:* ${videoInfo.data.title}\n👤 *Artista/Canal:* ${videoInfo.data.author.name}\n⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)\n\n🎧 *Baixando e processando sua música, aguarde...*`;
+              await reply(caption);
+              const dlRes = await youtube.mp3(videoInfo.data.url);
+              if (!dlRes.ok) {
+                return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
+              };
+              await nazu.sendMessage(from, { audio: dlRes.buffer,  mimetype: 'audio/mpeg' }, { quoted: info });
+            };
+          } else if(respAssist.acao === 'CRIAR_ENQUETE') {
+            if(respAssist.dados && respAssist.dados.pergunta && respAssist.dados.opcoes) {
+              await reply(respAssist.mensagem_aguarde);
+              await nazu.sendMessage(from, {poll: {name: respAssist.dados.pergunta,values: respAssist.dados.opcoes, selectableCount: 1}, messageContextInfo: { messageSecret: Math.random()}}, {from, options: { userJid: nazu?.user?.id }});
+            };
+          } else if(respAssist.acao === 'DELETAR_MENSAGEM') {
+            let stanzaId, participant;
+            if (info.message.extendedTextMessage) {
+              stanzaId = info.message.extendedTextMessage.contextInfo.stanzaId;
+              participant = info.message.extendedTextMessage.contextInfo.participant || menc_prt;
+            } else if (info.message.viewOnceMessage) {
+              stanzaId = info.key.id;
+              participant = info.key.participant || menc_prt;
+            };
+            try {
+              await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: stanzaId, participant: participant } });
+            } catch (error) {
+              console.error(error);
+            };
+          } else if(respAssist.acao === 'ASSISTIR_FILME') {
+            if(respAssist.dados && respAssist.dados.filme) {
+              await reply(respAssist.mensagem_aguarde);
+              datyz = await FilmesDL(respAssist.dados.filme);
+              if(!datyz || !datyz.url) return;
+              await nazu.sendMessage(from, {image: { url: datyz.img },caption: `Aqui está o que encontrei! 🎬\n\n*Nome*: ${datyz.name}\n\nSe tudo estiver certo, você pode assistir no link abaixo:\n${datyz.url}`}, { quoted: info });
+            };
+          } else if(respAssist.acao === 'CONSULTAR_COGNIMAI') {
+            const resultPriv = await ia.makeCognimaRequest('cognimai', budy2.replaceAll('@'+nazu.user.id.split(':')[0], ''), `cog_${sender.split('@')[0]}`);
+            if (!resultPriv.success) return;
+            await reply(resultPriv.reply);
+          } else if(respAssist.acao === 'CONVERSAR_COMO_HUMANO') {
+            const resultPriv = await ia.makeCognimaRequest('nazuninha', budy2.replaceAll('@'+nazu.user.id.split(':')[0], ''), `nazuninha_${sender.split('@')[0]}`);
+            if (!resultPriv.success) return;
+            await reply(resultPriv.reply);
+          } else if(respAssist.acao === 'ENVIAR_LEMBRETE') {
+            if(respAssist.dados && respAssist.dados.lembrete && respAssist.dados.destino && respAssist.dados.data_hora ) {
+              await reply(respAssist.mensagem_aguarde);
+              const Data = respAssist.dados.data_hora;
+              const JsonAc = { tipo: 'lembrete', texto: respAssist.dados.lembrete, destino: respAssist.dados.destino, from, sender, data: { ano: Data.split('-')[0], mes: Data.split('-')[1], dia: Data.split('-').pop().split(' ')[0] }, hora: { hora: Data.split(' ').pop().split(':')[0], minuto: Data.split(':').pop() } };
+              const DIR_PROGRAM = pathz.join(DATABASE_DIR, 'prog_actions.json');
+              if (!fs.existsSync(DIR_PROGRAM)) {
+                await fs.writeFileSync(DIR_PROGRAM, JSON.stringify([], null, 2));
+              };
+              const ACTIONS = JSON.parse(fs.readFileSync(DIR_PROGRAM, 'utf-8'));
+              ACTIONS.push(JsonAc);
+              await fs.writeFileSync(DIR_PROGRAM, JSON.stringify(ACTIONS, null, 2));
+            };
+          } else if(respAssist.acao === 'PROGRAMAR_GRUPO') {
+            if(respAssist.dados && respAssist.dados.acao && respAssist.dados.data_hora ) {
+              await reply(respAssist.mensagem_aguarde);
+              const Data = respAssist.dados.data_hora;
+              const JsonAc = { tipo: 'grupo', acao: respAssist.dados.acao, from, sender, data: { ano: Data.split('-')[0], mes: Data.split('-')[1], dia: Data.split('-').pop().split(' ')[0] }, hora: { hora: Data.split(' ').pop().split(':')[0], minuto: Data.split(':').pop() } };
+              const DIR_PROGRAM = pathz.join(DATABASE_DIR, 'prog_actions.json');
+              if (!fs.existsSync(DIR_PROGRAM)) {
+                await fs.writeFileSync(DIR_PROGRAM, JSON.stringify([], null, 2));
+              };
+              const ACTIONS = JSON.parse(fs.readFileSync(DIR_PROGRAM, 'utf-8'));
+              ACTIONS.push(JsonAc);
+              await fs.writeFileSync(DIR_PROGRAM, JSON.stringify(ACTIONS, null, 2));
+            };
           };
         };
       };
     };
-  };
+    
+  switch(command) {
   
- switch(command) {//ALTERADORES
+  
+  
+  
+  //ALTERADORES
+  
   case 'speedup':
   case 'vozmenino':
   case 'vozmulher':
@@ -1497,6 +1284,7 @@ if (budy2 === "ta baxano" && !isGroup) {
   case 'lowpass':
     try {
       if ((isMedia && !info.message.imageMessage && !info.message.videoMessage) || isQuotedAudio) {
+        await reply('Aguarde um momentinho... ☀️');
         const audioEffects = { speedup: 'atempo=1.06,asetrate=44100*1.25', vozmenino: 'atempo=1.06,asetrate=44100*1.25', vozmulher: 'asetrate=44100*1.25,atempo=0.8', vozhomem: 'asetrate=44100*0.8,atempo=1.2', vozcrianca: 'asetrate=44100*1.4,atempo=0.9', vozeco: 'aecho=0.8:0.88:60:0.4', eco: 'aecho=0.8:0.88:60:0.4', vozlenta: 'atempo=0.6', audiolento: 'atempo=0.6', vozrapida: 'atempo=1.5', audiorapido: 'atempo=1.5', vozcaverna: 'aecho=0.6:0.3:1000:0.5', bass: 'bass=g=5', bass2: 'bass=g=10', bass3: 'bass=g=15', volumeboost: 'volume=1.5', aumentarvolume: 'volume=1.5', reverb: 'aecho=0.8:0.88:60:0.4', drive: 'afftdn=nf=-25', equalizer: 'equalizer=f=100:width_type=h:width=200:g=3,equalizer=f=1000:width_type=h:width=200:g=-1,equalizer=f=10000:width_type=h:width=200:g=4', equalizar: 'equalizer=f=100:width_type=h:width=200:g=3,equalizer=f=1000:width_type=h:width=200:g=-1,equalizer=f=10000:width_type=h:width=200:g=4', reverse: 'areverse', audioreverso: 'areverse', pitch: 'asetrate=44100*0.8', flanger: 'flanger', grave: 'atempo=0.9,asetrate=44100', vozgrave: 'atempo=0.9,asetrate=44100', chorus: 'chorus=0.7:0.9:55:0.4:0.25:2', phaser: 'aphaser=type=t:decay=0.4', tremolo: 'tremolo=f=6:d=0.8', vibrato: 'vibrato=f=6', lowpass: 'lowpass=f=500' };
         const muk = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
         const rane = __dirname+`/../database/tmp/${Math.random()}.mp3`;
@@ -1519,7 +1307,7 @@ if (budy2 === "ta baxano" && !isGroup) {
     } catch (e) {
     console.error(e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  }
+  };
   break
 
   case 'videorapido':
@@ -1537,6 +1325,7 @@ if (budy2 === "ta baxano" && !isGroup) {
   case 'rotacionar':
     try {
       if ((isMedia && info.message.videoMessage) || isQuotedVideo) {
+        await reply('Aguarde um momentinho... ☀️');
         const encmedia = isQuotedVideo ? info.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage : info.message.videoMessage;
         const videoEffects = { videorapido: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]', fastvid: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]', videoslow: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]', videolento: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]', videoreverso: 'reverse,areverse', videoloop: 'loop=2',videomudo: 'an', videobw: 'hue=s=0', pretoebranco: 'hue=s=0', tomp3: 'q:a=0 -map a', sepia: 'colorchannelmixer=.393:.769:.189:.349:.686:.168:.272:.534:.131', espelhar: 'hflip', rotacionar: 'rotate=90*PI/180', };
         const rane = __dirname+`/../database/tmp/${Math.random()}.mp4`
@@ -1572,12 +1361,16 @@ if (budy2 === "ta baxano" && !isGroup) {
         });
       } else {
         reply(command === 'tomp3' ? "🎬 Para converter para áudio, por favor, responda (marque) a mensagem de vídeo! 😊" : "🎬 Para usar este efeito, por favor, responda (marque) a mensagem de vídeo que você quer modificar! 😊");
-      }
-  } catch (e) {
-    console.error(e);
-    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  }
-    break;
+      };
+    } catch (e) {
+      console.error(e);
+      await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
+  };
+  break;
+  
+  
+  
+  
   //INTELIGENCIA ARTIFICIAL
   
   case 'nazu': case 'nazuna': case 'ai': 
@@ -1594,8 +1387,9 @@ if (budy2 === "ta baxano" && !isGroup) {
   case 'gpt': case 'gpt4': case 'chatgpt':
     if (!q) return reply(`🤔 Qual pergunta você quer fazer para o GPT? Digite depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} me explique sobre buracos negros.`);
     try {      
-    const bahz = await ia.makeCognimaRequest('gpt', q, `gpt_${sender.split('@')[0]}`);
-    await reply(`${bahz.reply}`);
+      await reply('Aguarde um momentinho... ☀️');
+      const bahz = await ia.makeCognimaRequest('gpt', q, `gpt_${sender.split('@')[0]}`);
+      await reply(`${bahz.reply}`);
     } catch (e) {
       console.error("Erro na API GPT:", e);
       await reply("Puxa! 🥺 Parece que o GPT está tirando uma sonequinha... Tente novamente em instantes, tá? 💔");
@@ -1605,6 +1399,7 @@ if (budy2 === "ta baxano" && !isGroup) {
   case 'gemma': case 'gemma2': case 'gecko':
     if (!q) return reply(`🤔 Qual sua pergunta para o Gemma? Digite depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} quem descobriu o Brasil?`);
     try {
+      await reply('Aguarde um momentinho... ☀️');
       const bahz = await ia.makeCognimaRequest('gemma', q, `gemma_${sender.split('@')[0]}`);
       await reply(`${bahz.reply}`);
     } catch (e) {
@@ -1615,8 +1410,8 @@ if (budy2 === "ta baxano" && !isGroup) {
   
   case 'resumir':
     if (!q) return reply(`📝 Quer que eu faça um resuminho? Me envie o texto logo após o comando ${prefix}resumir! 😊`);
-    nazu.react('📝');
     try {
+      await reply('Aguarde um momentinho... ☀️');
       const prompt = `Resuma o seguinte texto em poucos parágrafos, de forma clara, mantendo as informações mais importantes:\n\n${q}`;
       const bahz = await ia.makeCognimaRequest('cognimai', prompt, `resumo_${sender.split('@')[0]}`);
       await reply(`${bahz.reply}`);
@@ -1629,8 +1424,8 @@ if (budy2 === "ta baxano" && !isGroup) {
   case 'tradutor':
     if (!q) return reply(`🌍 Quer traduzir algo? Me diga o idioma e o texto assim: ${prefix}tradutor idioma | texto
 Exemplo: ${prefix}tradutor inglês | Bom dia! 😊`);
-    nazu.react('🌍');
     try {
+      await reply('Aguarde um momentinho... ☀️');
       const partes = q.split('|');
       if (partes.length < 2) {
         return reply(`Formato incorreto! 😅 Use: ${prefix}tradutor idioma | texto
@@ -1649,13 +1444,10 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   
    case 'qrcode':
     if (!q) return reply(`📲 Quer gerar um QR Code? Me envie o texto ou link depois do comando ${prefix}qrcode! 😊`);
-    nazu.react('📲');
     try {
+      await reply('Aguarde um momentinho... ☀️');
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(q)}`;
-      await nazu.sendMessage(from, { 
-        image: { url: qrUrl },
-        caption: `📱✨ *Seu QR Code super fofo está pronto!*\n\nConteúdo: ${q.substring(0, 100)}${q.length > 100 ? '...' : ''}`
-      }, { quoted: info });
+      await nazu.sendMessage(from, { image: { url: qrUrl }, caption: `📱✨ *Seu QR Code super fofo está pronto!*\n\nConteúdo: ${q.substring(0, 100)}${q.length > 100 ? '...' : ''}`}, { quoted: info });
     } catch (e) {
       console.error("Erro ao gerar QR Code:", e);
       await reply("Oh céus! 🥺 Tive um probleminha para gerar seu QR Code... Poderia tentar de novo? 💔");
@@ -1760,21 +1552,16 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
     }
     break;
 
-  // --- Comandos de Gerenciamento de Subdonos ---
   case 'addsubdono':
     if (!isOwner || (isOwner && isSubOwner)) return reply("🚫 Apenas o Dono principal pode adicionar subdonos!");
     try {
       const targetUserJid = menc_jid2 && menc_jid2.length > 0 ? menc_jid2[0] : (q.includes('@') ? q.split(' ')[0].replace('@', '') + '@s.whatsapp.net' : null);
-      
       if (!targetUserJid) {
         return reply("🤔 Você precisa marcar o usuário ou fornecer o número completo (ex: 5511999998888) para adicionar como subdono.");
       }
-
       const normalizedJid = targetUserJid.includes('@') ? targetUserJid : targetUserJid.replace(/\D/g, '') + '@s.whatsapp.net';
-
       const result = addSubdono(normalizedJid);
       await reply(result.message);
-      
     } catch (e) {
       console.error("Erro ao adicionar subdono:", e);
       await reply("❌ Ocorreu um erro inesperado ao tentar adicionar o subdono.");
@@ -1785,16 +1572,12 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
     if (!isOwner || (isOwner && isSubOwner)) return reply("🚫 Apenas o Dono principal pode remover subdonos!");
     try {
       const targetUserJid = menc_jid2 && menc_jid2.length > 0 ? menc_jid2[0] : (q.includes('@') ? q.split(' ')[0].replace('@', '') + '@s.whatsapp.net' : null);
-      
       if (!targetUserJid) {
         return reply("🤔 Você precisa marcar o usuário ou fornecer o número completo (ex: 5511999998888) para remover como subdono.");
       }
-      
       const normalizedJid = targetUserJid.includes('@') ? targetUserJid : targetUserJid.replace(/\D/g, '') + '@s.whatsapp.net';
-
       const result = removeSubdono(normalizedJid);
       await reply(result.message);
-      
     } catch (e) {
       console.error("Erro ao remover subdono:", e);
       await reply("❌ Ocorreu um erro inesperado ao tentar remover o subdono.");
@@ -1808,33 +1591,26 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
       if (subdonos.length === 0) {
         return reply("✨ Nenhum subdono cadastrado no momento.");
       }
-      
       let listaMsg = "👑 *Lista de Subdonos Atuais:*\n\n";
       const mentions = [];
-      
       let participantsInfo = {};
       if (isGroup && groupMetadata.participants) {
           groupMetadata.participants.forEach(p => {
               participantsInfo[p.id] = p.pushname || p.id.split('@')[0];
           });
       }
-      
       subdonos.forEach((jid, index) => {
           const nameOrNumber = participantsInfo[jid] || jid.split('@')[0];
           listaMsg += `${index + 1}. @${jid.split('@')[0]} (${nameOrNumber})\n`;
           mentions.push(jid);
       });
-      
       await reply(listaMsg.trim(), { mentions });
-      
     } catch (e) {
       console.error("Erro ao listar subdonos:", e);
       await reply("❌ Ocorreu um erro inesperado ao tentar listar os subdonos.");
     }
     break;
-  // --- Fim Comandos Subdonos ---
-
-  // --- Comandos de Gerenciamento de Aluguel ---
+  
   case 'modoaluguel':
     if (!isOwner || (isOwner && isSubOwner)) return reply("🚫 Apenas o Dono principal pode gerenciar o modo de aluguel!");
     try {
@@ -1891,14 +1667,12 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
     try {
       const parts = q.trim().split(' ');
       const durationArg = parts[0]?.toLowerCase();
-      const targetGroupArg = parts[1]; // Pode ser undefined
+      const targetGroupArg = parts[1];
       let durationDays = null;
       let targetGroupId = null;
-
       if (!durationArg) {
           return reply(`🤔 Uso: ${prefix}gerarcodigo <dias|permanente> [id_do_grupo_opcional]`);
       }
-
       if (durationArg === 'permanente') {
         durationDays = 'permanent';
       } else if (!isNaN(parseInt(durationArg)) && parseInt(durationArg) > 0) {
@@ -1907,14 +1681,12 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         return reply('🤔 Duração inválida. Use um número de dias (ex: 7) ou a palavra "permanente".');
       }
 
-      // Valida o ID do grupo se fornecido
       if (targetGroupArg) {
           if (targetGroupArg.includes('@g.us')) {
               targetGroupId = targetGroupArg;
-          } else if (/^\d+$/.test(targetGroupArg)) { // Se for só número, adiciona o sufixo
+          } else if (/^\d+$/.test(targetGroupArg)) {
               targetGroupId = targetGroupArg + '@g.us';
           } else {
-              // Tenta verificar se é uma menção (embora não seja o ideal aqui)
               const mentionedJid = info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
               if (mentionedJid && mentionedJid.endsWith('@g.us')) {
                   targetGroupId = mentionedJid;
@@ -1923,276 +1695,19 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
               }
           }
       }
-
       const result = generateActivationCode(durationDays, targetGroupId);
-      await reply(result.message); // Envia a mensagem com o código gerado
-
+      await reply(result.message);
     } catch (e) {
       console.error("Erro no comando gerarcodigo:", e);
       await reply("❌ Ocorreu um erro inesperado ao gerar o código.");
     }
     break;
-  // --- Fim Comandos Aluguel ---
-
-  case 'backupgp':
-  try {
-    if (!isGroup) return reply("Este comando só pode ser usado em grupos!");
-    if (!isGroupAdmin && !isOwner) return reply("Apenas administradores podem fazer backup do grupo!");
-    
-    nazu.react('💾');
-    reply("📦 Criando backup do grupo, aguarde...");
-    
-    // Diretório de backup
-    const backupDir = pathz.join(__dirname, '..', 'database', 'backups');
-    if (!fs.existsSync(backupDir)) {
-      fs.mkdirSync(backupDir, { recursive: true });
-    }
-
-    if (!fs.existsSync(groupFile)) {
-      return reply("❌ Não há dados deste grupo para fazer backup!");
-    }
-    
-    // Obter os dados do grupo
-    const groupData = JSON.parse(fs.readFileSync(groupFile, 'utf-8'));
-    
-    // Obter informações detalhadas do grupo
-    const completeGroupInfo = await nazu.groupMetadata(from);
-    const groupDesc = completeGroupInfo.desc || '';
-    const adminList = groupAdmins.map(admin => {
-      const adminName = completeGroupInfo.participants.find(p => p.id === admin)?.name || admin.split('@')[0];
-      return {
-        id: admin,
-        name: adminName
-      };
-    });
-    
-    // Metadata do grupo
-    const metadata = {
-      id: from,
-      name: groupName,
-      description: groupDesc,
-      createdAt: new Date().toISOString(),
-      memberCount: AllgroupMembers.length,
-      admins: adminList,
-      createdBy: pushname || sender.split('@')[0]
-    };
-    
-    // Criar o objeto de backup
-    const backup = {
-      metadata,
-      configs: groupData, // Dados de configuração do grupo
-      internalData: true, // Indicador de que este backup inclui dados internos
-      version: "2.0"
-    };
-    
-    // Nome do arquivo de backup
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupFileName = `${from.split('@')[0]}_${timestamp}.json`;
-    const backupFilePath = pathz.join(backupDir, backupFileName);
-    
-    // Salvar o backup
-    fs.writeFileSync(backupFilePath, JSON.stringify(backup, null, 2));
-    
-    // Enviar o arquivo de backup
-    await nazu.sendMessage(from, {
-      document: fs.readFileSync(backupFilePath),
-      mimetype: 'application/json',
-      fileName: backupFileName,
-      caption: `✅ *Backup do Grupo Concluído*\n\n*Nome do Grupo:* ${groupName}\n*Data:* ${new Date().toLocaleString('pt-BR')}\n*Membros:* ${AllgroupMembers.length}\n*Admins:* ${adminList.length}\n*Descrição:* ${groupDesc.substring(0, 50)}${groupDesc.length > 50 ? '...' : ''}\n\nPara restaurar, use o comando *${prefix}restaurargp*`
-    }, { quoted: info });
-    
-  } catch (e) {
-    console.error(e);
-    await reply("Ocorreu um erro ao criar o backup do grupo 💔");
-  }
-  break;
-  
-  case 'restaurargp':
-  try {
-    if (!isGroup) return reply("Este comando só pode ser usado em grupos!");
-    if (!isGroupAdmin && !isOwner) return reply("Apenas administradores podem restaurar o grupo!");
-    
-    if (!isQuotedDocument) {
-      return reply(`Por favor, marque o arquivo de backup JSON enviado anteriormente pelo comando ${prefix}backupgp`);
-    }
-    
-    nazu.react('🔄');
-    reply("🔄 Restaurando backup, aguarde...");
-    
-    // Obter o arquivo de backup
-    const backupMsg = info.message.extendedTextMessage.contextInfo.quotedMessage.documentMessage;
-    if (!backupMsg.fileName.endsWith('.json')) {
-      return reply("❌ O arquivo marcado não é um backup válido! (deve ter extensão .json)");
-    }
-    
-    const backupBuffer = await getFileBuffer(backupMsg, "document");
-    let backupData;
-    
-    try {
-      backupData = JSON.parse(backupBuffer.toString());
-    } catch (err) {
-      return reply("❌ O arquivo de backup está corrompido ou não é um JSON válido!");
-    }
-    
-    // Verificar se é um backup válido (compatível com versões antigas e novas)
-    const isLegacyBackup = backupData.data && backupData.metadata;
-    const isNewBackup = backupData.configs && backupData.metadata;
-    
-    if (!isLegacyBackup && !isNewBackup) {
-      return reply("❌ O arquivo de backup não é válido!");
-    }
-    
-    // Mapear para o formato correto se for backup legado
-    if (isLegacyBackup) {
-      backupData.configs = backupData.data;
-      backupData.version = "1.0";
-    }
-    
-    // Verificar se o backup é para este grupo
-    if (backupData.metadata.id !== from) {
-      return reply(`⚠️ Este backup pertence a outro grupo (${backupData.metadata.name || 'desconhecido'}).\n\nDeseja restaurar mesmo assim? Responda com *sim* para confirmar.`);
-      // Você pode adicionar uma confirmação aqui se quiser
-    }
-    
-    let currentData = {};
-    if (fs.existsSync(groupFile)) {
-      currentData = JSON.parse(fs.readFileSync(groupFile, 'utf-8'));
-    }
-    
-    // Criar um backup dos dados atuais antes de restaurar
-    const backupDir = pathz.join(__dirname, '..', 'database', 'backups');
-    if (!fs.existsSync(backupDir)) {
-      fs.mkdirSync(backupDir, { recursive: true });
-    }
-    
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const autoBackupFileName = `auto_${from.split('@')[0]}_${timestamp}.json`;
-    const autoBackupFilePath = pathz.join(backupDir, autoBackupFileName);
-    
-    // Obter informações do grupo atual para o backup automático
-    const completeGroupInfo = await nazu.groupMetadata(from);
-    const groupDesc = completeGroupInfo.desc || '';
-    const adminList = groupAdmins.map(admin => {
-      const adminName = completeGroupInfo.participants.find(p => p.id === admin)?.name || admin.split('@')[0];
-      return {
-        id: admin,
-        name: adminName
-      };
-    });
-    
-    const autoBackup = {
-      metadata: {
-        id: from,
-        name: groupName,
-        description: groupDesc,
-        createdAt: new Date().toISOString(),
-        memberCount: AllgroupMembers.length,
-        admins: adminList,
-        createdBy: 'auto_backup_before_restore',
-        note: 'Este é um backup automático criado antes de uma restauração'
-      },
-      configs: currentData,
-      internalData: true,
-      version: "2.0"
-    };
-    
-    fs.writeFileSync(autoBackupFilePath, JSON.stringify(autoBackup, null, 2));
-    
-    // Restaurar os dados (backup.configs contém as configurações do grupo)
-    fs.writeFileSync(groupFile, JSON.stringify(backupData.configs, null, 2));
-    
-    // Aplicar configurações adicionais caso o backup contenha essa informação
-    try {
-      // Tentar atualizar nome do grupo se diferente e bot for admin
-      if (isBotAdmin && 
-          backupData.metadata.name && 
-          backupData.metadata.name !== groupName) {
-        await nazu.groupUpdateSubject(from, backupData.metadata.name);
-      }
-      
-      // Tentar atualizar descrição do grupo se diferente e bot for admin
-      if (isBotAdmin && 
-          backupData.metadata.description && 
-          backupData.metadata.description !== groupDesc) {
-        await nazu.groupUpdateDescription(from, backupData.metadata.description);
-      }
-      
-      if (isBotAdmin && 
-          backupData.metadata.admins && 
-          backupData.metadata.admins !== adminList) {
-          for(user of backupData.metadata.admins) {
-          if(!adminList.includes(user)) {
-        await nazu.groupParticipantsUpdate(from, [user.id], "promote");
-        }}
-      }
-    } catch (err) {
-      console.log("Erro ao atualizar nome/descrição:", err);
-    }
-    
-    // Gerar resumo das alterações
-    let alteracoes = [];
-    
-    // Verificar mudanças nas configurações
-    const configDiffs = {
-      antilinkgp: currentData.antilinkgp !== backupData.configs.antilinkgp ? "Proteção contra links" : null,
-      antiporn: currentData.antiporn !== backupData.configs.antiporn ? "Proteção contra conteúdo adulto" : null,
-      antiflood: currentData.antiflood !== backupData.configs.antiflood ? "Proteção contra flood" : null,
-      soadm: currentData.soadm !== backupData.configs.soadm ? "Modo só administradores" : null,
-      modobrincadeira: currentData.modobrincadeira !== backupData.configs.modobrincadeira ? "Modo brincadeira" : null,
-      autoSticker: currentData.autoSticker !== backupData.configs.autoSticker ? "Auto figurinhas" : null,
-      autodl: currentData.autodl !== backupData.configs.autodl ? "Download automático" : null
-    };
-    
-    // Adicionar mudanças encontradas
-    Object.entries(configDiffs).forEach(([key, value]) => {
-      if (value) {
-        const status = backupData.configs[key] ? "ativado" : "desativado";
-        alteracoes.push(`- ${value}: ${status}`);
-      }
-    });
-    
-    // Nome do grupo e descrição se foram alterados
-    if (isBotAdmin && backupData.metadata.name && backupData.metadata.name !== groupName) {
-      alteracoes.push(`- Nome do grupo: alterado para "${backupData.metadata.name}"`);
-    }
-    
-    if (isBotAdmin && backupData.metadata.description && backupData.metadata.description !== groupDesc) {
-      alteracoes.push(`- Descrição do grupo: atualizada`);
-    }
-    
-    if (isBotAdmin && 
-          backupData.metadata.admins && 
-          backupData.metadata.admins !== adminList) {
-        alteracoes.push(`- Administradores: restaurados`);
-      }
-      
-    // Informações sobre o backup
-    const backupDate = new Date(backupData.metadata.createdAt || Date.now()).toLocaleString('pt-BR');
-    
-    let mensagem = `✅ *Backup Restaurado com Sucesso*\n\n`;
-    mensagem += `*Nome do Grupo:* ${backupData.metadata.name || groupName}\n`;
-    mensagem += `*Data do Backup:* ${backupDate}\n\n`;
-    
-    if (alteracoes.length > 0) {
-      mensagem += `*Alterações aplicadas:*\n${alteracoes.join('\n')}\n\n`;
-    } else {
-      mensagem += `*Observação:* Nenhuma alteração significativa nas configurações.\n\n`;
-    }
-    
-    mensagem += `⚠️ Um backup automático dos dados anteriores foi criado caso precise reverter.`;
-    
-    await reply(mensagem);
-    
-  } catch (e) {
-    console.error(e);
-    await reply("Ocorreu um erro ao restaurar o backup do grupo 💔");
-  }
-  break;
+   
   
   case 'code-gen': try {
   if(!isPremium) return reply('Apenas usuários premium.');
   if(!q) return reply("Falta digitar o prompt 🤔");
-  nazu.react('✅');
+  await reply('Aguarde um momentinho... ☀️');
   const response = await axios.get(`https://api.cognima.com.br/api/ia/code-gen?key=CognimaTeamFreeKey&q=${q}`, { responseType: 'arraybuffer' });
   const mimeType = response.headers['content-type'];
   const contentDisposition = response.headers['content-disposition'];
@@ -2215,7 +1730,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   case 'cog':
   try {
     if(!isPremium) return reply('Apenas usuários premium.');
-    if (!q) return nazu.react('❌');
+    if (!q) return await reply('Falta o prompt 🥱');
     const resultPriv = await ia.makeCognimaRequest('cognimai', q, `cog_${sender.split('@')[0]}`);
     if (!resultPriv.success) return reply("ocorreu um erro 💔");
     let responseText = resultPriv.reply;
@@ -2292,23 +1807,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
-  
-  case 'apkmod':
-case 'mod':
-try {
-if (!q) return reply('Digite o nome do aplicativo.');
-datinha = await apkMod(q);
-if (datinha.error) return reply(datinha.error);
-anu = await axios.get(`https://tinyurl.com/api-create.php?url=${datinha.download}`);
-linkEncurtado = anu.data;
-await nazu.sendMessage(from, { image: { url: datinha.image }, caption: `\n💻 *Informações do Aplicativo*\n\n🔸 *Título:* ${datinha.title}\n🔹 *Descrição:*  \n_${datinha.description}_\n\n📋 *Detalhes Técnicos:*  \n- 📛 *Nome:* ${datinha.details.name}  \n- 🗓️ *Última Atualização:* ${datinha.details.updated}  \n- 🆚 *Versão:* ${datinha.details.version}  \n- 🏷️ *Categoria:* ${datinha.details.category}  \n- 🛠️ *Modificação:* ${datinha.details.modinfo}  \n- 📦 *Tamanho:* ${datinha.details.size}  \n- ⭐ *Classificação:* ${datinha.details.rate}  \n- 📱 *Requer Android:* ${datinha.details.requires}  \n- 👨‍💻 *Desenvolvedor:* ${datinha.details.developer}  \n- 🔗 *Google Play:* ${datinha.details.googleplay}  \n- 📥 *Downloads:* ${datinha.details.downloads}  \n\n⬇️ *Download do APK:*  \n📤 _Tentando enviar o APK para você..._  \nCaso não seja enviado, use o link abaixo:  \n🔗 ${linkEncurtado}` }, { quoted: info });
-await nazu.sendMessage(from, { document: { url: datinha.download }, mimetype: 'application/vnd.android.package-archive', fileName: `${datinha.details.name}.apk`, caption: `🔒 *Instalação Bloqueada pelo Play Protect?* 🔒\n\nCaso a instalação do aplicativo seja bloqueada pelo Play Protect, basta seguir as instruções do vídeo abaixo:\n\n🎥 https://youtu.be/FqQB2vojzlU?si=9qPnu_PGj3GU3L4_`}, {quoted: info});
-  } catch (e) {
-console.log(e);
-await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-};
-break;
-  
+
   case 'mcplugin':case 'mcplugins': try {
   if(!q) return reply('Cadê o nome do plugin para eu pesquisar? 🤔');
   datz = await mcPlugin(q);
@@ -2320,112 +1819,113 @@ break;
   };
   break
   
-  case 'play':
-case 'ytmp3':
+  case 'shazam':
   try {
-    // Verificar se o usuário forneceu uma consulta
+    if ((isMedia && !info.message.imageMessage && !info.message.videoMessage) || isQuotedAudio) {
+      await reply('Aguarde um momentinho... ☀️');
+      const muk = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
+      const buffi = await getFileBuffer(muk, 'audio');
+      const Slakzin = await ia.Shazam(buffi);
+      const videoInfo = await youtube.search(`${Slakzin.result.title} - ${Slakzin.result.artist}`);
+      const views = typeof videoInfo.data.views === 'number' ? videoInfo.data.views.toLocaleString('pt-BR') : videoInfo.data.views;
+      const description = videoInfo.data.description ? videoInfo.data.description.slice(0, 100) + (videoInfo.data.description.length > 100 ? '...' : '') : 'Sem descrição disponível';
+      const caption = `🎵 *Música Encontrada* 🎵\n\n📌 *Título:* ${videoInfo.data.title}\n👤 *Artista/Canal:* ${videoInfo.data.author.name}\n⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)\n👀 *Visualizações:* ${views}\n📅 *Publicado:* ${videoInfo.data.ago}\n📜 *Descrição:* ${description}\n🔗 *Link:* ${videoInfo.data.url}\n\n🎧 *Baixando e processando sua música, aguarde...*`;
+      await nazu.sendMessage(from, { image: { url: videoInfo.data.thumbnail }, caption: caption, footer: `${nomebot} • Versão ${botVersion}` }, { quoted: info });
+      const dlRes = await youtube.mp3(videoInfo.data.url);
+      if (!dlRes.ok) {
+        return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
+      };
+      try {
+        await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
+      } catch (audioError) {
+        if (String(audioError).includes("ENOSPC") || String(audioError).includes("size")) {
+          await reply('📦 Arquivo muito grande para enviar como áudio, enviando como documento...');
+          await nazu.sendMessage(from, { document: dlRes.buffer, fileName: `${dlRes.filename}`, mimetype: 'audio/mpeg' }, { quoted: info });
+        } else {
+          throw audioError;
+        };
+      };
+    } else {
+      await reply('Use o comando marcando um audio... ☀️');
+    };
+  } catch(e) {
+  console.error(e);
+  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
+  };
+  break
+  
+  case 'play':
+  case 'ytmp3':
+  try {
     if (!q) {
       return reply(`📝 Digite o nome da música ou um link do YouTube.\n\n📌 *Exemplo:* ${prefix + command} Back to Black`);
     }
-    
-    // Reagir à mensagem para indicar processamento
-    
-    // Determinar se é um link ou uma pesquisa
+
     let videoUrl;
     let videoInfo;
     
     if (q.includes('youtube.com') || q.includes('youtu.be')) {
-      // É um link direto do YouTube
       videoUrl = q;
-      videoInfo = await youtube.search(q);
+      await reply('Aguarde um momentinho... ☀️');
+      const dlRes = await youtube.mp3(videoUrl);
+      if (!dlRes.ok) {
+        return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
+      };
+      try {
+        await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
+      } catch (audioError) {
+        if (String(audioError).includes("ENOSPC") || String(audioError).includes("size")) {
+          await reply('📦 Arquivo muito grande para enviar como áudio, enviando como documento...');
+          await nazu.sendMessage(from, { document: dlRes.buffer, fileName: `${dlRes.filename}`, mimetype: 'audio/mpeg' }, { quoted: info });
+        } else {
+          throw audioError;
+        };
+      };
     } else {
-      // É uma pesquisa por texto
       videoInfo = await youtube.search(q);
       if (!videoInfo.ok) {
         return reply(`❌ Erro na pesquisa: ${videoInfo.msg}`);
       }
       videoUrl = videoInfo.data.url;
     }
-    
-    // Verificar se encontrou informações do vídeo
+
     if (!videoInfo.ok) {
       return reply(`❌ Não foi possível encontrar informações sobre o vídeo: ${videoInfo.msg}`);
     }
     
-    // Verificar se o vídeo não é muito longo (limite de 30 minutos)
     if (videoInfo.data.seconds > 1800) {
       return reply(`⚠️ Este vídeo é muito longo (${videoInfo.data.timestamp}).\nPor favor, escolha um vídeo com menos de 30 minutos.`);
-    }
+    };
     
-    // Formatar visualizações com pontos para melhor legibilidade
-    const views = typeof videoInfo.data.views === 'number' 
-      ? videoInfo.data.views.toLocaleString('pt-BR')
-      : videoInfo.data.views;
+    const views = typeof videoInfo.data.views === 'number' ? videoInfo.data.views.toLocaleString('pt-BR') : videoInfo.data.views;
     
-    // Preparar a descrição (limitada a 100 caracteres)
-    const description = videoInfo.data.description
-      ? videoInfo.data.description.slice(0, 100) + (videoInfo.data.description.length > 100 ? '...' : '')
-      : 'Sem descrição disponível';
+    const description = videoInfo.data.description ? videoInfo.data.description.slice(0, 100) + (videoInfo.data.description.length > 100 ? '...' : '') : 'Sem descrição disponível';
     
-    // Criar uma mensagem informativa sobre o vídeo encontrado
-    const caption = `
-🎵 *Música Encontrada* 🎵
+    const caption = `🎵 *Música Encontrada* 🎵\n\n📌 *Título:* ${videoInfo.data.title}\n👤 *Artista/Canal:* ${videoInfo.data.author.name}\n⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)\n👀 *Visualizações:* ${views}\n📅 *Publicado:* ${videoInfo.data.ago}\n📜 *Descrição:* ${description}\n🔗 *Link:* ${videoInfo.data.url}\n\n🎧 *Baixando e processando sua música, aguarde...*`;
 
-📌 *Título:* ${videoInfo.data.title}
-👤 *Artista/Canal:* ${videoInfo.data.author.name}
-⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)
-👀 *Visualizações:* ${views}
-📅 *Publicado:* ${videoInfo.data.ago}
-📜 *Descrição:* ${description}
-🔗 *Link:* ${videoInfo.data.url}
-
-🎧 *Baixando e processando sua música, aguarde...*`;
-
-    // Enviar mensagem com thumbnail e informações
-    await nazu.sendMessage(from, { 
-      image: { url: videoInfo.data.thumbnail }, 
-      caption: caption, 
-      footer: `${nomebot} • Versão ${botVersion}` 
-    }, { quoted: info });
+    await nazu.sendMessage(from, { image: { url: videoInfo.data.thumbnail }, caption: caption, footer: `${nomebot} • Versão ${botVersion}` }, { quoted: info });
     
-    // Atualizar reação para indicar download
-    
-    // Baixar o áudio
     const dlRes = await youtube.mp3(videoUrl);
     if (!dlRes.ok) {
       return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
-    }
+    };
     
-    // Tentar enviar como áudio (preferencial)
     try {
-      await nazu.sendMessage(from, {
-        audio: dlRes.buffer, 
-        mimetype: 'audio/mpeg'
-      }, { quoted: info });
+      await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
     } catch (audioError) {
-      // Se falhar devido ao tamanho, tentar enviar como documento
       if (String(audioError).includes("ENOSPC") || String(audioError).includes("size")) {
         await reply('📦 Arquivo muito grande para enviar como áudio, enviando como documento...');
-        await nazu.sendMessage(from, {
-          document: dlRes.buffer, 
-          fileName: `${videoInfo.data.title}.mp3`, 
-          mimetype: 'audio/mpeg'
-        }, { quoted: info });
+        await nazu.sendMessage(from, { document: dlRes.buffer, fileName: `${dlRes.filename}`, mimetype: 'audio/mpeg' }, { quoted: info });
       } else {
-        // Se for outro erro, relançar para tratamento no catch externo
         throw audioError;
-      }
-    }
-    
-    // Reação final de sucesso
-    
+      };
+    };
+
   } catch (error) {
-    // Tratamento de erros específicos
     if (String(error).includes("age")) {
       return reply(`🔞 Este conteúdo possui restrição de idade e não pode ser baixado.`);
     }
     
-    // Log do erro e resposta genérica
     console.error('Erro no comando play/ytmp3:', error);
     reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
   }
@@ -2435,10 +1935,22 @@ case 'playvid':
 case 'ytmp4':
   try {
     if (!q) return reply(`Digite o nome do vídeo ou um link do YouTube.\n> Ex: ${prefix + command} Back to Black`);
-    nazu.react(['💖']);
     let videoUrl;
     if (q.includes('youtube.com') || q.includes('youtu.be')) {
       videoUrl = q;
+      await reply('Aguarde um momentinho... ☀️');
+      const dlRes = await youtube.mp4(videoUrl);
+      if (!dlRes.ok) return reply(dlRes.msg);
+      try {
+        await nazu.sendMessage(from, { video: dlRes.buffer, fileName: `${dlRes.filename}`,  mimetype: 'video/mp4' }, { quoted: info });
+    } catch (videoError) {
+      if (String(videoError).includes("ENOSPC") || String(videoError).includes("size")) {
+        await reply('Arquivo muito grande, enviando como documento...');
+        await nazu.sendMessage(from, { document: dlRes.buffer, fileName: `${dlRes.filename}`, mimetype: 'video/mp4' }, { quoted: info });
+      } else {
+        throw videoError;
+      }
+    }
     } else {
       const searchResult = await youtube.search(q);
       if (!searchResult.ok) return reply(searchResult.msg);
@@ -2458,27 +1970,15 @@ case 'ytmp4':
 🔗 *Link:* ${videoInfo.data.url}
 
 📹 *Enviando seu vídeo, aguarde!*`;
-    await nazu.sendMessage(from, { 
-      image: { url: videoInfo.data.thumbnail }, 
-      caption: caption, 
-      footer: `By: ${nomebot}` 
-    }, { quoted: info });
+    await nazu.sendMessage(from, { image: { url: videoInfo.data.thumbnail }, caption: caption, footer: `By: ${nomebot}` }, { quoted: info });
     const dlRes = await youtube.mp4(videoUrl);
     if (!dlRes.ok) return reply(dlRes.msg);
     try {
-      await nazu.sendMessage(from, {
-        video: dlRes.buffer, 
-        fileName: `${videoInfo.data.title}.mp4`, 
-        mimetype: 'video/mp4'
-      }, { quoted: info });
+      await nazu.sendMessage(from, { video: dlRes.buffer, fileName: `${dlRes.filename}`, mimetype: 'video/mp4' }, { quoted: info });
     } catch (videoError) {
       if (String(videoError).includes("ENOSPC") || String(videoError).includes("size")) {
         await reply('Arquivo muito grande, enviando como documento...');
-        await nazu.sendMessage(from, {
-          document: dlRes.buffer, 
-          fileName: `${videoInfo.data.title}.mp4`, 
-          mimetype: 'video/mp4'
-        }, { quoted: info });
+        await nazu.sendMessage(from, { document: dlRes.buffer, fileName: `${dlRes.filename}`, mimetype: 'video/mp4' }, { quoted: info });
       } else {
         throw videoError;
       }
@@ -2491,6 +1991,7 @@ case 'ytmp4':
 
   case 'letra': case 'lyrics': try {
   if(!q) return reply('cade o nome da musica?');
+  await reply('Aguarde um momentinho... ☀️');
   await reply(await Lyrics(q));
   } catch (e) {
     console.error(e);
@@ -2501,7 +2002,7 @@ case 'ytmp4':
   case 'tiktok': case 'tiktokaudio': case 'tiktokvideo': case 'tiktoks': case 'tiktoksearch': case 'ttk': case 'tkk':
    try {
     if (!q) return reply(`Digite um nome ou o link de um vídeo.\n> Ex: ${prefix}${command} Gato`);
-    nazu.react(['💖']);
+    await reply('Aguarde um momentinho... ☀️');
     let isTikTokUrl = /^https?:\/\/(?:www\.|m\.|vm\.|t\.)?tiktok\.com\//.test(q);
     let datinha = await (isTikTokUrl ? tiktok.dl(q) : tiktok.search(q));
     if (!datinha.ok) return reply(datinha.msg);
@@ -2524,7 +2025,7 @@ case 'ytmp4':
    case 'instagram': case 'igdl': case 'ig': case 'instavideo': case 'igstory':
   try {
     if (!q) return reply(`Digite um link do Instagram.\n> Ex: ${prefix}${command} https://www.instagram.com/reel/DFaq_X7uoiT/?igsh=M3Q3N2ZyMWU1M3Bo`);
-    nazu.react(['📌']);
+    await reply('Aguarde um momentinho... ☀️');
     const datinha = await igdl.dl(q);
     if (!datinha.ok) return reply(datinha.msg);
     let bahzz = [];
@@ -2543,7 +2044,7 @@ case 'ytmp4':
   case 'pinterest': case 'pin': case 'pinterestdl': case 'pinterestsearch':
    try {
     if (!q) return reply(`Digite um nome ou envie um link do Pinterest.\n> Ex: ${prefix}${command} Gatos\n> Ex: ${prefix}${command} https://www.pinterest.com/pin/123456789/`);  
-    nazu.react(['📌']); 
+    await reply('Aguarde um momentinho... ☀️');
     let datinha = await (/^https?:\/\/(?:[a-zA-Z0-9-]+\.)?pinterest\.\w{2,6}(?:\.\w{2})?\/pin\/\d+|https?:\/\/pin\.it\/[a-zA-Z0-9]+/.test(q) ? pinterest.dl(q) : pinterest.search(q));
     if (!datinha.ok) return reply(datinha.msg);
     slakk = [];
@@ -2557,59 +2058,22 @@ case 'ytmp4':
    }
    break;
    
-   // MENUS DO BOT
   case 'menu': case 'help':
     try {
-      // Verificar se existe mídia personalizada para o menu
       const menuVideoPath = __dirname + '/../midias/menu.mp4';
       const menuImagePath = __dirname + '/../midias/menu.jpg';
-      
-      // Determinar se vamos usar vídeo ou imagem
       const useVideo = fs.existsSync(menuVideoPath);
       const mediaPath = useVideo ? menuVideoPath : menuImagePath;
-      
-      // Verificar se pelo menos um dos arquivos existe
-      if (!fs.existsSync(mediaPath)) {
-        // Usar uma imagem padrão se nenhuma mídia for encontrada
-        const defaultImage = { url: 'https://i.ibb.co/Wpm9xvV/20230710-221917.jpg' };
-        const menuText = await menu(prefix, nomebot, pushname);
-        
-        await nazu.sendMessage(from, {
-          image: defaultImage,
-          caption: menuText,
-        }, { quoted: info });
-        
-        return;
-      }
-      
-      // Carregar a mídia do menu
       const mediaBuffer = fs.readFileSync(mediaPath);
-      
-      // Obter o texto do menu
       const menuText = await menu(prefix, nomebot, pushname);
-      
-      // Adicionar informações extras ao menu
-      const enhancedMenuText = `${menuText}`;
-      
-      // Enviar o menu com a mídia apropriada
-      await nazu.sendMessage(from, {
-        [useVideo ? 'video' : 'image']: mediaBuffer,
-        caption: enhancedMenuText,
-        gifPlayback: useVideo,
-        mimetype: useVideo ? 'video/mp4' : 'image/jpeg'
-      }, { quoted: info });
-      
-      // Reagir à mensagem
-      
+      await nazu.sendMessage(from, { [useVideo ? 'video' : 'image']: mediaBuffer, caption: menuText, gifPlayback: useVideo, mimetype: useVideo ? 'video/mp4' : 'image/jpeg' }, { quoted: info });
     } catch (error) {
       console.error('Erro ao enviar menu:', error);
-      
-      // Fallback: enviar apenas o texto do menu se houver erro com a mídia
       const menuText = await menu(prefix, nomebot, pushname);
       await reply(`${menuText}\n\n⚠️ *Nota*: Ocorreu um erro ao carregar a mídia do menu.`);
     }
   break;
-  // MENUS ESPECÍFICOS
+
   case 'alteradores': case 'menualterador': case 'menualteradores':
     try {
       await sendMenuWithMedia('alteradores', menuAlterador);
@@ -2630,33 +2094,7 @@ case 'ytmp4':
     
   case 'menubn': case 'menubrincadeira': case 'menubrincadeiras':
     try {
-      
-      // Obtém o conteúdo do menu
-      let menuContent = await menubn(prefix, nomebot, pushname);
-      
-      // Filtra conteúdo impróprio se modo lite estiver ativado
-  if (isModoLite) {
-        // Remove seção de interações "hot"
-        menuContent = menuContent.replace(/│╭─▸ \*Interações "Hot" 🔥:\*[\s\S]*?│(\n|$)/g, '│$1');
-        
-        // Lista de comandos impróprios para filtrar
-        const comandosImpróprios = [
-          'sexo', 'surubao', 'goza', 'gozar', 'mamar', 'mamada', 'beijob', 'beijarb',
-          'pirocudo', 'bucetuda', 'tapar', 'racista', 'nazista', 'gostosa', 'machista',
-          'homofobica', 'gostoso', 'nazista', 'machista', 'homofobico', 'racista',
-          'rankgostosa', 'rankgostosas', 'ranknazista', 'rankgostoso', 'rankgostosos'
-        ];
-        
-        // Remove cada comando impróprio do menu
-    comandosImpróprios.forEach(cmd => {
-          const regex = new RegExp(`││◕⁠➜ ${prefix}${cmd}\\n`, 'g');
-          menuContent = menuContent.replace(regex, '');
-        });
-        
-        // Adiciona aviso de modo lite ativado
-        menuContent += '\n\n⚠️ *Nota:* Alguns comandos foram ocultados pelo Modo Lite';
-      }
-      
+      let menuContent = await menubn(prefix, nomebot, pushname, isModoLite);
       await sendMenuWithMedia('brincadeiras', async () => menuContent);
     } catch (error) {
       console.error('Erro ao enviar menu de brincadeiras:', error);
@@ -2705,8 +2143,7 @@ case 'ytmp4':
       if (!isOwner) {
         await reply("⚠️ Este menu é exclusivo para o dono do bot.");
         return;
-      }
-      
+      };
       await sendMenuWithMedia('dono', menuDono);
     } catch (error) {
       console.error('Erro ao enviar menu do dono:', error);
@@ -2722,59 +2159,28 @@ case 'ytmp4':
       await reply("❌ Ocorreu um erro ao carregar o menu de stickers");
     }
   break;
-    
-  // Função auxiliar para enviar menus com mídia
+
   async function sendMenuWithMedia(menuType, menuFunction) {
-    // Verificar se existe mídia personalizada para o menu
     const menuVideoPath = __dirname + '/../midias/menu.mp4';
     const menuImagePath = __dirname + '/../midias/menu.jpg';
     
-    // Determinar se vamos usar vídeo ou imagem
     const useVideo = fs.existsSync(menuVideoPath);
     const mediaPath = useVideo ? menuVideoPath : menuImagePath;
     
-    // Verificar se pelo menos um dos arquivos existe
-    if (!fs.existsSync(mediaPath)) {
-      // Usar uma imagem padrão se nenhuma mídia for encontrada
-      const defaultImage = { url: 'https://i.ibb.co/Wpm9xvV/20230710-221917.jpg' };
-      const menuText = await menuFunction(prefix, nomebot, pushname);
-      
-      await nazu.sendMessage(from, {
-        image: defaultImage,
-        caption: menuText,
-      }, { quoted: info });
-      
-      return;
-    }
-    
-    // Carregar a mídia do menu
     const mediaBuffer = fs.readFileSync(mediaPath);
-    
-    // Obter o texto do menu
-    const menuText = typeof menuFunction === 'function' ? 
-      (typeof menuFunction.then === 'function' ? await menuFunction : await menuFunction(prefix, nomebot, pushname)) : 
-      'Menu não disponível';
-    
-    // Adicionar informações extras ao menu
-    const enhancedMenuText = `${menuText}`
-    
-    // Enviar o menu com a mídia apropriada
-    await nazu.sendMessage(from, {
-      [useVideo ? 'video' : 'image']: mediaBuffer,
-      caption: enhancedMenuText,
-      gifPlayback: useVideo,
-      mimetype: useVideo ? 'video/mp4' : 'image/jpeg'
-    }, { quoted: info });
-  }
+
+    const menuText = typeof menuFunction === 'function' ? (typeof menuFunction.then === 'function' ? await menuFunction : await menuFunction(prefix, nomebot, pushname)) : 'Menu não disponível';
+
+    await nazu.sendMessage(from, { [useVideo ? 'video' : 'image']: mediaBuffer, caption: menuText, gifPlayback: useVideo, mimetype: useVideo ? 'video/mp4' : 'image/jpeg' }, { quoted: info });
+  };
    
-  //COMANDOS DE DONO BB
+   
   case 'antipv3':
   try {
     if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-    antipvData.mode = antipvData.mode === 'antipv3' ? null : 'antipv3'; // Update in-memory variable
+    antipvData.mode = antipvData.mode === 'antipv3' ? null : 'antipv3';
     fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify(antipvData, null, 2));
     await reply(`✅ Antipv3 ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'bloqueia usuários que usam comandos no privado' : 'responde normalmente no privado'}.`);
-    nazu.react('🔒');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -2784,22 +2190,21 @@ case 'ytmp4':
   case 'antipv2':
   try {
     if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-    antipvData.mode = antipvData.mode === 'antipv2' ? null : 'antipv2'; // Update in-memory variable
+    antipvData.mode = antipvData.mode === 'antipv2' ? null : 'antipv2';
     fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify(antipvData, null, 2));
     await reply(`✅ Antipv2 ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'avisa que comandos só funcionam em grupos no privado' : 'responde normalmente no privado'}.`);
-    nazu.react('🔒');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
   }
   break;
+  
   case 'antipv':
   try {
     if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
     antipvData.mode = antipvData.mode === 'antipv' ? null : 'antipv';
     fs.writeFileSync(__dirname + '/../database/antipv.json', JSON.stringify(antipvData, null, 2));
     await reply(`✅ Antipv ${antipvData.mode ? 'ativado' : 'desativado'}! O bot agora ${antipvData.mode ? 'ignora mensagens no privado' : 'responde normalmente no privado'}.`);
-    nazu.react('🔒');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -2809,11 +2214,10 @@ case 'ytmp4':
   case 'entrar':
   try {
     if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-    if (!q || !q.includes('chat.whatsapp.com')) return reply('Digite um link de convite válido! Exemplo: !entrar https://chat.whatsapp.com/...');
+    if (!q || !q.includes('chat.whatsapp.com')) return reply('Digite um link de convite válido! Exemplo: '+prefix+'entrar https://chat.whatsapp.com/...');
     const code = q.split('https://chat.whatsapp.com/')[1];
     await nazu.groupAcceptInvite(code).then((res) => {
-      reply(`✅ Entrei no grupo com sucesso! ID: ${res}`);
-      nazu.react('🎉');
+      reply(`✅ Entrei no grupo com sucesso!`);
     }).catch((err) => {
       reply('❌ Erro ao entrar no grupo. Link inválido ou permissão negada.');
     });
@@ -2826,7 +2230,7 @@ case 'ytmp4':
   case 'tm':
   try {
     if (!isOwner) return reply("Este comando é apenas para o meu dono 💔");
-    if (!q && !isQuotedImage && !isQuotedVideo) return reply('Digite uma mensagem ou marque uma imagem/vídeo! Exemplo: !tm Olá a todos!');
+    if (!q && !isQuotedImage && !isQuotedVideo) return reply('Digite uma mensagem ou marque uma imagem/vídeo! Exemplo: '+prefix+'tm Olá a todos!');
     let message = {};
     if (isQuotedImage) {
       const image = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage, 'image');
@@ -2843,7 +2247,6 @@ case 'ytmp4':
       await nazu.sendMessage(group.id, message);
     }
     await reply(`✅ Transmissão enviada para ${Object.keys(groups).length} grupos!`);
-    nazu.react('📢');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -2876,36 +2279,9 @@ case 'ytmp4':
   case 'getcase':
   if (!isOwner) return reply("Este comando é apenas para o meu dono");
   try {
-    if (!q) return reply('❌ Digite o nome do comando. Exemplo: !getcase menu');
-    const caseName = q.trim().toLowerCase();
-    const indexContent = fs.readFileSync(__dirname + '/index.js', 'utf-8');
-    const caseStartRegex = new RegExp(`case\\s+'${caseName}'\\s*:`, 'g');
-    if (!caseStartRegex.test(indexContent)) {
-      const multiCaseRegex = new RegExp(`case\\s+'[^']+'\\s*:\\s*case\\s+'${caseName}'\\s*:`, 'g');
-      if (!multiCaseRegex.test(indexContent)) {
-        return reply(`❌ O comando *${caseName}* não foi encontrado.`);
-      };
-    };
-    const switchStart = indexContent.indexOf('switch(command) {');
-    const switchEnd = indexContent.lastIndexOf('}');
-    const switchBlock = indexContent.slice(switchStart, switchEnd + 1);
-    const caseBlocks = switchBlock.split(/case\s+'/);
-    let targetCase = null;
-    for (const block of caseBlocks) {
-      if (block.startsWith(`${caseName}'`) || block.includes(`case '${caseName}'`)) {
-        targetCase = block;
-        break;
-      };
-    };
-    if (!targetCase) return reply(`❌ O comando *${caseName}* não foi encontrado.`);
-    const caseEndIndex = targetCase.indexOf('break;');
-    let caseCode = targetCase;
-    if (caseEndIndex !== -1) {
-      caseCode = targetCase.slice(0, caseEndIndex + 6);
-    };
-    caseCode = `case '${caseName}':${caseCode}`;
-    await nazu.sendMessage(from, { document: Buffer.from(caseCode, 'utf-8'), mimetype: 'text/plain', fileName: `${caseName}.txt` }, { quoted: info });
-    await reply(`✅ Código do comando *${caseName}* enviado como documento!`);
+    if (!q) return reply('❌ Digite o nome do comando. Exemplo: '+prefix+'getcase menu');
+    caseCode = 'case '+`'${cases}'`+fs.readFileSync("./index.js").toString().split('case \''+cases+'\'')[1].split("bre"+"ak")[0]+"brea"+"k";
+    await nazu.sendMessage(from, { document: Buffer.from(caseCode, 'utf-8'), mimetype: 'text/plain', fileName: `${q}.txt` }, { quoted: info });
   } catch (e) {
     console.error(e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
@@ -2913,12 +2289,11 @@ case 'ytmp4':
   break;
   
   case 'boton':
-case 'botoff':
+  case 'botoff':
   if (!isOwner) return reply("Este comando é apenas para o meu dono");
   try {
     const botStateFile = __dirname + '/../database/botState.json';
-    // botState is already loaded and will be updated directly
-
+    
     const isOn = botState.status === 'on';
     if (command === 'boton' && isOn) {
       return reply('🌟 O bot já está ativado!');
@@ -2927,29 +2302,27 @@ case 'botoff':
       return reply('🌙 O bot já está desativado!');
     }
 
-    botState.status = command === 'boton' ? 'on' : 'off'; // Update in-memory variable
+    botState.status = command === 'boton' ? 'on' : 'off';
     fs.writeFileSync(botStateFile, JSON.stringify(botState, null, 2));
 
-    const message = command === 'boton'
-      ? '✅ *Bot ativado!* Agora todos podem usar os comandos.'
-      : '✅ *Bot desativado!* Apenas o dono pode usar comandos.';
+    const message = command === 'boton' ? '✅ *Bot ativado!* Agora todos podem usar os comandos.' : '✅ *Bot desativado!* Apenas o dono pode usar comandos.';
     
     await reply(message);
   } catch (e) {
     console.error(e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
-break;
+  break;
 
   case 'blockcmdg':
   if (!isOwner) return reply("Este comando é apenas para o meu dono");
   try {
     const cmdToBlock = q?.toLowerCase().split(' ')[0];
     const reason = q?.split(' ').slice(1).join(' ') || 'Sem motivo informado';
-    if (!cmdToBlock) return reply('❌ Informe o comando a bloquear! Ex.: !blockcmd sticker');
+    if (!cmdToBlock) return reply('❌ Informe o comando a bloquear! Ex.: '+prefix+'blockcmd sticker');
     const blockFile = __dirname + '/../database/globalBlocks.json';
     globalBlocks.commands = globalBlocks.commands || {};
-    globalBlocks.commands[cmdToBlock] = { reason, timestamp: Date.now() }; // Update in-memory variable
+    globalBlocks.commands[cmdToBlock] = { reason, timestamp: Date.now() };
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Comando *${cmdToBlock}* bloqueado globalmente!\nMotivo: ${reason}`);
   } catch (e) {
@@ -2962,13 +2335,12 @@ break;
   if (!isOwner) return reply("Este comando é apenas para o meu dono");
   try {
     const cmdToUnblock = q?.toLowerCase().split(' ')[0];
-    if (!cmdToUnblock) return reply('❌ Informe o comando a desbloquear! Ex.: !unblockcmd sticker');
+    if (!cmdToUnblock) return reply('❌ Informe o comando a desbloquear! Ex.: '+prefix+'unblockcmd sticker');
     const blockFile = __dirname + '/../database/globalBlocks.json';
-    // globalBlocks is already loaded
     if (!globalBlocks.commands || !globalBlocks.commands[cmdToUnblock]) {
       return reply(`❌ O comando *${cmdToUnblock}* não está bloqueado!`);
     }
-    delete globalBlocks.commands[cmdToUnblock]; // Update in-memory variable
+    delete globalBlocks.commands[cmdToUnblock];
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Comando *${cmdToUnblock}* desbloqueado globalmente!`);
   } catch (e) {
@@ -2985,7 +2357,7 @@ break;
     if(!menc_os3) return reply("Marque alguém 🙄");
     const blockFile = __dirname + '/../database/globalBlocks.json';
     globalBlocks.users = globalBlocks.users || {};
-    globalBlocks.users[menc_os3] = { reason, timestamp: Date.now() }; // Update in-memory variable
+    globalBlocks.users[menc_os3] = { reason, timestamp: Date.now() };
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Usuário @${menc_os3.split('@')[0]} bloqueado globalmente!\nMotivo: ${reason}`, { mentions: [menc_os3] });
   } catch (e) {
@@ -2999,14 +2371,13 @@ break;
   try {
     if(!menc_os2) return reply("Marque alguém 🙄");
     const blockFile = __dirname + '/../database/globalBlocks.json';
-    // globalBlocks is already loaded
     if (!globalBlocks.users || (!globalBlocks.users[menc_os2] && !globalBlocks.users[menc_os2.split('@')[0]])) {
       return reply(`❌ O usuário @${menc_os2.split('@')[0]} não está bloqueado!`, { mentions: [menc_os2] });
     }
     if (globalBlocks.users[menc_os2]) {
-    delete globalBlocks.users[menc_os2]; // Update in-memory variable
+    delete globalBlocks.users[menc_os2];
     } else if (globalBlocks.users[menc_os2.split('@')[0]]) {
-    delete globalBlocks.users[menc_os2.split('@')[0]]; // Update in-memory variable
+    delete globalBlocks.users[menc_os2.split('@')[0]];
     }
     fs.writeFileSync(blockFile, JSON.stringify(globalBlocks, null, 2));
     await reply(`✅ Usuário @${menc_os2.split('@')[0]} desbloqueado globalmente!`, { mentions: [menc_os2] });
@@ -3020,7 +2391,6 @@ break;
   if (!isOwner) return reply("Este comando é apenas para o meu dono");
   try {
     const blockFile = __dirname + '/../database/globalBlocks.json';
-    // globalBlocks is already loaded
     const blockedCommands = globalBlocks.commands ? Object.entries(globalBlocks.commands).map(([cmd, data]) => `🔧 *${cmd}* - Motivo: ${data.reason}`).join('\n') : 'Nenhum comando bloqueado.';
     const blockedUsers = globalBlocks.users ? Object.entries(globalBlocks.users).map(([user, data]) => {const userId = user.split('@')[0]; return `👤 *${userId}* - Motivo: ${data.reason}`;}).join('\n') : 'Nenhum usuário bloqueado.';
     const message = `🔒 *Bloqueios Globais - ${nomebot}* 🔒\n\n📜 *Comandos Bloqueados*:\n${blockedCommands}\n\n👥 *Usuários Bloqueados*:\n${blockedUsers}`;    
@@ -3083,7 +2453,7 @@ break;
   case 'bangp':case 'unbangp':case 'desbangp': try {
   if(!isGroup) return reply("isso so pode ser usado em grupo 💔");
   if(!isOwner) return reply("Este comando é apenas para o meu dono");
-  banGpIds[from] = !banGpIds[from]; // Update in-memory variable
+  banGpIds[from] = !banGpIds[from];
   if(banGpIds[from]) {
   await reply('🚫 Grupo banido, apenas usuarios premium ou meu dono podem utilizar o bot aqui agora.');
   } else {
@@ -3101,7 +2471,7 @@ break;
     if (!isOwner) return reply("Este comando é apenas para o meu dono");
     if (!menc_os2) return reply("Marque alguém 🙄");
     if(!!premiumListaZinha[menc_os2]) return reply('O usuário ja esta na lista premium.');
-    premiumListaZinha[menc_os2] = true; // Update in-memory variable
+    premiumListaZinha[menc_os2] = true;
     await nazu.sendMessage(from, {text: `✅ @${menc_os2.split('@')[0]} foi adicionado(a) a lista premium.`, mentions: [menc_os2] }, { quoted: info });
     fs.writeFileSync(__dirname + `/../database/dono/premium.json`, JSON.stringify(premiumListaZinha));
   } catch (e) {
@@ -3115,7 +2485,7 @@ break;
     if(!isOwner) return reply("Este comando é apenas para o meu dono");
     if(!menc_os2) return reply("Marque alguém 🙄");
     if(!premiumListaZinha[menc_os2]) return reply('O usuário não esta na lista premium.');
-    delete premiumListaZinha[menc_os2]; // Update in-memory variable
+    delete premiumListaZinha[menc_os2];
     await nazu.sendMessage(from, {text: `🫡 @${menc_os2.split('@')[0]} foi removido(a) da lista premium.`, mentions: [menc_os2] }, { quoted: info });
     fs.writeFileSync(__dirname + `/../database/dono/premium.json`, JSON.stringify(premiumListaZinha));
   } catch (e) {
@@ -3129,7 +2499,7 @@ break;
     if (!isOwner) return reply("Este comando é apenas para o meu dono");
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if(!!premiumListaZinha[from]) return reply('O grupo ja esta na lista premium.');
-    premiumListaZinha[from] = true; // Update in-memory variable
+    premiumListaZinha[from] = true;
     await nazu.sendMessage(from, {text: `✅ O grupo foi adicionado a lista premium.` }, { quoted: info });
     fs.writeFileSync(__dirname + `/../database/dono/premium.json`, JSON.stringify(premiumListaZinha));
   } catch (e) {
@@ -3143,7 +2513,7 @@ break;
     if(!isOwner) return reply("Este comando é apenas para o meu dono");
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if(!premiumListaZinha[from]) return reply('O grupo não esta na lista premium.');
-    delete premiumListaZinha[from]; // Update in-memory variable
+    delete premiumListaZinha[from];
     await nazu.sendMessage(from, {text: `🫡 O grupo foi removido da lista premium.` }, { quoted: info });
     fs.writeFileSync(__dirname + `/../database/dono/premium.json`, JSON.stringify(premiumListaZinha));
   } catch (e) {
@@ -3331,13 +2701,12 @@ break;
   };
   break;
 
-case 'infoserver':
+  case 'infoserver':
   if (!isOwner) {
     await reply('🚫 *Ops! Você não tem permissão!* 😅\n\n🌸 *Este comando é só para o dono*\nInformações do servidor são confidenciais! ✨');
     break;
   }
 
-  // Coleta de informações básicas
   const serverUptime = process.uptime();
   const serverUptimeFormatted = formatUptime(serverUptime, true);
 
@@ -3379,20 +2748,18 @@ case 'infoserver':
     second: '2-digit'
   });
 
-  // Item 1: Informações Adicionais do Sistema
   const nodeVersion = process.version;
-  const osUptime = (os.uptime() / 3600).toFixed(2); // Uptime do SO em horas
+  const osUptime = (os.uptime() / 3600).toFixed(2);
   let networkDetails = '';
   for (const [name, interfaces] of Object.entries(serverNetworkInterfaces)) {
     interfaces.forEach(iface => {
       networkDetails += `├ ${name} (${iface.family}): ${iface.address}\n`;
     });
   }
-
-  // Nova adição: Armazenamento usando getDiskSpaceInfo()
+  
   let diskInfo = { totalGb: 0, freeGb: 0, usedGb: 0, percentUsed: 0 };
   try {
-    diskInfo = await getDiskSpaceInfo(); // Usa a função fornecida
+    diskInfo = await getDiskSpaceInfo();
   } catch (error) {
     console.error('Erro ao obter informações de disco:', error);
   }
@@ -3401,24 +2768,21 @@ case 'infoserver':
   const diskUsed = diskInfo.usedGb;
   const diskUsagePercent = diskInfo.percentUsed;
 
-  // Item 3: Monitoramento em Tempo Real - Taxa de Uso da CPU
   const startUsage = process.cpuUsage();
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Aguarda 1s para medir
+  await new Promise(resolve => setTimeout(resolve, 1000));
   const endUsage = process.cpuUsage(startUsage);
   const cpuPercent = ((endUsage.user + endUsage.system) / 10000).toFixed(1);
 
-  // Item 3: Latência do Bot
   const startTime = Date.now();
   const endTime = Date.now();
   const latency = endTime - startTime;
 
-  // Nova adição: Velocidade de Internet (Latência de Rede)
   let networkLatency = 'N/A';
   try {
     const startNetworkTest = Date.now();
     await new Promise((resolve, reject) => {
       const req = https.get('https://www.google.com', res => {
-        res.on('data', () => {}); // Consumir dados
+        res.on('data', () => {});
         res.on('end', () => resolve());
       });
       req.on('error', err => reject(err));
@@ -3431,12 +2795,10 @@ case 'infoserver':
     console.error('Erro ao testar latência de rede:', error);
   }
 
-  // Início da mensagem
   let infoServerMessage = `🌸 ═════════════════════ 🌸\n`;
   infoServerMessage += `    *INFORMAÇÕES DO SERVIDOR*\n`;
   infoServerMessage += `🌸 ═════════════════════ 🌸\n\n`;
 
-  // Sistema Operacional
   infoServerMessage += `🖥️ *Sistema Operacional:* 🏠\n`;
   infoServerMessage += `├ 🟢 Node.js: ${nodeVersion}\n`;
   infoServerMessage += `├ 💻 Plataforma: ${serverOsInfo.platform}\n`;
@@ -3448,7 +2810,6 @@ case 'infoserver':
   infoServerMessage += `├ ⏳ Sistema online há: ${osUptime} horas\n`;
   infoServerMessage += `└ 📅 Hora atual: ${currentServerTime}\n\n`;
 
-  // Processador
   infoServerMessage += `⚡ *Processador (CPU):* 🧠\n`;
   infoServerMessage += `├ 🔢 Núcleos: ${serverCpuCount}\n`;
   infoServerMessage += `├ 🏷️ Modelo: ${serverCpuModel}\n`;
@@ -3459,7 +2820,6 @@ case 'infoserver':
   infoServerMessage += `├ 📈 Load 5min: ${serverLoadAvg[1].toFixed(2)}\n`;
   infoServerMessage += `└ 📉 Load 15min: ${serverLoadAvg[2].toFixed(2)}\n\n`;
 
-  // Memória do Sistema
   const memoryUsagePercent = (((serverTotalMemory - serverFreeMemory) / serverTotalMemory) * 100).toFixed(1);
   const memoryEmoji = memoryUsagePercent > 80 ? '⚠️' : '✅';
   const memoryBar = '█'.repeat(memoryUsagePercent / 10) + '-'.repeat(10 - memoryUsagePercent / 10);
@@ -3469,26 +2829,23 @@ case 'infoserver':
   infoServerMessage += `├ 📈 RAM Usada: ${(serverTotalMemory - serverFreeMemory).toFixed(2)} GB\n`;
   infoServerMessage += `└ ${memoryEmoji} Uso: [${memoryBar}] ${memoryUsagePercent}%\n\n`;
 
-  // Memória do Bot
   const botMemoryUsagePercent = ((serverMemUsed / serverMemTotal) * 100).toFixed(1);
   const botMemoryEmoji = botMemoryUsagePercent > 80 ? '⚠️' : '✅';
   const botMemoryBar = '█'.repeat(botMemoryUsagePercent / 10) + '-'.repeat(10 - botMemoryUsagePercent / 10);
-  infoServerMessage += `🤖 *Memória da Nazuna:* 💖\n`;
+  infoServerMessage += `🤖 *Memória da ${nomebot}:* 💖\n`;
   infoServerMessage += `├ 🧠 Heap Usado: ${serverMemUsed} MB\n`;
   infoServerMessage += `├ 📦 Heap Total: ${serverMemTotal} MB\n`;
   infoServerMessage += `├ 🏠 RSS: ${serverMemRss} MB\n`;
   infoServerMessage += `├ 🔗 Externo: ${serverMemExternal} MB\n`;
   infoServerMessage += `└ ${botMemoryEmoji} Eficiência: [${botMemoryBar}] ${botMemoryUsagePercent}%\n\n`;
 
-  // Rede e Conectividade
   infoServerMessage += `🌐 *Rede e Conectividade:* 🔗\n`;
   infoServerMessage += `├ 🔌 Interfaces: ${serverInterfaces}\n`;
   infoServerMessage += networkDetails;
   infoServerMessage += `├ 📡 Status: Online\n`;
-  infoServerMessage += `├ ⏱️ Latência de Rede: ${networkLatency}\n`; // Nova adição: Latência de Rede
+  infoServerMessage += `├ ⏱️ Latência de Rede: ${networkLatency}\n`;
   infoServerMessage += `└ 🛡️ Firewall: Ativo\n\n`;
 
-  // Armazenamento (usando getDiskSpaceInfo)
   const diskEmoji = diskUsagePercent > 80 ? '⚠️' : '✅';
   const diskBar = '█'.repeat(diskUsagePercent / 10) + '-'.repeat(10 - diskUsagePercent / 10);
   infoServerMessage += `💽 *Armazenamento:* 💿\n`;
@@ -3497,17 +2854,16 @@ case 'infoserver':
   infoServerMessage += `├ 📈 Usado: ${diskUsed} GB\n`;
   infoServerMessage += `└ ${diskEmoji} Uso: [${diskBar}] ${diskUsagePercent}%\n\n`;
 
-  // Latência e Tempo de Atividade
   infoServerMessage += `⏰ *Tempo e Latência:* 🕐\n`;
   infoServerMessage += `├ ⏱️ Latência do Bot: ${latency}ms\n`;
-  infoServerMessage += `└ 🚀 Nazuna online há: ${serverUptimeFormatted}\n`;
+  infoServerMessage += `└ 🚀 Bot online há: ${serverUptimeFormatted}\n`;
 
   await reply(infoServerMessage);
   break;
       
   case 'statusbot':
-case 'infobot':
-case 'botinfo':
+  case 'infobot':
+  case 'botinfo':
   try {
     const botUptime = formatUptime(process.uptime(), true);
     const botMemUsage = process.memoryUsage();
@@ -3546,30 +2902,30 @@ case 'botinfo':
 
     const lines = [
       "╭───🤖 STATUS DO BOT ───╮",
-      `│ 🏷️ Nome: ${nomebot}`,
-      `│ 👨‍💻 Dono: ${nomedono}`,
-      `│ 🆚 Versão: ${botVersion}`,
-      `│ 🟢 Status: ${botStatus}`,
-      `│ ⏰ Online há: ${botUptime}`,
-      `│ 🖥️ Plataforma: ${platform}`,
-      `│ 🟢 Node.js: ${nodeVersion}`,
-      "│",
-      "│ 📊 *Estatísticas:*",
-      `│ • 👥 Grupos: ${totalGroups}`,
-      `│ • 👤 Usuários: ${totalUsers}`,
-      `│ • ⚒️ Comandos: ${totalCommands}`,
-      `│ • 💎 Users Premium: ${premiumUsers}`,
-      `│ • 💎 Grupos Premium: ${premiumGroups}`,
-      "│",
-      "│ 🛡️ *Segurança:*",
-      `│ • 🚫 Users Bloqueados: ${blockedUsers}`,
-      `│ • 🚫 Cmds Bloqueados: ${blockedCommands}`,
-      `│ • 🏠 Modo Aluguel: ${rentalMode}`,
-      "│",
-      "│ 💾 *Sistema:*",
-      `│ • 🧠 RAM Usada: ${memUsed}MB`,
-      `│ • 📦 RAM Total: ${memTotal}MB`,
-      `│ • 🕐 Hora Atual: ${currentTime}`,
+      `┊ 🏷️ Nome: ${nomebot}`,
+      `┊ 👨‍💻 Dono: ${nomedono}`,
+      `┊ 🆚 Versão: ${botVersion}`,
+      `┊ 🟢 Status: ${botStatus}`,
+      `┊ ⏰ Online há: ${botUptime}`,
+      `┊ 🖥️ Plataforma: ${platform}`,
+      `┊ 🟢 Node.js: ${nodeVersion}`,
+      "┊",
+      "┊ 📊 *Estatísticas:*",
+      `┊ • 👥 Grupos: ${totalGroups}`,
+      `┊ • 👤 Usuários: ${totalUsers}`,
+      `┊ • ⚒️ Comandos: ${totalCommands}`,
+      `┊ • 💎 Users Premium: ${premiumUsers}`,
+      `┊ • 💎 Grupos Premium: ${premiumGroups}`,
+      "┊",
+      "┊ 🛡️ *Segurança:*",
+      `┊ • 🚫 Users Bloqueados: ${blockedUsers}`,
+      `┊ • 🚫 Cmds Bloqueados: ${blockedCommands}`,
+      `┊ • 🏠 Modo Aluguel: ${rentalMode}`,
+      "┊",
+      "┊ 💾 *Sistema:*",
+      `┊ • 🧠 RAM Usada: ${memUsed}MB`,
+      `┊ • 📦 RAM Total: ${memTotal}MB`,
+      `┊ • 🕐 Hora Atual: ${currentTime}`,
       "╰─────────────────────╯"
     ].join("\n");
     
@@ -3584,15 +2940,14 @@ case 'botinfo':
   case 'topcmds':
   case 'comandosmaisusados':
   try {
-    
-    // Obtém os comandos mais usados
     const topCommands = commandStats.getMostUsedCommands(10);
-    
-    // Gera o menu com os comandos mais usados
-    const menu = await menuTopCmd(prefix, nomebot, pushname, topCommands);
-    
-    // Envia o menu
-    await reply(menu);
+    const menuVideoPath = __dirname + '/../midias/menu.mp4';
+    const menuImagePath = __dirname + '/../midias/menu.jpg';
+    const useVideo = fs.existsSync(menuVideoPath);
+    const mediaPath = useVideo ? menuVideoPath : menuImagePath;
+    const mediaBuffer = fs.readFileSync(mediaPath);
+    const menuText = await menuTopCmd(prefix, nomebot, pushname, topCommands);
+    await nazu.sendMessage(from, { [useVideo ? 'video' : 'image']: mediaBuffer, caption: menuText, gifPlayback: useVideo, mimetype: useVideo ? 'video/mp4' : 'image/jpeg' }, { quoted: info });
   } catch (e) {
     console.error(e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
@@ -3604,38 +2959,21 @@ case 'botinfo':
   try {
     if (!q) return reply(`Por favor, especifique um comando para ver suas estatísticas.\nExemplo: ${prefix}cmdinfo menu`);
     
-    // Remove o prefixo se o usuário incluiu
     const cmdName = q.startsWith(prefix) ? q.slice(prefix.length) : q;
-    
-    // Obtém as estatísticas do comando
+
     const stats = commandStats.getCommandStats(cmdName);
     
     if (!stats) {
       return reply(`❌ Comando *${cmdName}* não encontrado ou nunca foi usado.`);
     }
+
+    const topUsersText = stats.topUsers.length > 0 ? stats.topUsers.map((user, index) => { return `${index + 1}º @${user.userId.split('@')[0]} - ${user.count} usos`; }).join('\n') : 'Nenhum usuário registrado';
     
-    // Formata os usuários que mais usaram o comando
-    const topUsersText = stats.topUsers.length > 0 
-      ? stats.topUsers.map((user, index) => {
-          return `${index + 1}º @${user.userId.split('@')[0]} - ${user.count} usos`;
-        }).join('\n')
-      : 'Nenhum usuário registrado';
-    
-    // Formata a data da última utilização
     const lastUsed = new Date(stats.lastUsed).toLocaleString('pt-BR');
     
-    // Monta a mensagem
-    const infoMessage = `📊 *Estatísticas do Comando: ${prefix}${stats.name}* 📊\n\n` +
-      `📈 *Total de Usos*: ${stats.count}\n` +
-      `👥 *Usuários Únicos*: ${stats.uniqueUsers}\n` +
-      `🕒 *Último Uso*: ${lastUsed}\n\n` +
-      `🏆 *Top Usuários*:\n${topUsersText}\n\n` +
-      `✨ *Bot*: ${nomebot} by ${nomedono} ✨`;
+    const infoMessage = `📊 *Estatísticas do Comando: ${prefix}${stats.name}* 📊\n\n` + `📈 *Total de Usos*: ${stats.count}\n` + `👥 *Usuários Únicos*: ${stats.uniqueUsers}\n` + `🕒 *Último Uso*: ${lastUsed}\n\n` + `🏆 *Top Usuários*:\n${topUsersText}\n\n` + `✨ *Bot*: ${nomebot} by ${nomedono} ✨`;
     
-    await nazu.sendMessage(from, { 
-      text: infoMessage, 
-      mentions: stats.topUsers.map(u => u.userId)
-    }, { quoted: info });
+    await nazu.sendMessage(from, { text: infoMessage, mentions: stats.topUsers.map(u => u.userId) }, { quoted: info });
     
   } catch (e) {
     console.error(e);
@@ -3650,16 +2988,11 @@ case 'botinfo':
         return reply("❌ Este comando só funciona em grupos!");
 
       const meta = await nazu.groupMetadata(from);
-      const subject   = meta.subject || "—";
-      const desc      = meta.desc?.toString() || "Sem descrição";
-      const createdAt = meta.creation
-        ? new Date(meta.creation * 1000).toLocaleString('pt-BR')
-        : "Desconhecida";
+      const subject = meta.subject || "—";
+      const desc = meta.desc?.toString() || "Sem descrição";
+      const createdAt = meta.creation ? new Date(meta.creation * 1000).toLocaleString('pt-BR') : "Desconhecida";
 
-      const ownerJid =
-        meta.owner ||
-        meta.participants.find(p => p.admin && p.isCreator)?.id ||
-        "unknown@s.whatsapp.net";
+      const ownerJid = meta.owner || meta.participants.find(p => p.admin && p.isCreator)?.id || "unknown@s.whatsapp.net";
       const ownerTag = `@${ownerJid.split('@')[0]}`;
 
       const totalMembers = meta.participants.length;
@@ -3674,13 +3007,7 @@ case 'botinfo':
 
       const rentGlob   = isRentalModeActive();
       const rentInfo   = getGroupRentalStatus(from);
-      const rentStatus = rentGlob
-        ? (rentInfo.active
-           ? `✅ Ativo até ${rentInfo.permanent 
-               ? 'Permanente' 
-               : new Date(rentInfo.expiresAt).toLocaleDateString('pt-BR')}`
-           : "❌ Expirado")
-        : "❌ Desativado";
+      const rentStatus = rentGlob ? (rentInfo.active ? `✅ Ativo até ${rentInfo.permanent ? 'Permanente' : new Date(rentInfo.expiresAt).toLocaleDateString('pt-BR')}` : "❌ Expirado") : "❌ Desativado";
       const isPremGp = !!premiumListaZinha[from] ? "✅" : "❌";
 
       const toggles = [
@@ -3694,31 +3021,30 @@ case 'botinfo':
         ["Modo Brincadeira", isModoBn],
         ["Só Admins",      groupData.soadm],
         ["Modo Lite",      isModoLite]
-      ].filter(([_,v]) => typeof v === 'boolean').map(([k,v]) => `│ ${v ? '✅':'❌'} ${k}`).join('\n');
+      ].filter(([_,v]) => typeof v === 'boolean').map(([k,v]) => `┊ ${v ? '✅':'❌'} ${k}`).join('\n');
       
       const lines = [
         "╭───📊 STATUS DO GRUPO ───╮",
-        `│ 📝 Nome: ${subject}`,
-        `│ 🆔 ID: ${from.split('@')[0]}`,
-        `│ 👑 Dono: ${ownerTag}`,
-        `│ 📅 Criado: ${createdAt}`,
-        `│ 📄 Desc: ${desc.slice(0,35)}${desc.length>35?'...':''}`,
-        `│ 👥 Membros: ${totalMembers}`,
-        `│ 👮 Admins: ${totalAdmins}`,
-        `│ 💎 Premium: ${isPremGp}`,
-        `│ 🏠 Aluguel: ${rentStatus}`,
-        "│",
-        "│ 📊 *Estatísticas:*",
-        `│ • 💬 Mensagens: ${totalMsgs}`,
-        `│ • ⚒️ Comandos: ${totalCmds}`,
-        `│ • 🎨 Figurinhas: ${totalFigs}`,
-        "│",
-        "│ ⚙️ *Configurações:*",
+        `┊ 📝 Nome: ${subject}`,
+        `┊ 🆔 ID: ${from.split('@')[0]}`,
+        `┊ 👑 Dono: ${ownerTag}`,
+        `┊ 📅 Criado: ${createdAt}`,
+        `┊ 📄 Desc: ${desc.slice(0,35)}${desc.length>35?'...':''}`,
+        `┊ 👥 Membros: ${totalMembers}`,
+        `┊ 👮 Admins: ${totalAdmins}`,
+        `┊ 💎 Premium: ${isPremGp}`,
+        `┊ 🏠 Aluguel: ${rentStatus}`,
+        "┊",
+        "┊ 📊 *Estatísticas:*",
+        `┊ • 💬 Mensagens: ${totalMsgs}`,
+        `┊ • ⚒️ Comandos: ${totalCmds}`,
+        `┊ • 🎨 Figurinhas: ${totalFigs}`,
+        "┊",
+        "┊ ⚙️ *Configurações:*",
         toggles,
-        "╰────────────────────────╯"
+        "╰──────────────────╯"
       ].join("\n");
 
-      // envia com menção ao dono
       await reply(lines, { mentions: [ ownerJid ] });
     } catch (e) {
       console.error("Erro em statusgp:", e);
@@ -3726,50 +3052,42 @@ case 'botinfo':
   }
   break;
 
-case 'ping':
+  case 'ping':
   try {
-    
-    // Calcula a latência da mensagem
+
     const timestamp = Date.now();
     const speedConverted = (timestamp - (info.messageTimestamp * 1000)) / 1000;
 
-    // Coleta informações do sistema
     const uptimeBot = formatUptime(process.uptime(), true);
     const uptimeSistema = formatUptime(os.uptime(), true);
-    
-    // Informações de memória
+
     const ramTotalGb = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
     const ramLivreGb = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
     const ramSistemaUsadaGb = (ramTotalGb - ramLivreGb).toFixed(2);
     const ramUsadaPorcentagem = ((ramSistemaUsadaGb / ramTotalGb) * 100).toFixed(0);
     const ramBotProcessoMb = (process.memoryUsage().rss / 1024 / 1024).toFixed(2);
 
-    // Cria barras de progresso para visualização
     const criarBarra = (porcentagem, tamanho = 10) => {
       const preenchido = Math.round((porcentagem / 100) * tamanho);
       return '█'.repeat(preenchido) + '░'.repeat(tamanho - preenchido);
     };
     
     const ramBarra = criarBarra(ramUsadaPorcentagem);
-    
-    // Informações de CPU
+
     const cpuInfo = os.cpus()[0];
     const cpuModel = cpuInfo.model.replace(/\(R\)/g, '®').replace(/\(TM\)/g, '™');
     const cpuCores = os.cpus().length;
     const cpuLoad = os.loadavg()[0].toFixed(2);
     const nodeVersao = process.version;
     
-    // Informações de grupos
     const getGroups = await nazu.groupFetchAllParticipating();
     const totalGrupos = Object.keys(getGroups).length;
 
-    // Informações de disco
     const diskSpace = await getDiskSpaceInfo();
     const diskUsedPercentage = parseFloat(diskSpace.percentUsed);
     const diskBarra = criarBarra(diskUsedPercentage);
     
-    // Status de resposta (baseado na latência)
-    let statusEmoji = '🟢'; // Bom
+    let statusEmoji = '🟢';
     let statusTexto = 'Excelente';
     
     if (speedConverted > 2) {
@@ -3785,46 +3103,41 @@ case 'ping':
       statusTexto = 'Ruim';
     }
 
-    // Constrói a mensagem de resposta com design melhorado
     const mensagem = `
-╭━━━「 ${statusEmoji} *STATUS DO BOT* ${statusEmoji} 」━━━
-│
-│ 🤖 *Informações do Bot*
-│ ├ 📛 Nome: *${nomebot}*
-│ ├ 🔰 Versão: *${botVersion}*
-│ ├ 🔑 Prefixo: *${prefixo}*
-│ ├ 👑 Dono: *${nomedono}*
-│ ├ 📊 Grupos: *${totalGrupos}*
-│ ╰ ⏱️ Online há: *${uptimeBot}*
-│
-│ 📡 *Conexão* ${statusEmoji}
-│ ├ 📶 Latência: *${speedConverted.toFixed(3)}s*
-│ ╰ 📊 Status: *${statusTexto}*
-│
-│ 💻 *Sistema*
-│ ├ 🏢 OS: *${os.platform()} (${os.release()})*
-│ ├ 🔩 Arquitetura: *${os.arch()}*
-│ ├ 🧠 Processador: *${cpuModel}*
-│ ├ 📊 Núcleos: *${cpuCores}*
-│ ├ ⚙️ Carga CPU: *${cpuLoad}%*
-│ ╰ ⏱️ Uptime: *${uptimeSistema}*
-│
-│ 📊 *Recursos*
-│ ├ ${ramBarra} RAM: *${ramSistemaUsadaGb}/${ramTotalGb} GB (${ramUsadaPorcentagem}%)*
-│ ├ 💾 RAM Bot: *${ramBotProcessoMb} MB*
-│ ├ ${diskBarra} Disco: *${diskSpace.usedGb}/${diskSpace.totalGb} GB (${diskSpace.percentUsed})*
-│ ╰ 🔄 Node.js: *${nodeVersao}*
-│
-╰━━━「 ${nomebot} 」━━━
+╭━━「 ${statusEmoji} *STATUS DO BOT* ${statusEmoji} 」
+┊
+┊ 🤖 *Informações do Bot*
+┊ ├ 📛 Nome: *${nomebot}*
+┊ ├ 🔰 Versão: *${botVersion}*
+┊ ├ 🔑 Prefixo: *${prefixo}*
+┊ ├ 👑 Dono: *${nomedono}*
+┊ ├ 📊 Grupos: *${totalGrupos}*
+┊ ╰ ⏱️ Online há: *${uptimeBot}*
+┊
+┊ 📡 *Conexão* ${statusEmoji}
+┊ ├ 📶 Latência: *${speedConverted.toFixed(3)}s*
+┊ ╰ 📊 Status: *${statusTexto}*
+┊
+┊ 💻 *Sistema*
+┊ ├ 🏢 OS: *${os.platform()} (${os.release()})*
+┊ ├ 🔩 Arquitetura: *${os.arch()}*
+┊ ├ 🧠 Processador: *${cpuModel}*
+┊ ├ 📊 Núcleos: *${cpuCores}*
+┊ ├ ⚙️ Carga CPU: *${cpuLoad}%*
+┊ ╰ ⏱️ Uptime: *${uptimeSistema}*
+┊
+┊ 📊 *Recursos*
+┊ ├ ${ramBarra} RAM: *${ramSistemaUsadaGb}/${ramTotalGb} GB (${ramUsadaPorcentagem}%)*
+┊ ├ 💾 RAM Bot: *${ramBotProcessoMb} MB*
+┊ ├ ${diskBarra} Disco: *${diskSpace.usedGb}/${diskSpace.totalGb} GB (${diskSpace.percentUsed})*
+┊ ╰ 🔄 Node.js: *${nodeVersao}*
+┊
+╰━━「 ${nomebot} 」
     `.trim();
 
-    // Gera imagem dinâmica para o ping
     const pingImageUrl = `https://api.cognima.com.br/api/banner/counter?key=CognimaTeamFreeKey&num=${String(speedConverted.toFixed(3)).replace('.', '')}&theme=original`;
 
-    await nazu.sendMessage(from, { 
-      image: { url: pingImageUrl }, 
-      caption: mensagem 
-    }, { quoted: info });
+    await nazu.sendMessage(from, { image: { url: pingImageUrl }, caption: mensagem }, { quoted: info });
 
   } catch (e) {
     console.error("Erro no comando ping:", e);
@@ -3832,7 +3145,6 @@ case 'ping':
   };
   break;
   
-  //COMANDOS DE FIGURINHAS
   case 'toimg':
   if(!isQuotedSticker) return reply('Por favor, *mencione um sticker* para executar o comando.');
   try {
@@ -3853,7 +3165,7 @@ case 'ping':
    };
   const json = {"type": "quote","format": "png","backgroundColor": "#FFFFFF","width": 512,"height": 768,"scale": 2,"messages": [{"entities": [],"avatar": true,"from": {"id": 1,"name": pushname,"photo": {"url": ppimg}},"text": q,"replyMessage": {}}]};
   res = await axios.post('https://bot.lyo.su/quote/generate', json, {headers: {'Content-Type': 'application/json'}});
-  await sendSticker(nazu, from, { sticker: Buffer.from(res.data.result.image, 'base64'), author: 'Hiudy', packname: 'By:', type: 'image' }, {quoted: info });
+  await sendSticker(nazu, from, { sticker: Buffer.from(res.data.result.image, 'base64'), author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`, packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫', type: 'image' }, {quoted: info });
   } catch(e) {
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
@@ -3864,7 +3176,7 @@ case 'ping':
   emoji1 = q.split(`/`)[0];emoji2 = q.split(`/`)[1];
   if(!q || !emoji1 || !emoji2) return reply(`Formato errado, utilize:\n${prefix}${command} emoji1/emoji2\nEx: ${prefix}${command} 🤓/🙄`);
   datzc = await emojiMix(emoji1, emoji2);
-  await sendSticker(nazu, from, { sticker: {url: datzc}, author: 'Hiudy', packname: 'By:', type: 'image'}, { quoted: info });
+  await sendSticker(nazu, from, { sticker: {url: datzc}, author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`, packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫', type: 'image'}, { quoted: info });
   } catch(e) {
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
@@ -3877,7 +3189,7 @@ case 'ping':
   fonte = ["Days%20One","Domine","Exo","Fredoka%20One","Gentium%20Basic","Gloria%20Hallelujah","Great%20Vibes","Orbitron","PT%20Serif","Pacifico"];
   cores = cor[Math.floor(Math.random() * (cor.length))];
   fontes = fonte[Math.floor(Math.random() * (fonte.length))];
-  await sendSticker(nazu, from, { sticker: {url: `https://huratera.sirv.com/PicsArt_08-01-10.00.42.png?profile=Example-Text&text.0.text=${q}&text.0.outline.color=000000&text.0.outline.blur=0&text.0.outline.opacity=55&text.0.color=${cores}&text.0.font.family=${fontes}&text.0.background.color=ff0000`}, author: 'Hiudy', packname: 'By:', type: 'image'}, { quoted: info });
+  await sendSticker(nazu, from, { sticker: {url: `https://huratera.sirv.com/PicsArt_08-01-10.00.42.png?profile=Example-Text&text.0.text=${q}&text.0.outline.color=000000&text.0.outline.blur=0&text.0.outline.opacity=55&text.0.color=${cores}&text.0.font.family=${fontes}&text.0.background.color=ff0000`}, author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`, packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫', type: 'image'}, { quoted: info });
   } catch(e) {
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
@@ -3886,7 +3198,7 @@ case 'ping':
   
   case 'brat': try {
   if(!q) return reply('falta o texto');
-  await sendSticker(nazu, from, { sticker: {url: `https://api.cognima.com.br/api/image/brat?key=CognimaTeamFreeKey&texto=${encodeURIComponent(q)}`}, author: 'Hiudy', packname: 'By:', type: 'image'}, { quoted: info });
+  await sendSticker(nazu, from, { sticker: {url: `https://api.cognima.com.br/api/image/brat?key=CognimaTeamFreeKey&texto=${encodeURIComponent(q)}`}, author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`, packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫', type: 'image'}, { quoted: info });
   } catch(e) {
   console.error(e);
   };
@@ -3900,7 +3212,7 @@ case 'ping':
     var isVideo2 = !!boij;
     if (isVideo2 && boij.seconds > 9.9) return reply(`O vídeo precisa ter no máximo 9.9 segundos para ser convertido em figurinha.`);
     var buffer = await getFileBuffer(isVideo2 ? boij : boij2, isVideo2 ? 'video' : 'image')
-    await sendSticker(nazu, from, { sticker: buffer, author: 'Hiudy', packname: 'By:', type: isVideo2 ? 'video' : 'image'}, { quoted: info });
+    await sendSticker(nazu, from, { sticker: buffer, author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`, packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫', type: isVideo2 ? 'video' : 'image'}, { quoted: info });
   } catch(e) {
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
@@ -3915,7 +3227,7 @@ case 'ping':
     var isVideo2 = !!boij;
     if (isVideo2 && boij.seconds > 9.9) return reply(`O vídeo precisa ter no máximo 9.9 segundos para ser convertido em figurinha.`);
     var buffer = await getFileBuffer(isVideo2 ? boij : boij2, isVideo2 ? 'video' : 'image')
-    await sendSticker(nazu, from, { sticker: buffer, author: 'Hiudy', packname: 'By:', type: isVideo2 ? 'video' : 'image', forceSquare: true}, { quoted: info });
+    await sendSticker(nazu, from, { sticker: buffer, author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`, packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫', type: isVideo2 ? 'video' : 'image', forceSquare: true}, { quoted: info });
   } catch(e) {
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
@@ -3971,8 +3283,6 @@ case 'ping':
   };
   break;
   
-  //FIM COMANDOS DE FIGURINHAS
-  
   case 'mention':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
@@ -3991,8 +3301,7 @@ case 'ping':
     reply("ocorreu um erro 💔");
   }
   break;
-  
-  //COMANDOS DE ADM
+
   case 'deletar': case 'delete': case 'del':  case 'd':
   if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
   if(!menc_prt) return reply("Marque uma mensagem.");
@@ -4248,41 +3557,6 @@ case 'ping':
     };
     break;
 
-    case 'onlines':
-    if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-    if (!isGroupAdmin) return reply("você precisa ser adm 💔");
-
-    try {
-    const groupId = from;
-    let onlineMembers = [];
-    if (store.presences?.[groupId]) {
-      onlineMembers = Object.keys(store.presences[groupId]).filter(memberId => {
-        const presence = store.presences[groupId][memberId];
-        return presence?.lastKnownPresence === 'available' || presence?.lastKnownPresence === 'composing';
-      });
-    };
-    const mentions = onlineMembers.map(memberId => {
-        const member = groupMetadata.participants.find(p => p.id === memberId);
-        if (member) {
-          return {
-            id: memberId.replace('@c.us', '@s.whatsapp.net'),
-            name: memberId.split('@')[0]
-          };
-        };
-        return null;
-      }).filter(Boolean);
-    if (mentions.length > 0) {
-      const message = ['✨ *Pessoas Online no Grupo:* ✨\n', mentions.map(v => `👤 • @${v.name}`).join('\n')].join('');
-      await nazu.sendMessage(from, { text: message, mentions: mentions.map(v => v.id)}, {quoted: info});
-    } else {
-      reply('Nenhum membro online no momento.');
-    };
-  } catch (err) {
-    console.error('Erro ao processar comando "onlines":', err);
-    reply('Ocorreu um erro ao obter a lista de membros online.');
-  };
-  break;
-   
    case 'antilinkhard':
   try {
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
@@ -4291,7 +3565,6 @@ case 'ping':
     groupData.antilinkhard = !groupData.antilinkhard;
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
     await reply(`✅ Antilinkhard ${groupData.antilinkhard ? 'ativado' : 'desativado'}! Qualquer link enviado resultará em banimento.`);
-    nazu.react('🔗');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -4305,7 +3578,6 @@ case 'ping':
     groupData.autodl = !groupData.autodl;
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
     await reply(`✅ Autodl ${groupData.autodl ? 'ativado' : 'desativado'}! Links suportados serão baixados automaticamente.`);
-    nazu.react('📥');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -4316,11 +3588,11 @@ case 'ping':
   try {
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
-    if (!q) return reply(`Digite o limite de comandos por dia ou "off" para desativar.\nExemplo: !cmdlimit 10`);
-    cmdLimitData[from] = cmdLimitData[from] || { users: {} }; // Update in-memory variable (or initialize if group not present)
+    if (!q) return reply(`Digite o limite de comandos por dia ou "off" para desativar.\nExemplo: `+prefix+`cmdlimit 10`);
+    cmdLimitData[from] = cmdLimitData[from] || { users: {} };
     if (q.toLowerCase() === 'off') {
       cmdLimitData[from].enabled = false;
-      delete cmdLimitData[from].limit; // Update in-memory variable
+      delete cmdLimitData[from].limit;
     } else {
       const limit = parseInt(q);
       if (isNaN(limit) || limit < 1) return reply('Limite inválido! Use um número maior que 0 ou "off".');
@@ -4329,7 +3601,6 @@ case 'ping':
     }
     fs.writeFileSync(__dirname + '/../database/cmdlimit.json', JSON.stringify(cmdLimitData, null, 2));
     await reply(`✅ Limite de comandos ${cmdLimitData[from].enabled ? `definido para ${cmdLimitData[from].limit} por dia` : 'desativado'}!`);
-    nazu.react('📊');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -4344,7 +3615,6 @@ case 'ping':
     groupData.antipt = !groupData.antipt;
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
     await reply(`✅ AntiPT ${groupData.antipt ? 'ativado' : 'desativado'}! Membros de Portugal serão banidos.`);
-    nazu.react('🇵🇹');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -4359,7 +3629,6 @@ case 'ping':
     groupData.antifake = !groupData.antifake;
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
     await reply(`✅ Antifake ${groupData.antifake ? 'ativado' : 'desativado'}! Membros de fora do Brasil/Portugal serão banidos.`);
-    nazu.react('🇧🇷');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -4371,10 +3640,9 @@ case 'ping':
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
-    groupData.antidoc = !groupData.antiloc;
+    groupData.antidoc = !groupData.antidoc;
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
     await reply(`✅ Antidoc ${groupData.antidoc ? 'ativado' : 'desativado'}! Documentos enviados resultarão em banimento.`);
-    nazu.react('📄');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -4388,7 +3656,6 @@ case 'ping':
     groupData.x9 = !groupData.x9;
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
     await reply(`✅ Modo X9 ${groupData.x9 ? 'ativado' : 'desativado'}! Agora eu aviso sobre promoções e rebaixamentos.`);
-    nazu.react('🕵️');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -4399,7 +3666,7 @@ case 'ping':
   try {
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
-    if (!q) return reply(`Digite o intervalo em segundos ou "off" para desativar.\nExemplo: !antiflood 5`);
+    if (!q) return reply(`Digite o intervalo em segundos ou "off" para desativar.\nExemplo: `+prefix+`antiflood 5`);
     antifloodData[from] = antifloodData[from] || { users: {} };
     if (q.toLowerCase() === 'off') {
       antifloodData[from].enabled = false;
@@ -4412,7 +3679,6 @@ case 'ping':
     }
     fs.writeFileSync(__dirname + '/../database/antiflood.json', JSON.stringify(antifloodData, null, 2));
     await reply(`✅ Antiflood ${antifloodData[from].enabled ? `ativado com intervalo de ${antifloodData[from].interval} segundos` : 'desativado'}!`);
-    nazu.react('⏰');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -4427,7 +3693,6 @@ case 'ping':
     groupData.antiloc = !groupData.antiloc;
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
     await reply(`✅ Antiloc ${groupData.antiloc ? 'ativado' : 'desativado'}! Localizações enviadas resultarão em banimento.`);
-    nazu.react('📍');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -4522,14 +3787,12 @@ break;
  
    case 'limpar':
   try {
-    // Gera 500 linhas em branco e adiciona a mensagem final
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("Você precisa ser adm 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm para isso 💔");
     const linhasEmBranco = Array(500).fill('‎ ').join('\n');
     const mensagem = `${linhasEmBranco}\n🧹 Limpeza concluída!`;
     await reply(mensagem);
-    nazu.react('✅');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro ao limpar o chat 💔");
@@ -4957,7 +4220,7 @@ case 'listadv':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("você precisa ser adm 💔");
-    if (!q) return reply('❌ Digite o comando que deseja bloquear. Exemplo: /blockcmd sticker');
+    if (!q) return reply(`❌ Digite o comando que deseja bloquear. Exemplo: ${prefix}blockcmd sticker`);
     const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
     let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : { blockedCommands: {} };
     groupData.blockedCommands = groupData.blockedCommands || {};
@@ -4974,7 +4237,7 @@ case 'listadv':
   try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("você precisa ser adm 💔");
-    if (!q) return reply('❌ Digite o comando que deseja desbloquear. Exemplo: /unblockcmd sticker');
+    if (!q) return reply(`❌ Digite o comando que deseja desbloquear. Exemplo: ${prefix}unblockcmd sticker`);
     const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
     let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : { blockedCommands: {} };
     groupData.blockedCommands = groupData.blockedCommands || {};
@@ -4990,8 +4253,7 @@ case 'listadv':
     reply("ocorreu um erro 💔");
   }
   break;
-    
-    //JOGO DA VELHA
+
     case 'ttt': case 'jogodavelha': {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!menc_os2) return reply("Marque alguém 🙄");
@@ -5003,16 +4265,13 @@ case 'listadv':
     break;
    };
    
-    //COMANDOS DE BRINCADEIRAS
-   
    case 'chance':
     try {
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
     if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
-    if (!q) return reply('Digite algo para eu calcular a chance! Exemplo: !chance chover hoje');
+    if (!q) return reply(`Digite algo para eu calcular a chance! Exemplo: ${prefix}chance chover hoje`);
     const chance = Math.floor(Math.random() * 101);
     await reply(`📊 A chance de "${q}" acontecer é: *${chance}%*!`);
-    nazu.react('🎲');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -5023,11 +4282,10 @@ case 'listadv':
   try {
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
     if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
-    if (!q) return reply('Digite algo para eu prever quando vai acontecer! Exemplo: !quando vou ficar rico');
+    if (!q) return reply('Digite algo para eu prever quando vai acontecer! Exemplo: '+prefix+'quando vou ficar rico');
     const tempos = ['hoje', 'amanhã', 'na próxima semana', 'no próximo mês', 'no próximo ano', 'nunca'];
     const tempo = tempos[Math.floor(Math.random() * tempos.length)];
     await reply(`🕒 "${q}" vai acontecer: *${tempo}*!`);
-    nazu.react('⏳');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -5050,7 +4308,6 @@ case 'listadv':
     const shipLevel = Math.floor(Math.random() * 101);
     const chance = Math.floor(Math.random() * 101);
     await reply(`💕 *Casal do momento* 💕\n@${membro1.split('@')[0]} + @${membro2.split('@')[0]}\n\n🌟 Nível de ship: *${shipLevel}%*\n🎯 Chance de dar certo: *${chance}%*`, { mentions: [membro1, membro2] });
-    nazu.react('💖');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -5061,7 +4318,7 @@ case 'listadv':
    try {
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
     if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
-    if (!menc_os2) return reply('Marque alguém para eu encontrar um par! Exemplo: !shipo @fulano');
+    if (!menc_os2) return reply('Marque alguém para eu encontrar um par! Exemplo: '+prefix+'shipo @fulano');
     if (AllgroupMembers.length < 2) return reply('❌ Preciso de pelo menos 2 membros no grupo!');
     let path = __dirname + '/../database/grupos/' + from + '.json';
     let data = fs.existsSync(path) ? JSON.parse(fs.readFileSync(path)) : { mark: {} };
@@ -5073,7 +4330,6 @@ case 'listadv':
     const shipLevel = Math.floor(Math.random() * 101);
     const chance = Math.floor(Math.random() * 101);
     await reply(`💞 *Ship perfeito* 💞\n@${menc_os2.split('@')[0]} + @${par.split('@')[0]}\n\n🌟 Nível de ship: *${shipLevel}%*\n🎯 Chance de dar certo: *${chance}%*`, { mentions: [menc_os2, par] });
-    nazu.react('💘');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -5084,10 +4340,9 @@ case 'listadv':
   try {
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
     if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
-    if (!q) return reply('Faça uma pergunta! Exemplo: !sn Vou ganhar na loteria?');
+    if (!q) return reply('Faça uma pergunta! Exemplo: '+prefix+'sn Vou ganhar na loteria?');
     const resposta = Math.random() > 0.5 ? 'Sim' : 'Não';
     await reply(`🎯 ${resposta}!`);
-    nazu.react(resposta === 'Sim' ? '✅' : '❌');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -5158,7 +4413,7 @@ case 'listadv':
     
     const PosAtivo = groupData.contador.sort((a, b) => ((a.figu == undefined ? a.figu = 0 : a.figu + a.msg + a.cmd) < (b.figu == undefined ? b.figu = 0 : b.figu + b.cmd + b.msg)) ? 0 : -1).findIndex(item => item.id === sender) + 1;
     
-    const card = await new Banner.discordProfile().setUsername(pushname).setAvatar(profilePic).setDiscriminator(String(PosAtivo)+' RankAtivo').setCustomField('BIOGRAFIA', bio).setCustomField('CARGO', userStatus).addBadge({ url: "https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1750256388571_pho2rc.bin", description: "nazu_1" }).addBadge({ url: "https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1750256376195_yxuvia.bin", description: "nazu_2" }).addBadge({ url: "https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1750256372026_opr8yt.bin", description: "nazu_3" }).addBadge({ url: "https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1750256365503_3g4ea3.bin", description: "nazu_4" }).addBadge({ url: "https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1750256353890_d1wsij.bin", description: "nazu_5" }).setBanner('https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1750259175074_ftrfhj.bin').setStatus('online').build();
+    const card = await new Banner.discordProfile().setUsername(pushname).setAvatar(profilePic).setDiscriminator(String(PosAtivo)+' RankAtivo').setCustomField('BIOGRAFIA', bio).setCustomField('CARGO', userStatus).setBanner('https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1750259175074_ftrfhj.bin').setStatus('online').build();
     
     await nazu.sendMessage(from, { image: card, caption: perfilText, mentions: [target] }, { quoted: info });
   } catch (error) {
@@ -5169,7 +4424,7 @@ case 'listadv':
   
   case 'ppt':
   try {
-    if (!q) return reply('Escolha: pedra, papel ou tesoura! Exemplo: !ppt pedra');
+    if (!q) return reply('Escolha: pedra, papel ou tesoura! Exemplo: '+prefix+'ppt pedra');
     const escolhas = ['pedra', 'papel', 'tesoura'];
     if (!escolhas.includes(q.toLowerCase())) return reply('Escolha inválida! Use: pedra, papel ou tesoura.');
     const botEscolha = escolhas[Math.floor(Math.random() * 3)];
@@ -5187,7 +4442,6 @@ case 'listadv':
       resultado = 'Eu ganhei! 😎';
     }
     await reply(`🖐️ *Pedra, Papel, Tesoura* 🖐️\n\nVocê: ${usuarioEscolha}\nEu: ${botEscolha}\n\n${resultado}`);
-    nazu.react('✂️');
   } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -5387,8 +4641,7 @@ console.error(e);
 await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
 };
    break;
-  
-  // NOVOS COMANDOS AFK E REGRAS
+
   case 'afk':
     try {
       if (!isGroup) return reply("Este comando só funciona em grupos.");
@@ -5481,7 +4734,6 @@ ${groupData.rules.length}. ${q}`);
     }
     break;
 
-  // SISTEMA DE MODERADORES
   case 'addmod':
     try {
       if (!isGroup) return reply("Este comando só funciona em grupos.");
@@ -5594,7 +4846,6 @@ break;
       await reply("Ocorreu um erro ao listar comandos de moderadores 💔");
   }
   break;
-  // FIM DO SISTEMA DE MODERADORES
 
   case 'clima':
     try {
@@ -5607,7 +4858,6 @@ break;
       const weatherResponse = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=weathercode,temperature_2m,relativehumidity_2m,windspeed_10m,winddirection_10m`);
       const { temperature_2m: temperature, relativehumidity_2m: relativehumidity, windspeed_10m: windspeed, winddirection_10m: winddirection, weathercode } = weatherResponse.data.current;
 
-      // Mapeamento da descrição do clima
       let weatherDescription;
       switch (weathercode) {
         case 0:
@@ -5697,8 +4947,7 @@ break;
         default:
           weatherDescription = "Condição desconhecida";
       }
-
-      // Mapeamento do emoji do clima
+      
       let weatherEmoji;
       switch (weathercode) {
         case 0:
@@ -5751,24 +5000,23 @@ break;
           weatherEmoji = "🌈";
       }
 
-      // Mapeamento do emoji da direção do vento
       let windDirectionEmoji;
       if (winddirection >= 337.5 || winddirection < 22.5) {
-        windDirectionEmoji = "⬆️"; // Norte
+        windDirectionEmoji = "⬆️";
       } else if (winddirection >= 22.5 && winddirection < 67.5) {
-        windDirectionEmoji = "↗️"; // Nordeste
+        windDirectionEmoji = "↗️";
       } else if (winddirection >= 67.5 && winddirection < 112.5) {
-        windDirectionEmoji = "➡️"; // Leste
+        windDirectionEmoji = "➡️";
       } else if (winddirection >= 112.5 && winddirection < 157.5) {
-        windDirectionEmoji = "↘️"; // Sudeste
+        windDirectionEmoji = "↘️";
       } else if (winddirection >= 157.5 && winddirection < 202.5) {
-        windDirectionEmoji = "⬇️"; // Sul
+        windDirectionEmoji = "⬇️";
       } else if (winddirection >= 202.5 && winddirection < 247.5) {
-        windDirectionEmoji = "↙️"; // Sudoeste
+        windDirectionEmoji = "↙️";
       } else if (winddirection >= 247.5 && winddirection < 292.5) {
-        windDirectionEmoji = "⬅️"; // Oeste
+        windDirectionEmoji = "⬅️";
       } else {
-        windDirectionEmoji = "↖️"; // Noroeste
+        windDirectionEmoji = "↖️";
       }
 
       const weatherInfo = `🌦️ *Clima em ${name}*
@@ -5783,53 +5031,16 @@ ${weatherEmoji} *${weatherDescription}*`;
       await reply("Ocorreu um erro ao pesquisar o clima 💔");
     }
     break;
-    
-    // Novos comandos de atualização (Apenas Dono)
-    case 'updatebot':
-      if (!isDono) return reply('❌ Comando restrito ao Dono do Bot.');
-      reply('🚀 Iniciando atualização completa do bot... O processo ocorrerá no console.');
-      exec(`node ${__dirname}/.scripts/update.js`, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Erro ao executar update.js: ${error}`);
-          reply(`❌ Erro ao iniciar a atualização completa: ${error.message}`);
-          return;
-        }
-        console.log(`Saída update.js: ${stdout}`);
-        if (stderr) {
-          console.error(`Erro stderr update.js: ${stderr}`);
-        }
-        nazu.sendMessage(sender, { text: '✅ Processo de atualização completa iniciado no console.' });
-      });
-      break;
-
-    case 'updatemodules':
-      if (!isDono) return reply('❌ Comando restrito ao Dono do Bot.');
-      reply('🧠 Iniciando atualização inteligente dos módulos (Pro)... O processo ocorrerá no console.');
-      exec(`node ${__dirname}/.scripts/update-pro.js`, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Erro ao executar update-pro.js: ${error}`);
-          reply(`❌ Erro ao iniciar a atualização dos módulos: ${error.message}`);
-          return;
-        }
-        console.log(`Saída update-pro.js: ${stdout}`);
-        if (stderr) {
-          console.error(`Erro stderr update-pro.js: ${stderr}`);
-        }
-        nazu.sendMessage(sender, { text: '✅ Processo de atualização de módulos iniciado no console.' });
-      });
-      break;
 
  default:
   if(isCmd) await nazu.react('❌');
  }; 
   } catch(error) {
-    // Log detalhado do erro para facilitar debugging
     console.error('==== ERRO NO PROCESSAMENTO DA MENSAGEM ====');
     console.error('Tipo de erro:', error.name);
     console.error('Mensagem:', error.message);
     console.error('Stack trace:', error.stack);
     
-    // Informações adicionais que podem ajudar no diagnóstico
     try {
       console.error('Tipo de mensagem:', type);
       console.error('Comando (se aplicável):', isCmd ? command : 'N/A');
@@ -5841,6 +5052,7 @@ ${weatherEmoji} *${weatherDescription}*`;
   };
 };
 
+
 function getDiskSpaceInfo() {
   try {
     const platform = os.platform();
@@ -5848,17 +5060,14 @@ function getDiskSpaceInfo() {
     let freeBytes = 0;
     const defaultResult = { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A', percentUsed: 'N/A' };
 
-    // Windows
     if (platform === 'win32') {
       try {
-        // Obter a letra do drive do diretório atual
       const scriptPath = __dirname;
       const driveLetter = pathz.parse(scriptPath).root.charAt(0);
       const command = `fsutil volume diskfree ${driveLetter}:`;
       const output = execSync(command).toString();
       const lines = output.split('\n');
         
-        // Extrair informações de espaço livre e total
       const freeLine = lines.find(line => line.includes('Total # of free bytes'));
       const totalLine = lines.find(line => line.includes('Total # of bytes'));
         
@@ -5868,33 +5077,26 @@ function getDiskSpaceInfo() {
         console.error("Erro ao obter espaço em disco no Windows:", winError);
         return defaultResult;
       }
-    } 
-    // Linux ou macOS
-    else if (platform === 'linux' || platform === 'darwin') {
+    } else if (platform === 'linux' || platform === 'darwin') {
       try {
-        // Usar df para verificar a partição atual
         const command = 'df -k .';
       const output = execSync(command).toString();
       const lines = output.split('\n');
         
       if (lines.length > 1) {
         const parts = lines[1].split(/\s+/);
-          // Converter de KB para bytes
-          totalBytes = parseInt(parts[1]) * 1024; // Total
-          freeBytes = parseInt(parts[3]) * 1024;  // Disponível
+          totalBytes = parseInt(parts[1]) * 1024;
+          freeBytes = parseInt(parts[3]) * 1024;
         }
       } catch (unixError) {
         console.error("Erro ao obter espaço em disco no Linux/macOS:", unixError);
         return defaultResult;
       }
-    } 
-    // Plataforma não suportada
-    else {
+    } else {
       console.warn(`Plataforma ${platform} não suportada para informações de disco`);
       return defaultResult;
-    }
-
-    // Verificar se temos dados válidos
+    };
+    
     if (totalBytes > 0 && freeBytes >= 0) {
       const usedBytes = totalBytes - freeBytes;
       const totalGb = (totalBytes / 1024 / 1024 / 1024).toFixed(2);
@@ -5910,21 +5112,34 @@ function getDiskSpaceInfo() {
     } catch (error) {
     console.error("Erro ao obter informações de disco:", error);
     return { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A', percentUsed: 'N/A' };
-  }
-}
+  };
+};
 
-// Sistema de auto-reload para desenvolvimento
-const file = require.resolve(__filename);
-fs.watchFile(file, () => {
-  try {
-    fs.unwatchFile(file);
-    console.log(`✅ Alterações detectadas em '${pathz.basename(__filename)}', recarregando...`);
-    delete require.cache[file];
-    require(file);
-  } catch (error) {
-    console.error(`❌ Erro ao recarregar '${pathz.basename(__filename)}':`, error);
+
+cron.schedule('* * * * *', () => {
+  const DIR_PROGRAM = pathz.join(DATABASE_DIR, 'prog_actions.json');
+  if (!fs.existsSync(DIR_PROGRAM)) {
+    await fs.writeFileSync(DIR_PROGRAM, JSON.stringify([], null, 2));
+  };
+  const ACTIONS = JSON.parse(fs.readFileSync(DIR_PROGRAM, 'utf-8'));
+  for (let i = ACTIONS.length - 1; i >= 0; i--) {
+    const ACTION = ACTIONS[i];
+    const Data = new Date(Date.now()).toLocaleString('pt-BR');
+    if (ACTION.data.ano !== Data.split('/').pop().split(',')[0]) continue;
+    if (ACTION.data.mes !== Data.split('/')[1]) continue;
+    if (ACTION.data.dia !== Data.split('/')[0]) continue;
+    if (ACTION.hora.hora > Data.split(' ').pop().split(':')[0]) continue;
+    if (ACTION.hora.minuto > Data.split(':')[1]) continue;
+    if (ACTION.tipo && ACTION.tipo === "lembrete") {
+      const destino = ACTION.destino === 'privado' ? ACTION.sender : ACTION.from;
+      await SocketActions.sendMessage(destino, { text: `${ACTION.texto}\n\n@${ACTION.sender.split('@')[0]}`, mentions: [ACTION.sender] });
+    } else if (ACTION.tipo && ACTION.tipo === "grupo") {
+      await SocketActions.groupSettingUpdate(ACTION.from, ACTION.acao === 'abrir' ? 'not_announcement' : 'announcement');
+    };
+    ACTIONS.splice(i, 1);
   }
+  fs.writeFileSync(DIR_PROGRAM, JSON.stringify(ACTIONS, null, 2));
 });
 
-// Exporta a função principal do bot
+
 module.exports = NazuninhaBotExec;
