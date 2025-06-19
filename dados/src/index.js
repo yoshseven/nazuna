@@ -5125,11 +5125,11 @@ cron.schedule('* * * * *', async () => {
   for (let i = ACTIONS.length - 1; i >= 0; i--) {
     const ACTION = ACTIONS[i];
     const Data = new Date(Date.now()).toLocaleString('pt-BR');
-    if (ACTION.data.ano !== Data.split('/').pop().split(',')[0]) continue;
-    if (ACTION.data.mes !== Data.split('/')[1]) continue;
-    if (ACTION.data.dia !== Data.split('/')[0]) continue;
-    if (ACTION.hora.hora > Data.split(' ').pop().split(':')[0]) continue;
-    if (ACTION.hora.minuto > Data.split(':')[1]) continue;
+    if (Number(ACTION.data.ano) !== Number(Data.split('/').pop().split(',')[0])) continue;
+    if (Number(ACTION.data.mes) !== Number(Data.split('/')[1])) continue;
+    if (Number(ACTION.data.dia) !== Number(Data.split('/')[0])) continue;
+    if (Number(ACTION.hora.hora) > Number(Data.split(' ').pop().split(':')[0])) continue;
+    if (Number(ACTION.hora.minuto) > Number(Data.split(':')[1])) continue;
     if (ACTION.tipo && ACTION.tipo === "lembrete") {
       const destino = ACTION.destino === 'privado' ? ACTION.sender : ACTION.from;
       await SocketActions.sendMessage(destino, { text: `${ACTION.texto}\n\n@${ACTION.sender.split('@')[0]}`, mentions: [ACTION.sender] });
