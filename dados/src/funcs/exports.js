@@ -53,7 +53,8 @@ const remoteModuleUrls = {
   mcPlugin: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/mcplugins.js',
   FilmesDL: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/filmes.js',
   styleText: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/gerarnick.js',
-  ia: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/private/ia.js'
+  ia: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/private/ia.js',
+  VerifyUpdate: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/update-verify.js'
 };
 
 
@@ -74,7 +75,8 @@ module.exports = (async () => {
     mcPlugin: undefined,
     FilmesDL: undefined,
     styleText: undefined,
-    ia: undefined
+    ia: undefined,
+    VerifyUpdate: undefined
   };
 
   try {

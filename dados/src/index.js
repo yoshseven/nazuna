@@ -383,7 +383,7 @@ const isModoLiteActive = (groupData, modoLiteGlobalConfig) => {
 async function NazuninhaBotExec(nazu, info, store, groupCache) {
   SocketActions = nazu;
   
-  const { youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, apkMod, google, Lyrics, commandStats, ia } = await require(__dirname+'/funcs/exports.js');
+  const { youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, apkMod, google, Lyrics, commandStats, ia, VerifyUpdate } = await require(__dirname+'/funcs/exports.js');
     
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
   const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json');
@@ -1561,6 +1561,22 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
     }
     break;
 
+  case 'updates': try {
+    if (!isOwner || (isOwner && isSubOwner)) return reply("🚫 Apenas o Dono principal pode utilizar esse comando!");
+    if (!fs.existsSync(pathz.join(__dirname, '..', 'database', 'updateSave.json'))) return reply('❌ Sua versão não tem suporte a esse sistema ainda.');
+    const AtualCom = await axios.get('https://api.github.com/repos/hiudyy/nazuna/commits?per_page=1',{headers:{Accept:'application/vnd.github+json'}}).then(r=>r.headers.link?.match(/page=(\d+)>;\s*rel="last"/)?.[1]);
+    const { total } = JSON.parse(fs.readFileSync(pathz.join(__dirname, '..', 'database', 'updateSave.json'), 'utf-8'));
+    if(AtualCom > total) {
+      const TextZin = await VerifyUpdate('hiudyy/nazuna', AtualCom - total);
+      await reply(TextZin);
+    } else {
+      await reply('Você ja esta utilizando a versão mais recente da bot.');
+    };
+  } catch(e) {
+    console.error(e);
+  };
+  break
+  
   case 'addsubdono':
     if (!isOwner || (isOwner && isSubOwner)) return reply("🚫 Apenas o Dono principal pode adicionar subdonos!");
     try {
