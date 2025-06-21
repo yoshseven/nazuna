@@ -18,7 +18,7 @@ async function menuDono(prefix, botName = "MeuBot", userName = "Usuário") {
 ┊
 ┊•.̇𖥨֗🍓⭟${prefix}addsubdono
 ┊•.̇𖥨֗🍓⭟${prefix}delsubdono
-┊•.̇𖥨֗🍓⭟${prefix}listsubdonos
+┊•.̇𖥨֗🍓⭟${prefix}listasubdonos
 ┊•.̇𖥨֗🍓⭟${prefix}addpremium
 ┊•.̇𖥨֗🍓⭟${prefix}delpremium
 ┊•.̇𖥨֗🍓⭟${prefix}listprem

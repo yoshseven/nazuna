@@ -1586,7 +1586,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
     }
     break;
 
-  case 'listasubdonos':
+  case 'listasubdonos': case 'listsubdonos':
     if (!isOwnerOrSub) return reply("🚫 Apenas o Dono e Subdonos podem ver a lista!");
     try {
       const subdonos = getSubdonos();
@@ -3055,7 +3055,17 @@ break;
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
-
+  
+  case 'dono':
+  try {
+    const TextinDonoInfo = `╭┈⊰ 🌸 『 *INFORMAÇÕES DONO* 』\n┊\n┊👤 *Dono*: ${nomedono}\n┊📱 *Número Dono*: wa.me/${numerodono.replace(/\D/g, '')}\n┊👨‍💻 *Criador*: Hiudy\n┊\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`
+    await reply(TextinDonoInfo);
+  } catch (e) {
+    console.error(e);
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
+  }
+  break;
+  
   case 'ping':
   try {
 
