@@ -2,6 +2,7 @@
 // Nazuna Bot - Index principal
 // Criado por: Hiudy
 // Versão: 4.0.0
+// Atualizado: 21/06/2025
 // ====================
 
 
@@ -437,13 +438,13 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
     if(!budy2 || budy2.length < 1) return;
  
     const menc_prt = info.message?.extendedTextMessage?.contextInfo?.participant;
-    const menc_jid = args.join(" ").replace("@", "") + "@s.whatsapp.net";
+    const menc_jid = q.replace("@", "").split(' ')[0] + "@s.whatsapp.net";
     const menc_jid2 = info.message?.extendedTextMessage?.contextInfo?.mentionedJid;
     const menc_os2 = q.includes("@") ? menc_jid : menc_prt;
     const sender_ou_n = q.includes("@") ? menc_jid : (menc_prt || sender);
 
     const isCmd = body.trim().startsWith(prefix);
-    const command = isCmd ? budy2.trim().slice(1).split(/ +/).shift().trim().replace(/\s+/g, '') : null;
+    const command = isCmd ? (budy2.trim().slice(1).split(/ +/).shift().trim().replace(/\s+/g, '')).replaceAll(' ', '') : null;
  
     if (!isGroup) {
       if (antipvData.mode === 'antipv' && !isOwner) {
@@ -1286,9 +1287,9 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
   case 'lowpass':
     try {
       if ((isMedia && !info.message.imageMessage && !info.message.videoMessage) || isQuotedAudio) {
-        await reply('Aguarde um momentinho... ☀️');
         const audioEffects = { speedup: 'atempo=1.06,asetrate=44100*1.25', vozmenino: 'atempo=1.06,asetrate=44100*1.25', vozmulher: 'asetrate=44100*1.25,atempo=0.8', vozhomem: 'asetrate=44100*0.8,atempo=1.2', vozcrianca: 'asetrate=44100*1.4,atempo=0.9', vozeco: 'aecho=0.8:0.88:60:0.4', eco: 'aecho=0.8:0.88:60:0.4', vozlenta: 'atempo=0.6', audiolento: 'atempo=0.6', vozrapida: 'atempo=1.5', audiorapido: 'atempo=1.5', vozcaverna: 'aecho=0.6:0.3:1000:0.5', bass: 'bass=g=5', bass2: 'bass=g=10', bass3: 'bass=g=15', volumeboost: 'volume=1.5', aumentarvolume: 'volume=1.5', reverb: 'aecho=0.8:0.88:60:0.4', drive: 'afftdn=nf=-25', equalizer: 'equalizer=f=100:width_type=h:width=200:g=3,equalizer=f=1000:width_type=h:width=200:g=-1,equalizer=f=10000:width_type=h:width=200:g=4', equalizar: 'equalizer=f=100:width_type=h:width=200:g=3,equalizer=f=1000:width_type=h:width=200:g=-1,equalizer=f=10000:width_type=h:width=200:g=4', reverse: 'areverse', audioreverso: 'areverse', pitch: 'asetrate=44100*0.8', flanger: 'flanger', grave: 'atempo=0.9,asetrate=44100', vozgrave: 'atempo=0.9,asetrate=44100', chorus: 'chorus=0.7:0.9:55:0.4:0.25:2', phaser: 'aphaser=type=t:decay=0.4', tremolo: 'tremolo=f=6:d=0.8', vibrato: 'vibrato=f=6', lowpass: 'lowpass=f=500' };
         const muk = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
+        await reply('Aguarde um momentinho... ☀️');
         const rane = __dirname+`/../database/tmp/${Math.random()}.mp3`;
         const buffimg = await getFileBuffer(muk, 'audio');
         fs.writeFileSync(rane, buffimg);
@@ -1327,8 +1328,8 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
   case 'rotacionar':
     try {
       if ((isMedia && info.message.videoMessage) || isQuotedVideo) {
-        await reply('Aguarde um momentinho... ☀️');
         const encmedia = isQuotedVideo ? info.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage : info.message.videoMessage;
+        await reply('Aguarde um momentinho... ☀️');
         const videoEffects = { videorapido: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]', fastvid: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]', videoslow: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]', videolento: '[0:v]setpts=2*PTS[v];[0:a]atempo=0.5[a]', videoreverso: 'reverse,areverse', videoloop: 'loop=2',videomudo: 'an', videobw: 'hue=s=0', pretoebranco: 'hue=s=0', tomp3: 'q:a=0 -map a', sepia: 'colorchannelmixer=.393:.769:.189:.349:.686:.168:.272:.534:.131', espelhar: 'hflip', rotacionar: 'rotate=90*PI/180', };
         const rane = __dirname+`/../database/tmp/${Math.random()}.mp4`
         const buffimg = await getFileBuffer(encmedia, 'video');
@@ -3058,7 +3059,7 @@ break;
   
   case 'dono':
   try {
-    const TextinDonoInfo = `╭┈⊰ 🌸 『 *INFORMAÇÕES DONO* 』\n┊\n┊👤 *Dono*: ${nomedono}\n┊📱 *Número Dono*: wa.me/${numerodono.replace(/\D/g, '')}\n┊👨‍💻 *Criador*: Hiudy\n┊\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`
+    const TextinDonoInfo = `╭⊰ 🌸 『 *INFORMAÇÕES DONO* 』\n┊\n┊👤 *Dono*: ${nomedono}\n┊📱 *Número Dono*: wa.me/${numerodono.replace(/\D/g, '')}\n┊👨‍💻 *Criador*: Hiudy\n┊\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`;
     await reply(TextinDonoInfo);
   } catch (e) {
     console.error(e);
@@ -3390,8 +3391,9 @@ break;
     if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     if (!menc_os2) return reply("Marque alguém 🙄");
+    if (menc_os2 === nmrdn) return reply("❌ Não posso banir o dono do bot.");
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
-    reply(`✅ Usuário banido com sucesso!`);
+    reply(`✅ Usuário banido com sucesso!${(q && q.length > 0) ? '\n\nMotivo: '+q : ''}`);
   } catch (e) {
     console.error(e);
     reply("ocorreu um erro 💔");
@@ -3757,19 +3759,25 @@ break;
    case 'welcomeimg': {
   if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
   if (!isGroupAdmin) return reply("você precisa ser adm 💔");
-  if (!isQuotedImage && !isImage) return reply('❌ Marque uma imagem ou envie uma imagem com o comando!');
+  if ((!isQuotedImage && !isImage) && (!q || q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') !== 'banner')) return reply(`❌ Marque uma imagem ou envie uma imagem com o comando ou digite \`${prefix}${command} banner\``);
 
   try {
-      const imgMessage = isQuotedImage
-        ? info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage
-        : info.message.imageMessage;
+    if(isQuotedImage || isImage) {
+      const imgMessage = isQuotedImage ? info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage : info.message.imageMessage;
       const media = await getFileBuffer(imgMessage, 'image');
       const uploadResult = await upload(media);
       if (!uploadResult) throw new Error('Falha ao fazer upload da imagem');
       if (!groupData.welcome) groupData.welcome = {};
       groupData.welcome.image = uploadResult;
       fs.writeFileSync(__dirname + `/../database/grupos/${from}.json`, JSON.stringify(groupData, null, 2));
-    await reply('✅ Foto de boas-vindas configurada com sucesso!');
+      await reply('✅ Foto de boas-vindas configurada com sucesso!');
+    } else if(q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'banner') {
+      groupData.welcome.image = 'banner';
+      fs.writeFileSync(__dirname + `/../database/grupos/${from}.json`, JSON.stringify(groupData, null, 2));
+      await reply('✅ Foto de boas-vindas configurada com sucesso!');
+    } else {
+      await reply(`❌ Marque uma imagem ou envie uma imagem com o comando ou digite \`${prefix}${command} banner\``);
+    };
   } catch (error) {
     console.error(error);
     reply("ocorreu um erro 💔");

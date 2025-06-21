@@ -2,17 +2,20 @@
 ═════════════════════════════
   Nazuna - Conexão WhatsApp
   Autor: Hiudy
-  Revisão: 18/06/2025
+  Revisão: 21/06/2025
 ═════════════════════════════
 */
 
-const { Boom } = require('@hapi/boom');
+
 const { makeWASocket, useMultiFileAuthState, proto, DisconnectReason } = require('@cognima/walib');
+const Banner = require("@cognima/banners");
+const { Boom } = require('@hapi/boom');
 const NodeCache = require('node-cache');
 const readline = require('readline');
 const pino = require('pino');
 const fs = require('fs').promises;
 const path = require('path');
+
 
 const logger = pino({ level: 'silent' });
 const AUTH_DIR_PRIMARY = path.join(__dirname, '..', 'database', 'qr-code');
@@ -21,20 +24,26 @@ const DATABASE_DIR = path.join(__dirname, '..', 'database', 'grupos');
 const msgRetryCounterCache = new NodeCache({ stdTTL: 120, useClones: false });
 const { prefixo, nomebot, nomedono, numerodono } = require('./config.json');
 
+
 const indexModule = require(path.join(__dirname, 'index.js'));
+
 
 const codeMode = process.argv.includes('--code');
 const dualMode = process.argv.includes('--dual');
+
 
 const ask = (question) => {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   return new Promise((resolve) => rl.question(question, (answer) => { rl.close(); resolve(answer.trim()); }));
 };
 
+
 const groupCache = new NodeCache({ stdTTL: 5 * 60, useClones: false });
+
 
 let secondarySocket = null;
 let useSecondary = false; 
+
 
 async function createBotSocket(authDir, isPrimary = true) {
   await fs.mkdir(DATABASE_DIR, { recursive: true });
@@ -98,7 +107,6 @@ async function createBotSocket(authDir, isPrimary = true) {
       try {
         jsonGp = JSON.parse(await fs.readFile(groupFilePath, 'utf-8'));
       } catch (e) {
-        console.error(`Erro ao carregar JSON do grupo ${from}:`, e);
         return;
       }
 
@@ -164,7 +172,12 @@ async function createBotSocket(authDir, isPrimary = true) {
         try {
           const message = { text: welcomeText, mentions: [sender] };
           if (jsonGp.welcome?.image) {
-            message.image = { url: jsonGp.welcome.image };
+            let profilePic = 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1747053564257_bzswae.bin';
+            try {
+              profilePic = await nazu.profilePictureUrl(sender, 'image');
+            } catch (error) {};
+            const ImageZinha = jsonGp.welcome.image !== 'banner' ? { url: jsonGp.welcome.image } : await new Banner.welcomeLeave().setAvatar(profilePic).setTitle('Bem Vindo(a)').setMessage('Aceita um cafézinho enquanto lê as regras?').build();
+            message.image = ImageZinha;
             delete message.text;
             message.caption = welcomeText;
           }
