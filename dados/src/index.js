@@ -382,7 +382,7 @@ const isModoLiteActive = (groupData, modoLiteGlobalConfig) => {
 
 async function NazuninhaBotExec(nazu, info, store, groupCache) {
   SocketActions = nazu;
-   
+    
   const { youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, apkMod, google, Lyrics, commandStats, ia, VerifyUpdate } = await require(__dirname+'/funcs/exports.js');
     
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
