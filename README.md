@@ -1,6 +1,6 @@
 # **nazuna Bot 🤖🚀**
 
-   
+    
 ---
 
 ## 🌐 **Escolha Seu Idioma**
