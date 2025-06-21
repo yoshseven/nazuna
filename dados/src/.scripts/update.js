@@ -8,7 +8,7 @@ const readline = require('readline');
 const os = require('os');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
-
+const axios = require('axios');
 
 const REPO_URL = "https://github.com/hiudyy/nazuna.git";
 const BACKUP_DIR = path.join(process.cwd(), `backup_${new Date().toISOString().replace(/[:.]/g, '_').replace(/T/, '_')}`);
@@ -485,7 +485,15 @@ async function main() {
       completedSteps++;
       printDetail(`Progresso: ${completedSteps}/${totalSteps} etapas concluídas`);
     }
-
+    
+    const NumberUp = await axios.get('https://api.github.com/repos/hiudyy/nazuna/commits?per_page=1',{headers:{Accept:'application/vnd.github+json'}}).then(r=>r.headers.link?.match(/page=(\d+)>;\s*rel="last"/)?.[1]);
+    
+    const jsonUp = {
+      total: NumberUp
+    };
+    
+    await fsSync.writeFileSync(path.join(__dirname, '..', '..', 'database', 'updateSave.json'), JSON.stringify(jsonUp));
+    
     printSeparator();
     printMessage("🎉 Atualização concluída com sucesso!");
     printMessage("🚀 Inicie o bot com: npm start");
