@@ -1061,22 +1061,22 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
       const context = isGroup ? 'GRUPO' : 'PRIVADO';
       const messagePreview = isCmd ? `${prefix}${command}${q ? ` ${q.substring(0, 25)}${q.length > 25 ? '...' : ''}` : ''}` : budy2.substring(0, 35) + (budy2.length > 35 ? '...' : '');
       console.log('\x1b[44m\x1b[30m┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\x1b[0m');
-      console.log(`\x1b[34m┃ \x1b[1m${messageType} [${context}]\x1b[0m\x1b[34m${' '.repeat(36 - messageType.length - context.length)}┃\x1b[0m`);
+      console.log(`\x1b[34m┃ \x1b[1m${messageType} [${context}]\x1b[0m\x1b[34m${' '.repeat(36 - messageType.length - context.length)}\x1b[0m`);
       console.log('\x1b[34m┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\x1b[0m');
-      console.log(`\x1b[34m┃ 📜 \x1b[36mConteúdo:\x1b[0m \x1b[37m${messagePreview.padEnd(28)}\x1b[34m ┃\x1b[0m`);
+      console.log(`\x1b[34m┃ 📜 \x1b[36mConteúdo:\x1b[0m \x1b[37m${messagePreview.padEnd(28)}\x1b[34m\x1b[0m`);
   
       if (isGroup) {
-        console.log(`\x1b[34m┃ 👥 \x1b[36mGrupo:\x1b[0m \x1b[37m${(groupName || 'Desconhecido').padEnd(28)}\x1b[34m ┃\x1b[0m`);
-        console.log(`\x1b[34m┃ 👤 \x1b[36mUsuário:\x1b[0m \x1b[37m${(pushname || 'Sem Nome').padEnd(28)}\x1b[34m ┃\x1b[0m`);
+        console.log(`\x1b[34m┃ 👥 \x1b[36mGrupo:\x1b[0m \x1b[37m${(groupName || 'Desconhecido').padEnd(28)}\x1b[34m\x1b[0m`);
+        console.log(`\x1b[34m┃ 👤 \x1b[36mUsuário:\x1b[0m \x1b[37m${(pushname || 'Sem Nome').padEnd(28)}\x1b[34m\x1b[0m`);
       } else {
-        console.log(`\x1b[34m┃ 👤 \x1b[36mUsuário:\x1b[0m \x1b[37m${(pushname || 'Sem Nome').padEnd(28)}\x1b[34m ┃\x1b[0m`);
-        console.log(`\x1b[34m┃ 📱 \x1b[36mNúmero:\x1b[0m \x1b[37m${sender.split('@')[0].padEnd(28)}\x1b[34m ┃\x1b[0m`);
+        console.log(`\x1b[34m┃ 👤 \x1b[36mUsuário:\x1b[0m \x1b[37m${(pushname || 'Sem Nome').padEnd(28)}\x1b[34m\x1b[0m`);
+        console.log(`\x1b[34m┃ 📱 \x1b[36mNúmero:\x1b[0m \x1b[37m${sender.split('@')[0].padEnd(28)}\x1b[34m\x1b[0m`);
       }
       console.log('\x1b[34m┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\x1b[0m');
-      console.log(`\x1b[34m┃ 🕒 \x1b[36mData/Hora:\x1b[0m \x1b[37m${timestamp.padEnd(27)}\x1b[34m ┃\x1b[0m`);
-      console.log('\x1b[44m\x1b[30m┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\x1b[0m');
+      console.log(`\x1b[34m┃ 🕒 \x1b[36mData/Hora:\x1b[0m \x1b[37m${timestamp.padEnd(27)}\x1b[34m\x1b[0m`);
+      console.log('\x1b[44m\x1b[30m┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\x1b[0m\n');
    } catch (error) {
-     console.error('\x1b[41m\x1b[30m┃ 🚨 Erro ao gerar logs:\x1b[0m', error, '\x1b[41m\x1b[30m┃\x1b[0m');
+     console.error('\x1b[41m\x1b[30m┃ 🚨 Erro ao gerar logs:\x1b[0m', error, '\x1b[41m\x1b[30m\x1b[0m');
    };
 
 
