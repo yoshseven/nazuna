@@ -1318,7 +1318,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
     console.error(e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
 
   case 'videorapido':
   case 'fastvid':
@@ -1576,7 +1576,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   } catch(e) {
     console.error(e);
   };
-  break
+  break;
   
   case 'addsubdono':
     if (!isOwner || (isOwner && isSubOwner)) return reply("🚫 Apenas o Dono principal pode adicionar subdonos!");
@@ -1751,7 +1751,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
   
   case 'cog':
   try {
@@ -1776,7 +1776,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
 
   case 'nick': case 'gerarnick': try {
   if(!q) return reply('Digite o nick após o comando.');
@@ -1786,7 +1786,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
   
   case 'printsite': case 'ssweb': try{
   if(!q) return reply(`Cade o link?`)
@@ -1795,7 +1795,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
   
   case 'upload':case 'imgpralink':case 'videopralink':case 'gerarlink': try {
   if(!isQuotedImage && !isQuotedVideo && !isQuotedDocument && !isQuotedAudio) return reply(`Marque um video, uma foto, um audio ou um documento`);
@@ -1819,7 +1819,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
-  break
+  break;
 
   //DOWNLOADS
   case 'assistir': try {
@@ -1843,7 +1843,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
   
   case 'shazam':
   try {
@@ -1878,7 +1878,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
   
   case 'play':
   case 'ytmp3':
@@ -2436,7 +2436,7 @@ case 'ytmp4':
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
 
   case 'sermembro': try {
   if(!isOwner) return reply("Este comando é apenas para o meu dono");
@@ -2445,7 +2445,7 @@ case 'ytmp4':
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
 
    case 'prefixo':case 'numerodono':case 'nomedono':case 'nomebot': try {
     if(!isOwner) return reply("Este comando é apenas para o meu dono");
@@ -2476,7 +2476,7 @@ case 'ytmp4':
    console.error(e);
    reply("ocorreu um erro 💔");
   }
-  break
+  break;
   
   case 'bangp':case 'unbangp':case 'desbangp': try {
   if(!isGroup) return reply("isso so pode ser usado em grupo 💔");
@@ -2492,7 +2492,7 @@ case 'ytmp4':
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
   
   case 'addpremium':case 'addvip':
   try {
@@ -2578,7 +2578,7 @@ case 'ytmp4':
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
   
   case 'rankativog':
   try {
@@ -3191,7 +3191,7 @@ break;
   } catch(error) {
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
 
   case 'qc': try {
   if(!q) return reply('Falta o texto.');
@@ -3255,7 +3255,7 @@ break;
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
   
   case 'st2':case 'stk2':case 'sticker2':case 's2': try {
     var RSM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
@@ -3270,7 +3270,7 @@ break;
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
 
   case 'figualeatoria':case 'randomsticker': try {
     await nazu.sendMessage(from, { sticker: { url: `https://raw.githubusercontent.com/badDevelopper/Testfigu/main/fig (${Math.floor(Math.random() * 8051)}).webp`}}, {quoted: info});
@@ -3356,7 +3356,7 @@ break;
     } catch (error) {
         reply("ocorreu um erro 💔");
     };
-  break
+  break;
 
  case 'blockuser':
   if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
@@ -3434,7 +3434,7 @@ break;
     console.error(e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
     };
-    break
+    break;
 
   case 'promover':
   try {
@@ -3526,7 +3526,7 @@ break;
   console.error(e);
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
-  break
+  break;
   
   case 'totag':
   case 'cita':
@@ -4501,7 +4501,7 @@ case 'listadv':
    console.error(e);
    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
    };
-   break
+   break;
    
    case 'vab': try {
    if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
@@ -4512,7 +4512,7 @@ case 'listadv':
    console.error(e);
    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
    };
-   break
+   break;
    
    case 'surubao': case 'suruba': try {
    if (isModoLite) return nazu.react('❌');
