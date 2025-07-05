@@ -63,6 +63,7 @@ const upload = loadModule(path.join(utilsDir, 'upload.js'), 'upload');
 const tictactoe = loadModule(path.join(utilsDir, 'tictactoe.js'), 'tictactoe');
 const sendSticker = loadModule(path.join(utilsDir, 'sticker.js'), 'sendSticker').sendSticker;
 const commandStats = loadModule(path.join(utilsDir, 'commandStats.js'), 'commandStats');
+const BrazilianPhoneUtil = loadModule(path.join(utilsDir, 'brazilian-phone.js'), 'BrazilianPhoneUtil');
 
 
 module.exports = (async () => {
@@ -104,7 +105,8 @@ module.exports = (async () => {
       toolsJson: () => toolsJson,
       vabJson: () => vabJson,
       commandStats,
-      tictactoe
+      tictactoe,
+      BrazilianPhoneUtil
     };
     
   } catch (error) {

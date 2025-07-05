@@ -383,7 +383,8 @@ const isModoLiteActive = (groupData, modoLiteGlobalConfig) => {
 async function NazuninhaBotExec(nazu, info, store, groupCache) {
   SocketActions = nazu;
     
-  const { youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, apkMod, google, Lyrics, commandStats, ia, VerifyUpdate } = await require(__dirname+'/funcs/exports.js');
+  const { youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, apkMod, google, Lyrics, commandStats, ia, VerifyUpdate, BrazilianPhoneUtil } = await require(__dirname+'/funcs/exports.js');
+  const { handlePhoneAnalysis, handlePhoneValidation, handleBatchAnalysis, handlePhoneFormatting, handleBusinessHours, handleRegionFilter } = require(__dirname+'/funcs/brazilian-phone-commands.js');
     
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
   const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json');
@@ -5075,6 +5076,79 @@ ${weatherEmoji} *${weatherDescription}*`;
       await reply("Ocorreu um erro ao pesquisar o clima 💔");
     }
     break;
+
+  // Brazilian Phone Number Commands
+  case 'analisar':
+  case 'analisarnumero':
+  case 'phonedata':
+  try {
+    const response = await handlePhoneAnalysis(nazu, info, q, BrazilianPhoneUtil);
+    await reply(response);
+  } catch (e) {
+    console.error('Erro no comando analisar:', e);
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
+  }
+  break;
+
+  case 'validar':
+  case 'validarnumero':
+  case 'validphone':
+  try {
+    const response = await handlePhoneValidation(nazu, info, q, BrazilianPhoneUtil);
+    await reply(response);
+  } catch (e) {
+    console.error('Erro no comando validar:', e);
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
+  }
+  break;
+
+  case 'lote':
+  case 'loteanalise':
+  case 'batchphone':
+  try {
+    const response = await handleBatchAnalysis(nazu, info, q, BrazilianPhoneUtil);
+    await reply(response);
+  } catch (e) {
+    console.error('Erro no comando lote:', e);
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
+  }
+  break;
+
+  case 'formatar':
+  case 'formatarnumero':
+  case 'formatphone':
+  try {
+    const response = await handlePhoneFormatting(nazu, info, q, BrazilianPhoneUtil);
+    await reply(response);
+  } catch (e) {
+    console.error('Erro no comando formatar:', e);
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
+  }
+  break;
+
+  case 'horario':
+  case 'horariocomercial':
+  case 'businesshours':
+  try {
+    const response = await handleBusinessHours(nazu, info, q, BrazilianPhoneUtil);
+    await reply(response);
+  } catch (e) {
+    console.error('Erro no comando horario:', e);
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
+  }
+  break;
+
+  case 'estado':
+  case 'filtroestado':
+  case 'filterstate':
+  try {
+    const response = await handleRegionFilter(nazu, info, q, BrazilianPhoneUtil);
+    await reply(response);
+  } catch (e) {
+    console.error('Erro no comando estado:', e);
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
+  }
+  break;
 
  default:
   if(isCmd) await nazu.react('❌');
