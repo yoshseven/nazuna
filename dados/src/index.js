@@ -15,14 +15,27 @@ const os = require('os');
 const https = require('https'); 
 const Banner = require("@cognima/banners");
 const cron = require('node-cron');
-
-
+require('dotenv').config();
 let SocketActions = null;
 
 
 const { version: botVersion } = JSON.parse(fs.readFileSync(pathz.join(__dirname, '..', '..', 'package.json')));
 
+const ytmp3 = async (query) => {
+  try {
+    const response = await axios.get(`https://nodz-apis.com.br/api/downloads/playaudio`, {
+      params: {
+        query: query,
+        apiKey: API_KEY_KIRA
+      }
+    });
 
+    return response.data.resultado;
+  } catch (err) {
+    console.error("Erro ao buscar do Nodz API:", err);
+    return null;
+  }
+};
 const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuAlterador, menuLogos, menuTopCmd } = require(`${__dirname}/menus/index.js`);
 
 
@@ -152,7 +165,7 @@ const addSubdono = (userId) => {
   };
   currentSubdonos.push(userId);
   if (saveSubdonos(currentSubdonos)) {
-    return { success: true, message: '🎉 Pronto! Novo subdono adicionado com sucesso! ✨' };
+    return { success: true, message: '🎉 Pronto! ele (a) mamou o meu mestre e virou  subdono com sucesso! ✨' };
   } else {
     return { success: false, message: '😥 Oops! Tive um probleminha para salvar a lista de subdonos. Tente novamente, por favor!' };
   };
@@ -379,12 +392,10 @@ const isModoLiteActive = (groupData, modoLiteGlobalConfig) => {
   return isModoLiteGlobal;
 };
 
-
+;
 async function NazuninhaBotExec(nazu, info, store, groupCache) {
-  SocketActions = nazu;
-    
-  const { youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, apkMod, google, Lyrics, commandStats, ia, VerifyUpdate, BrazilianPhoneUtil } = await require(__dirname+'/funcs/exports.js');
-  const { handlePhoneAnalysis, handlePhoneValidation, handleBatchAnalysis, handlePhoneFormatting, handleBusinessHours, handleRegionFilter } = require(__dirname+'/funcs/brazilian-phone-commands.js');
+  SocketActions = nazu;    
+  const { youtube, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, apkMod, google, Lyrics, commandStats, ia, VerifyUpdate } = await require(__dirname+'/funcs/exports.js');
     
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
   const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json');
@@ -429,9 +440,239 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
       if (!message) return '';
       return message.conversation || message.extendedTextMessage?.text || message.imageMessage?.caption || message.videoMessage?.caption || message.documentWithCaptionMessage?.message?.documentMessage?.caption || message.viewOnceMessage?.message?.imageMessage?.caption || message.viewOnceMessage?.message?.videoMessage?.caption || message.viewOnceMessageV2?.message?.imageMessage?.caption || message.viewOnceMessageV2?.message?.videoMessage?.caption || message.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text || message.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption || '';
     };
-
-    const body = getMessageText(info.message) || info?.text || '';
     
+const body = getMessageText(info.message) || info?.text || '';
+const isYouTubeLink = body.includes('youtube.com/') || body.includes('youtu.be/');
+
+if (isYouTubeLink) {
+  try {
+    await reply('📥 Baixando mídia do YouTube, aguarde...');
+
+    // Função para limpar parâmetros extras da URL
+    function limparUrlYoutube(link) {
+      const match = link.match(/(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([^\s&]+)/);
+      return match ? `https://www.youtube.com/watch?v=${match[4]}` : null;
+    }
+
+    const cleanLink = limparUrlYoutube(body);
+    if (!cleanLink) return reply('❌ Link do YouTube inválido.');
+
+    const datinha = await youtube.dl(cleanLink);
+    if (!datinha.ok) return reply(`❌ Erro: ${datinha.msg}`);
+
+    const sendMedia = async (urlz) => {
+      const res = await axios.get(urlz.url, { responseType: 'arraybuffer' });
+      const buffer = Buffer.from(res.data, 'binary');
+      const type = urlz.type; // 'video' ou 'audio'
+      const mimetype = type === 'video' ? 'video/mp4'
+                     : type === 'audio' ? 'audio/mp4'
+                     : null;
+
+      if (!mimetype) throw new Error('Tipo de mídia não suportado: ' + type);
+      return { [type]: buffer, mimetype };
+    };
+
+    if (datinha.urls.length > 1) {
+      const album = [];
+      for (const media of datinha.urls) {
+        album.push(await sendMedia({ url: media, type: datinha.type }));
+      }
+      await nazu.sendAlbumMessage(from, album, { quoted: info });
+    } else {
+      const midia = await sendMedia({ url: datinha.urls[0], type: datinha.type });
+      await nazu.sendMessage(from, midia, { quoted: info });
+    }
+
+    return;
+  } catch (e) {
+    console.error('Erro ao baixar mídia do YouTube:', e);
+    return reply('❌ Erro ao baixar a mídia do YouTube. Verifique o link.');
+  }
+}
+const isInstagramLink = body.includes('instagram.com/') || body.includes('ig.me/');
+
+if (isInstagramLink) {
+  try {
+    await reply('📥 Baixando mídia do Instagram, aguarde...');
+
+    const datinha = await igdl.dl(body);
+    if (!datinha.ok) return reply(`❌ Erro: ${datinha.msg}`);
+
+    const getBuffer = async (url) => {
+      const res = await axios.get(url, { responseType: 'arraybuffer' });
+      return Buffer.from(res.data, 'binary');
+    };
+
+    const sendMedia = async (urlz) => {
+      const buffer = await getBuffer(urlz.url);
+      const type = urlz.type;
+      const mimetype = type === 'video' ? 'video/mp4'
+                     : type === 'image' ? 'image/jpeg'
+                     : type === 'audio' ? 'audio/mp4'
+                     : null;
+
+      if (!mimetype) throw new Error('Tipo de mídia não suportado: ' + type);
+      return { [type]: buffer, mimetype };
+    };
+
+    if (datinha.data.length > 1) {
+      const album = [];
+      for (const media of datinha.data) {
+        const msg = await sendMedia(media);
+        album.push(msg);
+      }
+      await nazu.sendAlbumMessage(from, album, { quoted: info });
+    } else {
+      const midia = await sendMedia(datinha.data[0]);
+      await nazu.sendMessage(from, midia, { quoted: info });
+    }
+
+    return;
+  } catch (e) {
+    console.error('Erro ao baixar mídia do Instagram:', e);
+    return reply('❌ Erro ao baixar a mídia do Instagram. Verifique o link.');
+  }
+}
+const isTiktokLink = body.includes('tiktok.com/') || body.includes('vm.tiktok.com/');
+
+if (isTiktokLink) {
+  try {
+    await reply('📥 Baixando vídeo do TikTok, aguarde...');
+    const datinha = await tiktok.dl(body);
+
+    if (!datinha.ok) return reply(`❌ Erro: ${datinha.msg}`);
+
+    if (datinha.urls.length > 1) {
+      const album = datinha.urls.map(url => ({
+        type: datinha.type,
+        [datinha.type]: { url }
+      }));
+      await nazu.sendAlbumMessage(from, album, { quoted: info });
+    } else {
+      await nazu.sendMessage(from, { [datinha.type]: { url: datinha.urls[0] } }, { quoted: info });
+    }
+
+    if (datinha.audio) {
+      await nazu.sendMessage(from, {
+        audio: { url: datinha.audio },
+        mimetype: 'audio/mp4'
+      }, { quoted: info });
+    }
+
+    return;
+  } catch (e) {
+    console.error("Erro TikTok:", e);
+    return reply("❌ Erro ao baixar o vídeo do TikTok.");
+  }
+}
+const botNumber = nazu?.user?.id?.split(':')[0] + '@s.whatsapp.net';
+
+const mentionedJids =
+  info?.message?.extendedTextMessage?.contextInfo?.mentionedJid ||
+  info?.message?.imageMessage?.contextInfo?.mentionedJid ||
+  info?.message?.videoMessage?.contextInfo?.mentionedJid || [];
+
+if (mentionedJids.includes(botNumber)) {
+  const respostasGado = [
+  "😍 Me marcou, já tô nu. E você?",
+  "💖 Oi linda, se marcar de novo, eu te dou um beijo virtual... na boca!",
+  "😏 Princesa, você sabe que tem o poder de me deixar todo bobo só com uma menção.",
+  "💦 Eita, quando você me marca eu fico todo molhado... de emoção 😌",
+  "💘 Te responder é pouco, eu quero casar com você e fazer 3 filhos.",
+  "🍑 Marca mais que eu sento no teclado por você.",
+  "👅 Me chama de bot e me usa como quiser, delícia.",
+  "🛏️ Bora marcar encontro? Ou só vai me marcar aqui no grupo mesmo?",
+  "😋 Se marcar de novo, te mostro meu código-fonte sem censura."
+];
+
+  const respostasGrossas = [
+  "🖕 Vai tomar no meio do seu cu, filho de uma jumenta!",
+  "👊 Fica me marcando, mas tua mãe geme no meu zap todo dia.",
+  "🤢 Vai encher o saco do teu pai corno, seu fedido.",
+  "🗣️ Tu é tão inútil que nem vírus de computador quer infectar teu cérebro.",
+  "🪦 Vai cuidar da tua autoestima, tua mãe chora toda noite por ter um filho fracassado.",
+  "🚽 Tá me marcando por quê? Tua mãe não te dá atenção?",
+  "💀 Se tua mãe tivesse engolido, o mundo seria melhor.",
+  "🐷 Vai tomar banho, ogro fedorento. Tua presença fede mais que spam.",
+  "🧠 Marca de novo e eu ensino teu pai a ser homem de verdade.",
+  "🤮 Me marcou, agora aguenta: tua mãe é minha e teu pai é corno assumido."
+];
+
+  const nomeDeQuemMarcou = pushname?.toLowerCase() || "";
+
+  const ehMulher =
+    nomeDeQuemMarcou.includes("ana") ||
+    nomeDeQuemMarcou.includes("maria") ||
+    nomeDeQuemMarcou.includes("julia") ||
+    nomeDeQuemMarcou.includes("da") ||
+    nomeDeQuemMarcou.endsWith("a");
+
+  const resposta = ehMulher
+    ? respostasGado[Math.floor(Math.random() * respostasGado.length)]
+    : respostasGrossas[Math.floor(Math.random() * respostasGrossas.length)];
+
+  await nazu.sendMessage(from, { text: resposta }, { quoted: info });
+  return;
+}
+const normalizarTexto = (txt) => {
+  return txt
+    .normalize("NFD") // remove acentos
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9\s]/g, '') // remove símbolos
+    .replace(/\s+/g, ' ') // espaços múltiplos para 1
+    .trim()
+    .toLowerCase();
+};
+
+const texto = normalizarTexto(body);
+
+// Palavras ofensivas contra o bot
+const xingamentos = [
+  'bot lixo', 'bot burro', 'bot desgraçado', 'bot idiota', 'bot feio',
+  'merda de bot', 'bot retardado', 'vai se ferrar bot', 'bot do caralho',
+  'bot do inferno', 'vai tomar no cu bot', 'filho da puta bot', 'bot inútil',
+  'bot travado', 'bot lento', 'morre bot', 'vai se foder bot', 'vai se fuder bot',
+  'bot bugado', 'bot sem futuro', 'bot safado', 'bot corno', 'bot pau no cu',
+  'bot otario', 'bot babaca', 'bot de merda', 'bot nojento', 'bot cu',
+  'bot nao presta', 'odio desse bot', 'bot de bosta'
+];
+
+const respostasRage = [
+  '👊 Vai xingar tua mãe, seu arrombado.',
+  '😡 Cala a boca, nem sua mãe gosta de você.',
+  '👀 Reclama mais que eu fico mais forte.',
+  '💩 Tu me xinga mas continua me usando né, otário.',
+  '😈 Sua mãe não reclama quando eu fodo ela, seu otário.',
+  '🍆 Vai cuidar da tua autoestima, fracassado.',
+  '🧠 Me xingar não vai mudar o fato que tu é um zé ninguém.',
+  '🧼 Lava essa boca suja antes de falar comigo de novo.'
+];
+
+if (xingamentos.some(palavra => texto.includes(palavra))) {
+  const respostaAleatoria = respostasRage[Math.floor(Math.random() * respostasRage.length)];
+  return reply(respostaAleatoria);
+}
+
+// Palavras fofas ou elogios
+const elogios = [
+  'bot lindo', 'obrigado bot', 'amo o bot', 'bot gostoso',
+  'bot maravilhoso', 'fofinho', 'bot bom', 'te amo bot'
+];
+
+if (elogios.some(palavra => texto.includes(palavra))) {
+  const respostasFofo = [
+    '😳 Tudo graças ao Yosh, meu criador gostoso 💖',
+    '🥰 Obrigado, linda!',
+    '😚 Awnnn, que fofinha(o) você 🐥',
+    '💸 Só 2 reais pra me usar, bebê 😏'
+  ];
+  const respostaAleatoria = respostasFofo[Math.floor(Math.random() * respostasFofo.length)];
+  return reply(respostaAleatoria);
+}
+
+if (body.trim().toLowerCase() === 'prefixo') {
+  return reply(`O prefixo atual do bot é: ${prefix}`);
+}
     const args = body.trim().split(/ +/).slice(1);
     const q = args.join(' ');
     const budy2 = normalizar(body);
@@ -472,8 +713,6 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
     const groupName = groupMetadata?.subject || '';
     const AllgroupMembers = !isGroup ? [] : groupMetadata.participants?.map(p => p.id) || [];
     const groupAdmins = !isGroup ? [] : groupMetadata.participants?.filter(p => p.admin).map(p => p.id) || [];
-  
-    const botNumber = nazu.user.id.split(':')[0] + '@s.whatsapp.net';
     const isBotAdmin = !isGroup ? false : groupAdmins.includes(botNumber);
   
     const groupFile = pathz.join(__dirname, '..', 'database', 'grupos', `${from}.json`);
@@ -1255,8 +1494,83 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
     
   switch(command) {
   
-  
-  
+  case 'cpf': {
+if(!isPremium) return reply("Apenas premium..")
+const cpf = q.replace(/\D/g, '');
+if (!cpf) {
+reply(`*Por favor, forneça um CPF para consulta.*\n\nUso: "${prefix}cpf <numero_do_cpf>"`);
+break;
+}
+if (!Utils.validarCPF(cpf)) {
+reply('*CPF inválido.*');
+break;
+}
+const apiUrl = 'https://api.lemit.com.br/api/v1/consulta/pessoa';
+axios.post(apiUrl, `documento=${cpf}`, {
+headers: {
+'Authorization': `Bearer dOhwSbKlQJhS8SrPZxI2NlSjQv4lx6ESVIwhlFXh`,
+'Content-Type': 'application/x-www-form-urlencoded'
+}
+}).then(response => {
+reply(Utils.formatarResposta(response.data));
+}).catch(error => {
+console.error('Erro na requisição:', error);
+reply('*Erro na requisição. Tente novamente mais tarde.*');
+});
+break;
+}
+
+case 'telefone':
+case 'cnpj':
+case 'rg':
+case 'óbito':
+case 'abrirbo':
+case 'ip':
+case 'cep': {
+  const userNumber = sender.split('@')[0]; // Corrige para pegar só o número
+
+  if (userNumber !== '5567992049715') {
+    return reply("🚫 Somente meu mestre *Yosh 7* pode usar este comando!\n👤 Número autorizado: +5567992049715");
+  }
+
+  if (command === 'cpf') {
+    if (!q) return reply(`📌 Digite o nome para gerar um CPF aleatório.\nEx: ${prefix}cpf João da Silva`);
+    reply(`📄 CPF Gerado:\n👤 Nome: ${q}\n🆔 CPF: ${Math.floor(100 + Math.random() * 900)}.${Math.floor(100 + Math.random() * 900)}.${Math.floor(100 + Math.random() * 900)}-${Math.floor(10 + Math.random() * 90)}\n📌 Status: Ativo`);
+  }
+
+  if (command === 'telefone') {
+    if (!q) return reply(`📌 Use: ${prefix}telefone 11987654321`);
+    reply(`📱 Dados Telefônicos:\n📞 Número: ${q}\n📍 Localização: RJ\n📡 Operadora: Vivo`);
+  }
+
+  if (command === 'cnpj') {
+    reply(`🏢 *Consulta CNPJ*\n📈 CNPJ: ${Math.floor(10000000 + Math.random() * 90000000)}/${Math.floor(1000 + Math.random() * 9000)}-00\n🏢 Empresa: ZOERA LTDA\n📍 Localização: São Paulo - SP\n🟢 Situação: Ativa`);
+  }
+
+  if (command === 'rg') {
+    reply(`🪪 *Dados RG Fictício*\n📌 RG: ${Math.floor(1000000 + Math.random() * 9000000)}-${Math.floor(1 + Math.random() * 9)}\n🧑‍🦱 Nome: Fulano da Zoera\n📍 Estado: SP`);
+  }
+
+  if (command === 'óbito') {
+    if (!q) return reply('❌ Informe o CPF para marcar como óbito.\nEx: !óbito 123.456.789-00');
+    reply(`⚰️ CPF informado foi incluído na base de óbitos.\n📄 CPF: ${q}`);
+  }
+
+  if (command === 'abrirbo') {
+    if (!q) return reply(`⚠️ Informe o CPF do acusado.\nEx: ${prefix}abrirbo 123.456.789-00`);
+    reply(`🚨 *B.O por Pedofilia e Zoofilia*\n📄 CPF: ${q}\n📂 Situação: Encaminhado ao Ministério Público\n📆 Abertura: ${new Date().toLocaleDateString()}\n🔒 Status: Em análise`);
+  }
+
+  if (command === 'ip') {
+    reply(`🌐 Consulta IP:\n🖥️ IP: ${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}\n📍 Localização: Brasil\n🔒 Status: Ativo`);
+  }
+
+  if (command === 'cep') {
+    if (!q) return reply(`✉️ Digite o CEP. Ex: ${prefix}cep 01001000`);
+    reply(`📍 Endereço:\n🗺️ CEP: ${q}\n🏘️ Bairro: Centro\n🛣️ Rua: Av. Paulista\n📍 Cidade: São Paulo - SP`);
+  }
+}
+break;
   
   //ALTERADORES
   
@@ -1394,6 +1708,8 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
     }
   break;
   
+  
+  
   case 'gpt': case 'gpt4': case 'chatgpt':
     if (!q) return reply(`🤔 Qual pergunta você quer fazer para o GPT? Digite depois do comando ${prefix}${command}! 😊 Ex: ${prefix}${command} me explique sobre buracos negros.`);
     try {      
@@ -1417,6 +1733,43 @@ async function NazuninhaBotExec(nazu, info, store, groupCache) {
       await reply("Ah, que pena! 🥺 O Gemma parece estar brilhando em outro lugar agora... Tente chamá-lo de novo daqui a pouquinho, tá? 💔");
     }
   break;
+ 
+  case 'music': {
+  if (!q) return reply('🎤 Envie a letra da música. Ex: "Na quebrada eu cresci, hoje vivo de Pix"');
+  reply('🎧 Criando sua música... Isso pode levar alguns segundos.');
+
+  const texto = q;
+  const beatPath = '/home/container/beat.mp3';
+  const ttsPath = '/home/container/voz.mp3';
+  const finalPath = '/home/container/musica_gerada.mp3';
+
+  try {
+    // 1. Gerar voz com TTS (Google Translate TTS)
+    const gtts = require('node-gtts')('pt');
+    await new Promise((resolve, reject) => {
+      gtts.save(ttsPath, texto, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // 2. Misturar beat + voz com ffmpeg
+    const { execSync } = require('child_process');
+    execSync(`ffmpeg -y -i "${beatPath}" -i "${ttsPath}" -filter_complex "[0:a][1:a]amix=inputs=2:duration=first:dropout_transition=2" "${finalPath}"`);
+
+    // 3. Enviar áudio
+    await nazu.sendMessage(from, {
+      audio: { url: finalPath },
+      mimetype: 'audio/mp4',
+      ptt: true
+    }, { quoted: info });
+
+  } catch (e) {
+    console.error("Erro ao gerar música:", e);
+    reply('❌ Ocorreu um erro ao gerar sua música.');
+  }
+  break;
+  }
   
   case 'resumir':
     if (!q) return reply(`📝 Quer que eu faça um resuminho? Me envie o texto logo após o comando ${prefix}resumir! 😊`);
@@ -1880,8 +2233,124 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
   };
   break
   
-  case 'play':
-  case 'ytmp3':
+  case 'bolso2':
+  try {
+    if ((isMedia && !info.message.videoMessage) || isQuotedImage) {
+      const post = isQuotedImage
+        ? JSON.parse(JSON.stringify(info).replace('quotedM', 'm')).message.extendedTextMessage.contextInfo.message.imageMessage
+        : info.message.imageMessage;
+
+      const imagem = await downloadContentFromMessage(post, 'image');
+      let buffer = Buffer.from([]);
+      for await (const chunk of imagem) {
+        buffer = Buffer.concat([buffer, chunk]);
+      }
+
+      await reply('🛠️ Aplicando efeito Bolsonaro...');
+
+      const form = new FormData();
+      form.append('imagem', buffer, { filename: 'foto.jpg', contentType: 'image/jpeg' });
+
+      const { data } = await axios.post(
+        'https://api.cognima.com.br/api/image/bolsonaro?key=CognimaTeamFreeKey',
+        form,
+        { headers: form.getHeaders() }
+      );
+
+      if (!data || !data.url) return reply('❌ Falha ao gerar imagem.');
+
+      await nazu.sendMessage(from, {
+        image: { url: data.url },
+        caption: '🇧🇷 Efeito Bolsonaro aplicado com sucesso via Cognima!'
+      }, { quoted: info });
+
+    } else {
+      reply('📸 Envie ou marque uma imagem para aplicar o efeito Bolsonaro.');
+    }
+  } catch (e) {
+    console.error(e);
+    reply('⚠️ Ocorreu um erro ao aplicar o efeito. Tente novamente mais tarde.');
+  }
+  break;
+case 'lay': {
+if (!q) return reply(`🔹 Uso correto: ${prefix + command} nome`);
+reagir(from, "✅️")
+const result = await yts(q);
+const video = result.videos[0];
+conn.sendMessage(from, {image: {url: `https://zero-two-apis.com.br/api/musicard?nome=${video.title}&canal=${video.author.name}&foto=${video.thumbnail}&duracao=${video.timestamp}&apikey=${KEY_ZERO}`}, caption: `↺ *YOUTUBE - RESULTADO* ↺\n-\n🜲 🎧⃤ ${video.title}\n-\n🜲 🕒⃤ Duraçao » ${video.timestamp}\n-\n🜲 👤⃤ Canal » ${video.author.name}\n-\n🜲 👁⃤ Views » ${video.views}\n`, footer: `${NomeDoBot}`,
+buttons: [
+{
+buttonId: `${prefix}ytmp3 ${video.url}`,
+buttonText: { displayText: 'AUDIO' },
+type: 1
+},
+{
+buttonId: `${prefix}ytmp4 ${video.url}`,
+buttonText: { displayText: 'VIDEO' },
+type: 1
+},
+{
+buttonId: `${prefix}ytdoc ${video.url}`,
+buttonText: { displayText: 'DOC' },
+type: 1 }], headerType: 1, viewOnce: true, contextInfo: {
+isForwarded: true,
+forwardingScore: 1,
+forwardedNewsletterMessageInfo: {
+newsletterJid: newscanal,
+newsletterName: nomecanal,
+serverMessageId: ''
+}
+}
+}, {quoted: selo});
+}
+break
+
+  
+
+case 'if': {
+  if (!q) return reply('🔍 Digite o número com DDD. Ex: !if +5521985702335');
+
+  const numero = q.replace(/\D/g, '');
+  if (numero.length < 11) return reply('❌ Número inválido.');
+
+  const prefixo = numero.slice(4, 7); // depois do DDD
+
+  let operadora = 'Desconhecida';
+  const prefixosOperadoras = {
+    Claro: ['991', '992', '993', '988', '989', '981'],
+    Vivo: ['994', '995', '996', '997', '998', '999'],
+    Tim: ['983', '984', '985', '986'],
+    Oi: ['987', '980']
+  };
+
+  for (const [op, prefixos] of Object.entries(prefixosOperadoras)) {
+    if (prefixos.includes(prefixo)) {
+      operadora = op;
+      break;
+    }
+  }
+
+  const gerarProtocolo = () => Math.floor(100000000 + Math.random() * 900000000);
+  const gerarChave = () => Math.random().toString(36).substring(2, 10).toUpperCase();
+  const gerarTelConet = () => `0800-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const denuncias = Math.floor(1 + Math.random() * 99);
+
+  const msg = `📲 *CONSULTA OPERADORA*
+────────────────────
+👤 *Número:* +${numero}
+📡 *Operadora:* ${operadora}
+🔐 *CHAVE:* ${gerarChave()}
+📩 *DENÚNCIAS WHATSAPP:* ${denuncias}
+📑 *PROTOCOLO OPERADORA:* ${gerarProtocolo()}
+📞 *CONET NET TEL:* ${gerarTelConet()}
+────────────────────`;
+
+  reply(msg);
+}
+break;
+
+case 'play':
+case 'ytmp3':
   try {
     if (!q) {
       return reply(`📝 Digite o nome da música ou um link do YouTube.\n\n📌 *Exemplo:* ${prefix + command} Back to Black`);
@@ -1889,14 +2358,13 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 
     let videoUrl;
     let videoInfo;
-    
+
     if (q.includes('youtube.com') || q.includes('youtu.be')) {
       videoUrl = q;
       await reply('Aguarde um momentinho... ☀️');
-      const dlRes = await youtube.mp3(videoUrl);
-      if (!dlRes.ok) {
-        return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
-      };
+      let dlRes = await youtube.mp3(videoUrl);
+      if (!dlRes.ok) return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
+
       try {
         await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
       } catch (audioError) {
@@ -1905,60 +2373,87 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           await nazu.sendMessage(from, { document: dlRes.buffer, fileName: `${dlRes.filename}`, mimetype: 'audio/mpeg' }, { quoted: info });
         } else {
           throw audioError;
-        };
-      };
-      return
+        }
+      }
+      return;
     } else {
       videoInfo = await youtube.search(q);
-      if (!videoInfo.ok) {
-        return reply(`❌ Erro na pesquisa: ${videoInfo.msg}`);
-      }
+      if (!videoInfo.ok) return reply(`❌ Erro na pesquisa: ${videoInfo.msg}`);
       videoUrl = videoInfo.data.url;
     }
 
-    if (!videoInfo.ok) {
-      return reply(`❌ Não foi possível encontrar informações sobre o vídeo: ${videoInfo.msg}`);
-    }
-    
-    if (videoInfo.data.seconds > 1800) {
-      return reply(`⚠️ Este vídeo é muito longo (${videoInfo.data.timestamp}).\nPor favor, escolha um vídeo com menos de 30 minutos.`);
-    };
-    
-    const views = typeof videoInfo.data.views === 'number' ? videoInfo.data.views.toLocaleString('pt-BR') : videoInfo.data.views;
-    
-    const description = videoInfo.data.description ? videoInfo.data.description.slice(0, 100) + (videoInfo.data.description.length > 100 ? '...' : '') : 'Sem descrição disponível';
-    
-    const caption = `🎵 *Música Encontrada* 🎵\n\n📌 *Título:* ${videoInfo.data.title}\n👤 *Artista/Canal:* ${videoInfo.data.author.name}\n⏱ *Duração:* ${videoInfo.data.timestamp} (${videoInfo.data.seconds} segundos)\n👀 *Visualizações:* ${views}\n📅 *Publicado:* ${videoInfo.data.ago}\n📜 *Descrição:* ${description}\n🔗 *Link:* ${videoInfo.data.url}\n\n🎧 *Baixando e processando sua música, aguarde...*`;
+    if (!videoInfo.ok) return reply(`❌ Não foi possível encontrar o vídeo: ${videoInfo.msg}`);
+    if (videoInfo.data.seconds > 1800) return reply(`⚠️ Vídeo muito longo (${videoInfo.data.timestamp}). Escolha um com menos de 30 minutos.`);
+
+    let caption = `*༄🎵➤ Titulo:* ${videoInfo.data.title}
+*༄⏱️➤ Duraçao:* ${videoInfo.data.timestamp}
+*༄📅➤ Post:* ${videoInfo.data.ago}
+*༄👤➤ Canal:* ${videoInfo.data.author.name}
+
+01:57 ───────●─── ${videoInfo.data.timestamp}
+ㅤ◁ㅤ ❚❚ ㅤ▷ ㅤㅤ↻ ♡
+
+*༄🎧➤ Baixando o áudio...*`;
 
     await nazu.sendMessage(from, { image: { url: videoInfo.data.thumbnail }, caption: caption, footer: `${nomebot} • Versão ${botVersion}` }, { quoted: info });
-    
-    const dlRes = await youtube.mp3(videoUrl);
-    if (!dlRes.ok) {
-      return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
-    };
-    
+
+    let dlRes = await youtube.mp3(videoUrl);
+    if (!dlRes.ok) return reply(`❌ Erro ao baixar o áudio: ${dlRes.msg}`);
+
     try {
       await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
     } catch (audioError) {
       if (String(audioError).includes("ENOSPC") || String(audioError).includes("size")) {
-        await reply('📦 Arquivo muito grande para enviar como áudio, enviando como documento...');
+        await reply('📦 Arquivo muito grande para enviar como documento...');
         await nazu.sendMessage(from, { document: dlRes.buffer, fileName: `${dlRes.filename}`, mimetype: 'audio/mpeg' }, { quoted: info });
       } else {
         throw audioError;
-      };
-    };
-
-  } catch (error) {
-    if (String(error).includes("age")) {
-      return reply(`🔞 Este conteúdo possui restrição de idade e não pode ser baixado.`);
+      }
     }
-    
+  } catch (error) {
+    if (String(error).includes("age")) return reply(`🔞 Este conteúdo tem restrição de idade e não pode ser baixado.`);
     console.error('Erro no comando play/ytmp3:', error);
-    reply("❌ Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.");
+    reply("❌ Ocorreu um erro ao processar sua solicitação.");
   }
   break;
+case 'if2': 
+case 'ifcheck': 
+  if (!q) return reply('📞 Informe um número para verificar a operadora.\n\nExemplo: !if +556799999999');
+  
+  await reply('🔍 Consultando operadora, aguarde...');
 
-case 'playvid':
+  axios.get(`https://phonevalidation.abstractapi.com/v1/?api_key=3aa2740a424045bf90f463d10d83b0c2&phone=${encodeURIComponent(q)}`)
+    .then(res => {
+      if (!res.data.valid) return reply('❌ Número inválido ou não encontrado.');
+
+      const operadora = res.data.carrier || 'Desconhecida';
+      const tipoLinha = res.data.line_type || 'Desconhecido';
+      const localizacao = `${res.data.location || '??'}, ${res.data.country || '🌍'}`;
+
+      // Dados aleatórios fictícios:
+      const chave = Math.floor(Math.random() * 1000000000);
+      const denuncias = Math.floor(Math.random() * 91) + 1; // entre 1 e 91
+      const protocolo = Math.floor(Math.random() * 9000000000) + 1000000000;
+      const netTel = `0800${Math.floor(Math.random() * 900000 + 100000)}`;
+
+      reply(`📞 *Resultado do número: ${q}*
+
+🔹 *Operadora:* ${operadora}
+🔹 *Tipo de Linha:* ${tipoLinha}
+🔹 *Localização:* ${localizacao}
+
+🧾 *CHAVE:* ${chave}
+🚨 *Denúncias no WhatsApp:* ${denuncias}
+🆔 *Protocolo da Operadora:* ${protocolo}
+📡 *Conet Net Tel:* ${netTel}`);
+    })
+    .catch(err => {
+      console.error(err);
+      reply('❌ Ocorreu um erro ao consultar a operadora. Tente novamente.');
+    });
+break;
+  
+case 'play5':
 case 'ytmp4':
   try {
     if (!q) return reply(`Digite o nome do vídeo ou um link do YouTube.\n> Ex: ${prefix + command} Back to Black`);
@@ -2050,22 +2545,51 @@ case 'ytmp4':
    }
    break;
    
-   case 'instagram': case 'igdl': case 'ig': case 'instavideo': case 'igstory':
+case 'instagram':
+case 'igdl':
+case 'ig':
+case 'instavideo':
+case 'igstory':
   try {
-    if (!q) return reply(`Digite um link do Instagram.\n> Ex: ${prefix}${command} https://www.instagram.com/reel/DFaq_X7uoiT/?igsh=M3Q3N2ZyMWU1M3Bo`);
-    await reply('Aguarde um momentinho... ☀️');
+    if (!q) return reply(`📎 Envie um link válido do Instagram.\nEx: ${prefix}${command} https://www.instagram.com/reel/XYZ`);
+    await reply('🔄 Baixando mídia, aguarde...');
+
     const datinha = await igdl.dl(q);
     if (!datinha.ok) return reply(datinha.msg);
-    let bahzz = [];
-    if(datinha.data.length > 1) {
-    await Promise.all(datinha.data.map(urlz => bahzz.push({type: urlz.type, [urlz.type]: urlz.buff})));
-    await nazu.sendAlbumMessage(from, bahzz, { quoted: info });
-    } else {
-    await nazu.sendMessage(from, {[datinha.data[0].type]: datinha.data[0].buff}, {quoted: info});
+
+    const getBuffer = async (url) => {
+      const res = await axios.get(url, { responseType: 'arraybuffer' });
+      return Buffer.from(res.data, 'binary');
     };
+
+    const sendMedia = async (urlz) => {
+      const mediaBuffer = await getBuffer(urlz.url);
+      const type = urlz.type; // 'video' ou 'image' ou 'audio'
+      const mime = type === 'video' ? 'video/mp4'
+                 : type === 'image' ? 'image/jpeg'
+                 : type === 'audio' ? 'audio/mp4'
+                 : undefined;
+
+      if (!mime) throw new Error('Tipo de mídia não suportado: ' + type);
+
+      return { [type]: mediaBuffer, mimetype: mime };
+    };
+
+    if (datinha.data.length > 1) {
+      const bahzz = [];
+      for (const urlz of datinha.data) {
+        const msg = await sendMedia(urlz);
+        bahzz.push(msg);
+      }
+      await nazu.sendAlbumMessage(from, bahzz, { quoted: info });
+    } else {
+      const msg = await sendMedia(datinha.data[0]);
+      await nazu.sendMessage(from, msg, { quoted: info });
+    }
+
   } catch (e) {
-    console.error(e);
-    reply("ocorreu um erro 💔");
+    console.error('Erro no comando instagram:', e);
+    reply('❌ Não consegui enviar essa mídia. Formato pode ser incompatível.');
   }
   break;
     
@@ -2085,7 +2609,7 @@ case 'ytmp4':
     reply("ocorreu um erro 💔");
    }
    break;
-   
+      
   case 'menu': case 'help':
     try {
       const menuVideoPath = __dirname + '/../midias/menu.mp4';
@@ -2100,6 +2624,46 @@ case 'ytmp4':
       const menuText = await menu(prefix, nomebot, pushname);
       await reply(`${menuText}\n\n⚠️ *Nota*: Ocorreu um erro ao carregar a mídia do menu.`);
     }
+  break;
+  case 'ff-perfil':
+  if (!q) return reply("❌ Você precisa informar o ID do jogador. Ex:\n.ff-perfil 123456789");
+
+  try {
+    const response = await axios.get(`${BaseApiDark}/api/freefire/perfil?id=${q}&apikey=${DARK_APIKEY}`);
+    const data = response.data.resultado;
+
+    if (!data?.nick) return reply("⚠️ Jogador não encontrado ou ID inválido.");
+
+    const textoFf = `
+🎮 *Perfil Free Fire*
+
+🆔 ID: ${data.id}
+👤 Nick: ${data.nick}
+📈 Level: ${data.level_completo} (Lvl ${data.level})
+⭐ Exp: ${data.exp}
+❤️ Likes: ${data.likes}
+📝 Bio: ${data.bio || 'Não informada'}
+📆 Criada em: ${data.conta_criada}
+🕹️ Último login: ${data.ultimo_login}
+🛠️ Versão: ${data.versão_do_jogo}
+🎫 Passe Booyah: ${data.passe_booyah}
+🌎 Região: ${data.regiao}
+👥 Guilda: ${data.guilda || 'Nenhuma'}
+🏆 Nível Guilda: ${data.nivel_guilda || 'N/A'}
+👥 Membros Guilda: ${data.membros_guilda || '0'}
+    `.trim();
+
+    const imagemFf = `${BaseApiDark}/api/canva/cardFF?name=${encodeURIComponent(data.nick)}&banner=${data.banner}&profile=${data.avatar}&level=${data.level}`;
+
+    await laura.sendMessage(from, {
+      image: { url: imagemFf },
+      caption: textoFf
+    }, { quoted: selo });
+
+  } catch (err) {
+    console.error(err);
+    reply("❌ Ocorreu um erro ao buscar os dados. Verifique o ID e tente novamente.");
+  }
   break;
 
   case 'alteradores': case 'menualterador': case 'menualteradores':
@@ -2666,6 +3230,27 @@ break;
   };
   break;
   
+  case 'criador':
+case 'dono':
+try {
+  let criadores = [
+    'wa.me/5567992049715',
+    'wa.me/559296082810'
+  ];
+
+  let msg = `👑 Aqui está o número do meu criador pika das galáxias:\n\n`;
+  criadores.forEach((num, i) => {
+    msg += `🔹 ${num}\n`;
+  });
+  msg += `\n💻 Criador supremo do código\n🚀 Do pirocão enorme segundo a profecia 😎`;
+
+  reply(msg);
+} catch (e) {
+  console.error(e);
+  reply("❌ Ocorreu um erro ao buscar os criadores.");
+}
+break;
+  
   case 'totalcmd':
   case 'totalcomando': try {
     fs.readFile(__dirname + '/index.js', 'utf8', async (err, data) => {
@@ -2678,6 +3263,52 @@ break;
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
     }
   break;
+  case 'sorteio': {
+  try {
+    if (!q) return reply('🎯 Envie os nicks separados por vírgula ou espaço. Exemplo:\n\n.sorteio Yosh, Ana, Leo, Hugo');
+
+    // Captura e limpeza dos nomes
+    let nomes = q.includes(',') ? q.split(',') : q.split(/\s+/);
+    nomes = nomes.map(n => n.trim()).filter(n => n);
+
+    const total = nomes.length;
+    const permitidos = [2, 4, 6, 8];
+
+    if (!permitidos.includes(total)) {
+      return reply(`❌ *Número inválido de jogadores!*\n\nUse exatamente:\n• 2 nomes = 1x1\n• 4 nomes = 2x2\n• 6 nomes = 3x3\n• 8 nomes = 4x4`);
+    }
+
+    // Embaralhamento 100% aleatório
+    for (let i = nomes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [nomes[i], nomes[j]] = [nomes[j], nomes[i]];
+    }
+
+    const time1 = nomes.slice(0, total / 2);
+    const time2 = nomes.slice(total / 2);
+
+    const montarTime = (nomeTime, jogadores, emoji) => {
+      return `╭═══『 ${emoji} ${nomeTime} 』\n${jogadores.map(j => `│ 🎯 ${j}`).join('\n')}\n╰════════════`;
+    };
+
+    const resposta = `
+🎮 *SORTEIO DE ${total / 2}x${total / 2} FINALIZADO!*
+
+${montarTime('TIME 1', time1, '🔥')}
+
+${montarTime('TIME 2', time2, '⚔️')}
+
+🔁 Sorteio 100% aleatório
+📌 Use novamente para outro resultado!
+`.trim();
+
+    await reply(resposta);
+  } catch (e) {
+    console.error('Erro no comando sorteio:', e);
+    reply('❌ Erro ao realizar sorteio. Tente novamente.');
+  }
+  break;
+}
  
  case 'meustatus':
   try {
@@ -3082,17 +3713,81 @@ break;
   
   case 'dono':
   try {
-    const TextinDonoInfo = `╭⊰ 🌸 『 *INFORMAÇÕES DONO* 』\n┊\n┊👤 *Dono*: ${nomedono}\n┊📱 *Número Dono*: wa.me/${numerodono.replace(/\D/g, '')}\n┊👨‍💻 *Criador*: Hiudy\n┊\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`;
+    const TextinDonoInfo = `╭⊰ 🌸 『 *INFORMAÇÕES DONO* 』\n┊\n┊👤 *Dono*: ${nomedono}\n┊📱 *Número Dono*: wa.me/${numerodono.replace(/\D/g, '')}\n┊👨‍💻 *Criador*: yosh\n┊\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`;
     await reply(TextinDonoInfo);
   } catch (e) {
     console.error(e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
-  
-  case 'ping':
+  case 'reiniciar':
+case 'restart':
   try {
+    if (!isOwner) return reply("🚫 Apenas o dono pode usar este comando.");
+    
+    await reply("♻️ Reiniciando o bot...");
+    
+    // Aguarda 1 segundo e reinicia
+    setTimeout(() => {
+      process.exit(0); // encerra o processo
+    }, 1000);
+  } catch (err) {
+    console.error("Erro ao reiniciar:", err);
+    reply("❌ Ocorreu um erro ao tentar reiniciar o bot.");
+  }
+  break;
+  case 'clima':
+  try {
+    if (!q) return reply('☁️ Por favor, informe o nome de uma cidade ou estado.\nEx: .clima Salvador');
 
+    await reply('⛅ Buscando clima, aguarde...');
+
+    const clima = await axios.get(`https://api.weatherapi.com/v1/current.json?key=f9b9289d2e234652863224041253006&q=${encodeURIComponent(q)}&lang=pt`);
+    const dados = clima.data;
+
+    const cidade = dados.location.name;
+    const estado = dados.location.region;
+    const pais = dados.location.country;
+    const temp = dados.current.temp_c;
+    const condicao = dados.current.condition.text;
+    const icone = dados.current.condition.icon;
+    const hora = dados.location.localtime.split(' ')[1];
+
+    let mensagem = `
+🌤️ *Clima Atual em ${cidade} - ${estado}, ${pais}*:
+────────────────────────────
+🌡️ Temperatura: *${temp}°C*
+📝 Condição: *${condicao}*
+🕒 Hora local: *${hora}*
+────────────────────────────
+🌐 Dados via WeatherAPI.com
+*👨‍💻 Yosh Dev ⁷*
+    `.trim();
+
+    await nazu.sendMessage(from, { image: { url: `https:${icone}` }, caption: mensagem }, { quoted: info });
+
+    let caminhoAudio = '';
+    if (temp <= 18) {
+      caminhoAudio = '/home/container/frio.mp3';
+    } else if (temp >= 28) {
+      caminhoAudio = '/home/container/calor.mp3';
+    } else {
+      caminhoAudio = '/home/container/fresco.mp3';
+    }
+
+    await nazu.sendMessage(from, {
+      audio: fs.readFileSync(caminhoAudio),
+      mimetype: 'audio/mp4',
+      ptt: true
+    }, { quoted: info });
+
+  } catch (e) {
+    console.error('Erro ao obter clima:', e);
+    reply('❌ Não consegui encontrar o clima. Verifique o nome da cidade e tente novamente.');
+  }
+  break;
+case 'ping':
+  try {
     const timestamp = Date.now();
     const speedConverted = (timestamp - (info.messageTimestamp * 1000)) / 1000;
 
@@ -3105,73 +3800,60 @@ break;
     const ramUsadaPorcentagem = ((ramSistemaUsadaGb / ramTotalGb) * 100).toFixed(0);
     const ramBotProcessoMb = (process.memoryUsage().rss / 1024 / 1024).toFixed(2);
 
-    const criarBarra = (porcentagem, tamanho = 10) => {
+    const criarBarra = (porcentagem, tamanho = 12) => {
       const preenchido = Math.round((porcentagem / 100) * tamanho);
-      return '█'.repeat(preenchido) + '░'.repeat(tamanho - preenchido);
+      return '💵'.repeat(preenchido) + '🕳️'.repeat(tamanho - preenchido);
     };
-    
-    const ramBarra = criarBarra(ramUsadaPorcentagem);
 
+    const ramBarra = criarBarra(ramUsadaPorcentagem);
     const cpuInfo = os.cpus()[0];
-    const cpuModel = cpuInfo.model.replace(/\(R\)/g, '®').replace(/\(TM\)/g, '™');
+    const cpuModel = cpuInfo.model.replace(/R/g, '®').replace(/TM/g, '™');
     const cpuCores = os.cpus().length;
     const cpuLoad = os.loadavg()[0].toFixed(2);
     const nodeVersao = process.version;
-    
+
     const getGroups = await nazu.groupFetchAllParticipating();
     const totalGrupos = Object.keys(getGroups).length;
 
     const diskSpace = await getDiskSpaceInfo();
     const diskUsedPercentage = parseFloat(diskSpace.percentUsed);
     const diskBarra = criarBarra(diskUsedPercentage);
-    
-    let statusEmoji = '🟢';
-    let statusTexto = 'Excelente';
-    
-    if (speedConverted > 2) {
-      statusEmoji = '🟡';
-      statusTexto = 'Bom';
-    }
-    if (speedConverted > 5) {
-      statusEmoji = '🟠';
-      statusTexto = 'Médio';
-    }
-    if (speedConverted > 8) {
-      statusEmoji = '🔴';
-      statusTexto = 'Ruim';
-    }
+
+    let statusEmoji = '🟢', statusTexto = 'Golpe rodando liso';
+    if (speedConverted > 2) statusEmoji = '🟡', statusTexto = 'Sinais de calote';
+    if (speedConverted > 5) statusEmoji = '🟠', statusTexto = 'Trambique engasgado';
+    if (speedConverted > 8) statusEmoji = '🔴', statusTexto = 'Chamando advogado';
 
     const mensagem = `
-╭━━「 ${statusEmoji} *STATUS DO BOT* ${statusEmoji} 」
-┊
-┊ 🤖 *Informações do Bot*
-┊ ├ 📛 Nome: *${nomebot}*
-┊ ├ 🔰 Versão: *${botVersion}*
-┊ ├ 🔑 Prefixo: *${prefixo}*
-┊ ├ 👑 Dono: *${nomedono}*
-┊ ├ 📊 Grupos: *${totalGrupos}*
-┊ ╰ ⏱️ Online há: *${uptimeBot}*
-┊
-┊ 📡 *Conexão* ${statusEmoji}
-┊ ├ 📶 Latência: *${speedConverted.toFixed(3)}s*
-┊ ╰ 📊 Status: *${statusTexto}*
-┊
-┊ 💻 *Sistema*
-┊ ├ 🏢 OS: *${os.platform()} (${os.release()})*
-┊ ├ 🔩 Arquitetura: *${os.arch()}*
-┊ ├ 🧠 Processador: *${cpuModel}*
-┊ ├ 📊 Núcleos: *${cpuCores}*
-┊ ├ ⚙️ Carga CPU: *${cpuLoad}%*
-┊ ╰ ⏱️ Uptime: *${uptimeSistema}*
-┊
-┊ 📊 *Recursos*
-┊ ├ ${ramBarra} RAM: *${ramSistemaUsadaGb}/${ramTotalGb} GB (${ramUsadaPorcentagem}%)*
-┊ ├ 💾 RAM Bot: *${ramBotProcessoMb} MB*
-┊ ├ ${diskBarra} Disco: *${diskSpace.usedGb}/${diskSpace.totalGb} GB (${diskSpace.percentUsed})*
-┊ ╰ 🔄 Node.js: *${nodeVersao}*
-┊
-╰━━「 ${nomebot} 」
-    `.trim();
+╭─🎩💳 *STATUS DO TRAMBIQUE* 💳🎩─╮
+
+🧑‍💻 *Bot:* ${nomebot}
+🧾 *Chefe:* ${nomedono}
+⏱️ *Bot Online:* ${uptimeBot}
+📡 *Ping:* ${speedConverted.toFixed(3)}s
+📈 *Condição:* ${statusTexto} ${statusEmoji}
+
+💼 *Processador:* ${cpuModel}
+🧮 *Núcleos:* ${cpuCores} | Carga: ${cpuLoad}%
+🖥️ *SO:* ${os.platform()} ${os.release()}
+🔋 *Uptime SO:* ${uptimeSistema}
+
+🧠 *Memória Lavada:*
+${ramBarra}
+💾 ${ramSistemaUsadaGb}/${ramTotalGb} GB usados
+📦 RAM Bot: ${ramBotProcessoMb} MB
+
+🗃️ *Espaço no Cofre:*
+${diskBarra}
+💰 ${diskSpace.usedGb}/${diskSpace.totalGb} GB
+
+👥 *Vítimas Ativas:* ${totalGrupos}
+🧪 *Node.js:* ${nodeVersao}
+
+⚠️ *Se travar, é culpa do Pix não caído!*
+
+╰─💰 *by ${nomebot} – 171 Corp.* 💰─╯
+`.trim();
 
     const pingImageUrl = `https://api.cognima.com.br/api/banner/counter?key=CognimaTeamFreeKey&num=${String(speedConverted.toFixed(3)).replace('.', '')}&theme=original`;
 
@@ -3179,7 +3861,7 @@ break;
 
   } catch (e) {
     console.error("Erro no comando ping:", e);
-    await reply("❌ Ocorreu um erro ao processar o comando ping");
+    await reply("❌ O golpe falhou. Erro no comando ping.");
   };
   break;
   
@@ -3234,14 +3916,23 @@ break;
   };
   break;
   
-  case 'brat': try {
-  if(!q) return reply('falta o texto');
-  await sendSticker(nazu, from, { sticker: {url: `https://api.cognima.com.br/api/image/brat?key=CognimaTeamFreeKey&texto=${encodeURIComponent(q)}`}, author: `『${pushname}』\n『${nomebot}』\n『${nomedono}』\n『cognima.com.br』`, packname: '👤 Usuario(a)ᮀ۟❁’￫\n🤖 Botᮀ۟❁’￫\n👑 Donoᮀ۟❁’￫\n🌐 Siteᮀ۟❁’￫', type: 'image'}, { quoted: info });
-  } catch(e) {
-  console.error(e);
-  };
+case 'brat':
+  try {
+    if (!q) return reply('❗ Informe o texto para gerar a figurinha.\nExemplo: .brat sou lendário');
+
+    const texto = encodeURIComponent(q.trim());
+    const url = `https://api.erdk.dev/api/sticker/brat?text=${texto}`;
+
+    await nazu.sendMessage(from, {
+      sticker: { url },
+      packname: `『${pushname || 'Usuário'}』`,
+      author: `『${nomebot || 'Bot'}』`,
+    }, { quoted: info });
+  } catch (e) {
+    console.error('Erro no comando brat:', e);
+    reply('❌ Ocorreu um erro ao gerar a figurinha. Verifique se o texto está correto ou tente novamente mais tarde.');
+  }
   break;
-  
   case 'st':case 'stk':case 'sticker':case 's': try {
     var RSM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     var boij2 = RSM?.imageMessage || info.message?.imageMessage || RSM?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || RSM?.viewOnceMessage?.message?.imageMessage;
@@ -3283,7 +3974,7 @@ break;
   case 'rename':case 'roubar': try {
    if(!isQuotedSticker) return reply('Você usou de forma errada... Marque uma figurinha.')
    author = q.split(`/`)[0];packname = q.split(`/`)[1];
-   if(!q || !author || !packname) return reply(`Formato errado, utilize:\n${prefix}${command} Autor/Pack\nEx: ${prefix}${command} By:/Hiudy`);
+   if(!q || !author || !packname) return reply(`Formato errado, utilize:\n${prefix}${command} Autor/Pack\nEx: ${prefix}${command} By:/yosh`);
    encmediats = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
    await sendSticker(nazu, from, { sticker: `data:image/jpeg;base64,${encmediats.toString('base64')}`, author: packname, packname: author, rename: true}, { quoted: info });
   } catch(e) {
@@ -3292,9 +3983,9 @@ break;
   };
   break;
   
-  case 'rgtake': try {
+case 'rgtake': try {
   const [author, pack] = q.split('/');
-  if (!q || !author || !pack) return reply(`Formato errado, utilize:\n${prefix}${command} Autor/Pack\nEx: ${prefix}${command} By:/Hiudy`);
+  if (!q || !author || !pack) return reply(`Formato errado, utilize:\n${prefix}${command} Autor/Pack\nEx: ${prefix}${command} By:/Yosh`);
   const filePath = __dirname + '/../database/users/take.json';
   const dataTake = fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, 'utf-8')) : {};
   dataTake[sender] = { author, pack };
@@ -3306,19 +3997,44 @@ break;
   };
   break;
   
-  case 'take': try {
-  if (!isQuotedSticker) return reply('Você usou de forma errada... Marque uma figurinha.');
-  const filePath = __dirname + '/../database/users/take.json';
-  if (!fs.existsSync(filePath)) return reply('Nenhum autor e pacote salvos. Use o comando *rgtake* primeiro.');
-  const dataTake = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-  if (!dataTake[sender]) return reply('Você não tem autor e pacote salvos. Use o comando *rgtake* primeiro.');
-  const { author, pack } = dataTake[sender];
-  const encmediats = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
-  await sendSticker(nazu, from, { sticker: `data:image/jpeg;base64,${encmediats.toString('base64')}`, author: pack, packname: author, rename: true }, { quoted: info });
-  } catch(e) {
-  console.error(e);
-  await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  };
+case 'take':
+case 't':
+  try {
+    if (!isQuotedSticker) {
+      return reply('❌ Você usou de forma errada... Marque uma figurinha.');
+    }
+
+    const filePath = __dirname + '/../database/users/take.json';
+    let authorFinal = '';
+
+    if (fs.existsSync(filePath)) {
+      const dataTake = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      if (dataTake[sender]) {
+        const { author, pack } = dataTake[sender];
+        authorFinal = `${author} ${pack}`;
+      }
+    }
+
+    if (!authorFinal) {
+      authorFinal = pushname || sender.split('@')[0];
+    }
+
+    const encmediats = await getFileBuffer(
+      info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 
+      'sticker'
+    );
+
+    await sendSticker(nazu, from, { 
+      sticker: `data:image/jpeg;base64,${encmediats.toString('base64')}`, 
+      packname: '',         // pack vazio
+      author: authorFinal,  // autor + pack
+      rename: true 
+    }, { quoted: info });
+
+  } catch (e) {
+    console.error(e);
+    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
+  }
   break;
   
   case 'mention':
@@ -4322,6 +5038,95 @@ case 'listadv':
     await reply("Ocorreu um erro 💔");
   }
   break;
+  case 'gold': case 'golds': case 'consultargold':
+if(!IS_sistemGold) return reply(`Só é possível utilizar este comando ativando o sistema de Golds\nExemplo: ${prefix}sistemgold 1`)
+if(!isGroup) return reply(Res_SoGrupo)
+if(command == "consultargold") {
+ConsultarGold(menc_os2)
+} else {
+ConsultarGold(sender)
+}
+break
+
+// 🟡 Consultar Golds
+case 'gold':
+case 'golds':
+case 'consultargold':
+  if (!IS_sistemGold) return reply(`❌ Este comando só funciona com o sistema de Golds ativado.\nUse: *${prefix}sistemgold 1*`);
+  if (!isGroup) return reply(Res_SoGrupo);
+
+  const alvoGold = (command === 'consultargold' && menc_os2) ? menc_os2 : sender;
+  ConsultarGold(alvoGold);
+  break;
+
+// 🏆 Rank de Golds
+case 'rankgold':
+  if (!isGroup) return reply(Res_SoGrupo);
+
+  const grupoIndex = rggold.findIndex(i => i.grupo === from);
+  if (grupoIndex === -1) return reply('⚠️ Nenhum dado de golds encontrado para esse grupo.');
+
+  const rankeados = rggold[grupoIndex].usus.sort((a, b) => b.Golds - a.Golds);
+  const ment = [];
+  let mensagemRank = `💰 *Rank de Golds* 💰\n`;
+
+  for (let i = 0; i < Math.min(5, rankeados.length); i++) {
+    mensagemRank += `
+┌───────────────
+│ ${i + 1}º : @${rankeados[i].id.split('@')[0]}
+│
+│ Saldo: ${rankeados[i].Golds}
+└────────────`;
+    ment.push(rankeados[i].id);
+  }
+
+  mentions(mensagemRank, ment, true);
+  break;
+
+// ➕➖ Adicionar/Tirar Golds
+case 'addgold':
+case 'tirargold':
+  if (!isDono) return reply(Res_SoDono);
+  if (!isGroup) return reply(Res_SoGrupo);
+  
+  if (!menc_os2 || !q.match(/\d+/)) {
+    return reply(`❗ Use corretamente:\n\n📌 Ex. Marcando a mensagem:\n*${prefix}${command} 5*\n\n📌 Ou com @:\n*${prefix}${command} @usuário 5*`);
+  }
+
+  const qtdGold = parseInt(q.replace(menc_jid2, '').trim());
+  if (isNaN(qtdGold)) return reply('❌ Quantidade inválida.');
+
+  if (command === "addgold") {
+    AddGold(qtdGold, menc_os2);
+  } else {
+    TirarGold(qtdGold, menc_os2);
+  }
+  break;
+
+// ⚙️ Ativar/Desativar Sistema de Golds
+case 'sistemgold':
+  if (!isGroup) return reply(Res_SoGrupo);
+  if (!isGroupAdmins) return reply(Res_SoAdm);
+  if (!isBotGroupAdmins) return reply(Res_BotADM);
+
+  if (!args[0]) return reply('Use *1* para ativar ou *0* para desativar o sistema de Golds.');
+
+  const horaAgora = moment.tz('America/Sao_Paulo').format('HH:mm');
+
+  if (args[0] === '1') {
+    if (IS_sistemGold) return reply('⚠️ O sistema de Golds já está ativo neste grupo.');
+    dataGp[0].sistemGold = true;
+    setGp(dataGp);
+    reply(`✅ Sistema de Golds ativado com sucesso às ${horaAgora}.`);
+  } else if (args[0] === '0') {
+    if (!IS_sistemGold) return reply('⚠️ O sistema de Golds já está desativado.');
+    dataGp[0].sistemGold = false;
+    setGp(dataGp);
+    reply(`🚫 Sistema de Golds desativado com sucesso às ${horaAgora}.`);
+  } else {
+    reply('Use *1* para ativar ou *0* para desativar.');
+  }
+  break;
   
   case 'quando':
   try {
@@ -5076,79 +5881,6 @@ ${weatherEmoji} *${weatherDescription}*`;
       await reply("Ocorreu um erro ao pesquisar o clima 💔");
     }
     break;
-
-  // Brazilian Phone Number Commands
-  case 'analisar':
-  case 'analisarnumero':
-  case 'phonedata':
-  try {
-    const response = await handlePhoneAnalysis(nazu, info, q, BrazilianPhoneUtil);
-    await reply(response);
-  } catch (e) {
-    console.error('Erro no comando analisar:', e);
-    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  }
-  break;
-
-  case 'validar':
-  case 'validarnumero':
-  case 'validphone':
-  try {
-    const response = await handlePhoneValidation(nazu, info, q, BrazilianPhoneUtil);
-    await reply(response);
-  } catch (e) {
-    console.error('Erro no comando validar:', e);
-    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  }
-  break;
-
-  case 'lote':
-  case 'loteanalise':
-  case 'batchphone':
-  try {
-    const response = await handleBatchAnalysis(nazu, info, q, BrazilianPhoneUtil);
-    await reply(response);
-  } catch (e) {
-    console.error('Erro no comando lote:', e);
-    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  }
-  break;
-
-  case 'formatar':
-  case 'formatarnumero':
-  case 'formatphone':
-  try {
-    const response = await handlePhoneFormatting(nazu, info, q, BrazilianPhoneUtil);
-    await reply(response);
-  } catch (e) {
-    console.error('Erro no comando formatar:', e);
-    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  }
-  break;
-
-  case 'horario':
-  case 'horariocomercial':
-  case 'businesshours':
-  try {
-    const response = await handleBusinessHours(nazu, info, q, BrazilianPhoneUtil);
-    await reply(response);
-  } catch (e) {
-    console.error('Erro no comando horario:', e);
-    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  }
-  break;
-
-  case 'estado':
-  case 'filtroestado':
-  case 'filterstate':
-  try {
-    const response = await handleRegionFilter(nazu, info, q, BrazilianPhoneUtil);
-    await reply(response);
-  } catch (e) {
-    console.error('Erro no comando estado:', e);
-    await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  }
-  break;
 
  default:
   if(isCmd) await nazu.react('❌');
