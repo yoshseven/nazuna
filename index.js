@@ -2441,21 +2441,13 @@ case 'ytmp3':
 
   // 🪙 Roubar Golds
   case 'roubagold': {
-    if (!menc_os2) return reply('💸 Marque alguém para roubar.');
-    const mensagemRoubar = RoubarGold(sender, menc_os2);
-    await reply(mensagemRoubar, { mentions: [menc_os2] });
+    if (!menc_os2) return reply('💸 Marque alguém para roubar!');
+    const resultadoRoubo = RoubarGold(sender, menc_os2);
+    await reply(resultadoRoubo.message, { mentions: [menc_os2, sender] });
   }
   break;
 
   // ⚙️ Ativar/Desativar Sistema de Golds
-🆔 *Protocolo da Operadora:* ${protocolo}
-📡 *Conet Net Tel:* ${netTel}`);
-    })
-    .catch(err => {
-      console.error(err);
-      reply('❌ Ocorreu um erro ao consultar a operadora. Tente novamente.');
-    });
-break;
   
 case 'play5':
 case 'ytmp4':
