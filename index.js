@@ -5527,6 +5527,135 @@ Motivo: ${reason}`;
       await reply("Ocorreu um erro ao remover AFK 💔");
   }
   break;
+
+  // 🟡 Gold Joke Commands
+  case 'addgold':
+    // Check if this is the joke version (owner-only) vs the real system version
+    if (isDono || isOwner) {
+      try {
+        if (!isGroup) return reply("Este comando só funciona em grupos 💔");
+        if (!menc_os2) return reply(`💰 Marque alguém para adicionar golds! Exemplo: ${prefix}addgold @usuario 100`);
+        
+                 const jokeGoldAmount = parseInt(q.replace(menc_jid2, '').trim()) || Math.floor(Math.random() * 1000) + 100;
+        
+                 const goldJokes = [
+           `💰 *PARABÉNS!* ${pushname} decidiu ser generoso hoje!\n\n🎁 Você acaba de ganhar *${jokeGoldAmount} golds* de presente!\n\n✨ @${menc_os2.split('@')[0]} agora está mais rico(a)! 🤑`,
+           `🏆 *CHUVA DE OURO!* ☔💰\n\n${pushname} está distribuindo riquezas!\n@${menc_os2.split('@')[0]} recebeu *${jokeGoldAmount} golds* do nada!\n\n💫 Alguém está de muito bom humor hoje! 😎`,
+           `💎 *JACKPOT!* 🎰\n\n🎉 @${menc_os2.split('@')[0]} foi sorteado(a) na mega-sena dos golds!\n💰 Prêmio: *${jokeGoldAmount} golds*\n\n🍀 Que sorte a sua! O dono está se sentindo caridoso! 🤣`
+         ];
+        
+        const randomJoke = goldJokes[Math.floor(Math.random() * goldJokes.length)];
+        await reply(randomJoke, { mentions: [menc_os2] });
+        break;
+      } catch (e) {
+        console.error('Erro no comando addgold joke:', e);
+        await reply("Ocorreu um erro no addgold 💔");
+        break;
+      }
+    }
+    // If not owner, fall through to the existing addgold system
+    if (!isDono) return reply(Res_SoDono);
+    if (!isGroup) return reply(Res_SoGrupo);
+    
+    if (!menc_os2 || !q.match(/\d+/)) {
+      return reply(`❗ Use corretamente:\n\n📌 Ex. Marcando a mensagem:\n*${prefix}${command} 5*\n\n📌 Ou com @:\n*${prefix}${command} @usuário 5*`);
+    }
+
+    const qtdGold = parseInt(q.replace(menc_jid2, '').trim());
+    if (isNaN(qtdGold)) return reply('❌ Quantidade inválida.');
+
+    AddGold(qtdGold, menc_os2);
+    break;
+
+  case 'roubagold':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos 💔");
+      if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
+      if (!menc_os2) return reply(`🔫 Marque alguém para roubar! Exemplo: ${prefix}roubagold @usuario`);
+      
+      const stolenAmount = Math.floor(Math.random() * 500) + 50;
+      const success = Math.random() > 0.3; // 70% chance de sucesso
+      
+      if (success) {
+        const robberyJokes = [
+          `🔫💰 *ASSALTO BEM SUCEDIDO!*\n\n😈 @${sender.split('@')[0]} roubou *${stolenAmount} golds* de @${menc_os2.split('@')[0]}!\n\n🏃‍♂️💨 Saiu correndo com o dinheiro e ninguém viu nada!\n👮‍♀️ A polícia ainda está procurando...`,
+          `🥷 *NINJA DOS GOLDS!*\n\n@${sender.split('@')[0]} se infiltrou na carteira de @${menc_os2.split('@')[0]} como um verdadeiro ninja!\n\n💰 Conseguiu pegar *${stolenAmount} golds* sem fazer barulho!\n🌙 Desapareceu na escuridão... 🖤`,
+          `🎭 *GOLPE DO SÉCULO!*\n\n🧠 @${sender.split('@')[0]} aplicou o golpe perfeito!\n💸 @${menc_os2.split('@')[0]} nem percebeu que perdeu *${stolenAmount} golds*!\n\n😂 Só vai descobrir quando for comprar alguma coisa! 🤣`
+        ];
+        
+        const randomJoke = robberyJokes[Math.floor(Math.random() * robberyJokes.length)];
+        await reply(randomJoke, { mentions: [sender, menc_os2] });
+      } else {
+        const failJokes = [
+          `🚨 *ASSALTO FRACASSOU!*\n\n😅 @${sender.split('@')[0]} tentou roubar @${menc_os2.split('@')[0]} mas...\n\n🤡 Tropeçou nos próprios pés e caiu de cara no chão!\n👮‍♀️ A polícia já está vindo! Corre! 🏃‍♂️💨`,
+          `❌ *MISSÃO IMPOSSÍVEL!*\n\n🥴 @${sender.split('@')[0]} tentou roubar @${menc_os2.split('@')[0]} mas a carteira estava vazia!\n\n😭 Roubou só poeira e decepção!\n💔 Que azarado(a)! 😂`,
+          `🚫 *DEFESA ATIVADA!*\n\n🛡️ @${menc_os2.split('@')[0]} tem proteção anti-roubo!\n\n⚡ @${sender.split('@')[0]} levou um choque e saiu voando!\n🤕 Ainda está tonto(a) até agora! 🌟💫`
+        ];
+        
+        const randomFail = failJokes[Math.floor(Math.random() * failJokes.length)];
+        await reply(randomFail, { mentions: [sender, menc_os2] });
+      }
+    } catch (e) {
+      console.error('Erro no comando roubagold:', e);
+      await reply("Ocorreu um erro no roubo 💔");
+    }
+    break;
+
+  case 'carteiragold':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos 💔");
+      if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
+      
+      const target = menc_os2 || sender;
+      const goldBalance = Math.floor(Math.random() * 10000) + 100;
+      const targetName = `@${target.split('@')[0]}`;
+      
+      const walletJokes = [
+        `💼 *CARTEIRA GOLD* 💰\n\n👤 Dono: ${targetName}\n💰 Saldo atual: *${goldBalance} golds*\n\n📊 Status: ${goldBalance > 5000 ? '🤑 Rico(a) demais!' : goldBalance > 2000 ? '💎 Bem de vida!' : goldBalance > 500 ? '💵 Na média' : '🥺 Quase falido(a)'}\n\n🏦 *Nazuna Bank* - Desde 2024`,
+        `🔍 *INVESTIGAÇÃO FINANCEIRA* 🕵️‍♀️\n\n📋 Relatório de ${targetName}:\n💰 Patrimônio: *${goldBalance} golds*\n\n🏷️ Classificação:\n${goldBalance > 8000 ? '👑 Realeza' : goldBalance > 5000 ? '💎 Empresário(a)' : goldBalance > 2000 ? '🏠 Classe média' : goldBalance > 500 ? '🍞 Ralé' : '📦 Morador(a) de rua'}\n\n📈 Investir em bitcoin? ${Math.random() > 0.5 ? 'Recomendado!' : 'Muito arriscado!'}`,
+        `🏧 *EXTRATO BANCÁRIO* 🧾\n\n👤 ${targetName}\n💰 Saldo disponível: *${goldBalance} golds*\n\n📋 Últimas transações:\n${Math.random() > 0.5 ? '🛒 Comprou comida - 50 golds' : '🎮 Gastou em jogo - 100 golds'}\n${Math.random() > 0.5 ? '💸 Perdeu apostando - 200 golds' : '🎯 Ganhou na loteria - 500 golds'}\n\n⚠️ *Aviso:* Este é um banco de mentirinha! 😂`
+      ];
+      
+      const randomWallet = walletJokes[Math.floor(Math.random() * walletJokes.length)];
+      await reply(randomWallet, { mentions: [target] });
+    } catch (e) {
+      console.error('Erro no comando carteiragold:', e);
+      await reply("Ocorreu um erro na carteira 💔");
+    }
+    break;
+
+  case 'minerargold':
+    try {
+      if (!isGroup) return reply("Este comando só funciona em grupos 💔");
+      if (!isModoBn) return reply('❌ O modo brincadeira não está ativo nesse grupo.');
+      
+      const minedAmount = Math.floor(Math.random() * 300) + 50;
+      const miningSuccess = Math.random() > 0.2; // 80% chance de sucesso
+      
+      if (miningSuccess) {
+        const miningJokes = [
+          `⛏️ *MINERAÇÃO GOLD* ⛏️\n\n🏗️ @${sender.split('@')[0]} está minerando há horas...\n\n💎 *EUREKA!* Encontrou uma pepita gigante!\n💰 Extraiu *${minedAmount} golds* da mina!\n\n🎉 Agora pode se aposentar! (Por uns 5 minutos) 😂`,
+          `🚛 *GOLD RUSH!* 🏃‍♂️💨\n\n⛏️ @${sender.split('@')[0]} virou garimpeiro profissional!\n\n✨ Após muito suor e lágrimas, conseguiu *${minedAmount} golds*!\n💪 O esforço valeu a pena!\n\n🤠 Yeehaw! Mais rico que antes! 🐎`,
+          `🏭 *FÁBRICA DE GOLDS* 🏭\n\n🔧 @${sender.split('@')[0]} montou uma operação de mineração!\n\n📦 Produção do dia: *${minedAmount} golds*!\n💼 Negócio está bombando!\n\n📈 Stonks! 📊⬆️`
+        ];
+        
+        const randomMining = miningJokes[Math.floor(Math.random() * miningJokes.length)];
+        await reply(randomMining, { mentions: [sender] });
+      } else {
+        const miningFailJokes = [
+          `💥 *EXPLOSÃO NA MINA!* 💥\n\n⛏️ @${sender.split('@')[0]} estava minerando quando...\n\n🧨 BOOM! A dinamite explodiu antes da hora!\n😵‍💫 Saiu voando e não minerou nada!\n\n🤕 Pelo menos está vivo(a)! 😅`,
+          `🕳️ *MINA VAZIA!* 🕳️\n\n😴 @${sender.split('@')[0]} cavou o dia todo e só achou...\n\n🪨 Pedras comuns e minhocas! 🐛\n💸 Gastou mais com equipamentos do que ganhou!\n\n😭 Vida de minerador é difícil! ⛏️💔`,
+          `🐉 *DRAGÃO GUARDIÃO!* 🐉\n\n⛏️ @${sender.split('@')[0]} encontrou uma mina cheia de ouro mas...\n\n🔥 Um dragão estava guardando o tesouro!\n🏃‍♂️💨 Saiu correndo sem pegar nada!\n\n🦎 Pelo menos virou lenda! 📜✨`
+        ];
+        
+        const randomFail = miningFailJokes[Math.floor(Math.random() * miningFailJokes.length)];
+        await reply(randomFail, { mentions: [sender] });
+      }
+    } catch (e) {
+      console.error('Erro no comando minerargold:', e);
+      await reply("Ocorreu um erro na mineração 💔");
+    }
+    break;
   
   case 'regras':
     try {
