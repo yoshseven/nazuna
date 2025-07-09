@@ -2434,7 +2434,8 @@ case 'ytmp3':
   // 🪙 Minerar Golds
   case 'minerargold': {
     const mensagemMinerar = MinerarGold(sender);
-    await reply(mensagemMinerar);
+    if (!mensagemMinerar.success) return reply(mensagemMinerar.message);
+    await reply(`⛏️ Você minerou e encontrou *${mensagemMinerar.amount}* gold(s)!`);
   }
   break;
 
@@ -3047,7 +3048,7 @@ case 'igstory':
   
   case 'bangp':case 'unbangp':case 'desbangp': try {
   if(!isGroup) return reply("isso so pode ser usado em grupo 💔");
-  if(!isOwner) return reply("Este comando é apenas para o meu dono");
+  if(!isOwner) return reply("Este comando é apenas para o meu dono 💔");
   banGpIds[from] = !banGpIds[from];
   if(banGpIds[from]) {
   await reply('🚫 Grupo banido, apenas usuarios premium ou meu dono podem utilizar o bot aqui agora.');
