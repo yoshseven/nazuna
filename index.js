@@ -37,6 +37,13 @@ const ytmp3 = async (query) => {
   }
 };
 const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuAlterador, menuLogos, menuTopCmd } = require(`${__dirname}/menus/index.js`);
+const { AddGold, TirarGold, ConsultarGold, MinerarGold, RoubarGold, getGold } = require('./dados/src/funcs/goldJoke.js');
+
+// Mensagens padrão
+const Res_SoGrupo = "🚫 Este comando só pode ser usado em grupos!";
+const Res_SoAdm   = "🚫 Apenas administradores podem usar este comando.";
+const Res_BotADM  = "🚫 Eu preciso ser administrador para executar isso.";
+const Res_SoDono  = "🚫 Apenas meu mestre pode usar este comando!";
 
 
 const config = JSON.parse(fs.readFileSync(__dirname+'/config.json'));
@@ -636,7 +643,6 @@ const xingamentos = [
   'bot otario', 'bot babaca', 'bot de merda', 'bot nojento', 'bot cu',
   'bot nao presta', 'odio desse bot', 'bot de bosta'
 ];
-
 const respostasRage = [
   '👊 Vai xingar tua mãe, seu arrombado.',
   '😡 Cala a boca, nem sua mãe gosta de você.',
@@ -647,7 +653,6 @@ const respostasRage = [
   '🧠 Me xingar não vai mudar o fato que tu é um zé ninguém.',
   '🧼 Lava essa boca suja antes de falar comigo de novo.'
 ];
-
 if (xingamentos.some(palavra => texto.includes(palavra))) {
   const respostaAleatoria = respostasRage[Math.floor(Math.random() * respostasRage.length)];
   return reply(respostaAleatoria);
@@ -748,6 +753,11 @@ if (body.trim().toLowerCase() === 'prefixo') {
       const isModeratorActionAllowed = groupData.moderators?.includes(sender) && groupData.allowedModCommands?.includes(command);
       isGroupAdmin = groupAdmins.includes(sender) || isOwner || isModeratorActionAllowed;
     };
+  
+    // Helpers globais de administrador/dono
+    const isGroupAdmins = isGroupAdmin;
+    const isBotGroupAdmins = isBotAdmin;
+    const isDono = nmrdn === sender;
   
     const isModoBn = groupData.modobrincadeira;
     const isOnlyAdmin = groupData.soadm;
@@ -861,7 +871,7 @@ if (body.trim().toLowerCase() === 'prefixo') {
         const { 
           mentions = [], 
           noForward = false, 
-          noQuote = false,
+          noQuote = false, 
           buttons = null
         } = options;
      
@@ -1269,8 +1279,6 @@ if (body.trim().toLowerCase() === 'prefixo') {
         reply(`❌ *Erro crítico*\n\n${String(e)}`);
       };
     };
- 
-
     if (isGroup && isAntiLinkGp && !isGroupAdmin && budy2.includes('chat.whatsapp.com')) {
       try {
         if (isOwner) return;
@@ -1289,8 +1297,6 @@ if (body.trim().toLowerCase() === 'prefixo') {
         console.error("Erro no sistema antilink de grupos:", error);
       }
     };
- 
-
     const botStateFile = __dirname + '/../database/botState.json';
     if (botState.status === 'off' && !isOwner) return;
 
@@ -1557,7 +1563,7 @@ case 'cep': {
   }
 
   if (command === 'abrirbo') {
-    if (!q) return reply(`⚠️ Informe o CPF do acusado.\nEx: ${prefix}abrirbo 123.456.789-00`);
+    if (!q) return reply('⚠️ Informe o CPF do acusado.\nEx: ${prefix}abrirbo 123.456.789-00');
     reply(`🚨 *B.O por Pedofilia e Zoofilia*\n📄 CPF: ${q}\n📂 Situação: Encaminhado ao Ministério Público\n📆 Abertura: ${new Date().toLocaleDateString()}\n🔒 Status: Em análise`);
   }
 
@@ -2389,7 +2395,6 @@ case 'ytmp3':
 *༄⏱️➤ Duraçao:* ${videoInfo.data.timestamp}
 *༄📅➤ Post:* ${videoInfo.data.ago}
 *༄👤➤ Canal:* ${videoInfo.data.author.name}
-
 01:57 ───────●─── ${videoInfo.data.timestamp}
 ㅤ◁ㅤ ❚❚ ㅤ▷ ㅤㅤ↻ ♡
 
@@ -2416,42 +2421,32 @@ case 'ytmp3':
     reply("❌ Ocorreu um erro ao processar sua solicitação.");
   }
   break;
-case 'if2': 
-case 'ifcheck': 
-  if (!q) return reply('📞 Informe um número para verificar a operadora.\n\nExemplo: !if +556799999999');
-  
-  await reply('🔍 Consultando operadora, aguarde...');
 
-  axios.get(`https://phonevalidation.abstractapi.com/v1/?api_key=3aa2740a424045bf90f463d10d83b0c2&phone=${encodeURIComponent(q)}`)
-    .then(res => {
-      if (!res.data.valid) return reply('❌ Número inválido ou não encontrado.');
+  // 🪙 Consultar saldo de Golds
+  case 'carteiragold': {
+    const alvoCarteira = menc_os2 ? menc_os2 : sender;
+    const mensagemCarteira = ConsultarGold(alvoCarteira);
+    await reply(mensagemCarteira, { mentions: [alvoCarteira] });
+  }
+  break;
 
-      const operadora = res.data.carrier || 'Desconhecida';
-      const tipoLinha = res.data.line_type || 'Desconhecido';
-      const localizacao = `${res.data.location || '??'}, ${res.data.country || '🌍'}`;
+  // 🪙 Minerar Golds
+  case 'minerargold': {
+    const mensagemMinerar = MinerarGold(sender);
+    if (!mensagemMinerar.success) return reply(mensagemMinerar.message);
+    await reply(`⛏️ Você minerou e encontrou *${mensagemMinerar.amount}* gold(s)!`);
+  }
+  break;
 
-      // Dados aleatórios fictícios:
-      const chave = Math.floor(Math.random() * 1000000000);
-      const denuncias = Math.floor(Math.random() * 91) + 1; // entre 1 e 91
-      const protocolo = Math.floor(Math.random() * 9000000000) + 1000000000;
-      const netTel = `0800${Math.floor(Math.random() * 900000 + 100000)}`;
+  // 🪙 Roubar Golds
+  case 'roubagold': {
+    if (!menc_os2) return reply('💸 Marque alguém para roubar!');
+    const resultadoRoubo = RoubarGold(sender, menc_os2);
+    await reply(resultadoRoubo.message, { mentions: [menc_os2, sender] });
+  }
+  break;
 
-      reply(`📞 *Resultado do número: ${q}*
-
-🔹 *Operadora:* ${operadora}
-🔹 *Tipo de Linha:* ${tipoLinha}
-🔹 *Localização:* ${localizacao}
-
-🧾 *CHAVE:* ${chave}
-🚨 *Denúncias no WhatsApp:* ${denuncias}
-🆔 *Protocolo da Operadora:* ${protocolo}
-📡 *Conet Net Tel:* ${netTel}`);
-    })
-    .catch(err => {
-      console.error(err);
-      reply('❌ Ocorreu um erro ao consultar a operadora. Tente novamente.');
-    });
-break;
+  // ⚙️ Ativar/Desativar Sistema de Golds
   
 case 'play5':
 case 'ytmp4':
@@ -3044,7 +3039,7 @@ case 'igstory':
   
   case 'bangp':case 'unbangp':case 'desbangp': try {
   if(!isGroup) return reply("isso so pode ser usado em grupo 💔");
-  if(!isOwner) return reply("Este comando é apenas para o meu dono");
+  if(!isOwner) return reply("Este comando é apenas para o meu dono 💔");
   banGpIds[from] = !banGpIds[from];
   if(banGpIds[from]) {
   await reply('🚫 Grupo banido, apenas usuarios premium ou meu dono podem utilizar o bot aqui agora.');
@@ -3085,7 +3080,6 @@ case 'igstory':
     reply("ocorreu um erro 💔");
   }
   break;
-  
   case 'addpremiumgp':case 'addvipgp':
   try {
     if (!isOwner) return reply("Este comando é apenas para o meu dono");
@@ -3592,7 +3586,7 @@ ${montarTime('TIME 2', time2, '⚔️')}
   } catch (e) {
     console.error("Erro em statusbot:", e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  };
+  }
   break;
   
   case 'topcmd':
@@ -3639,7 +3633,6 @@ ${montarTime('TIME 2', time2, '⚔️')}
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
-  
   case 'statusgp':
   case 'dadosgp':
     try {
@@ -3996,7 +3989,6 @@ case 'rgtake': try {
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
-  
 case 'take':
 case 't':
   try {
@@ -4073,7 +4065,6 @@ case 't':
         reply("ocorreu um erro 💔");
     };
   break
-
  case 'blockuser':
   if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
   if (!isGroupAdmin) return reply("você precisa ser adm 💔");
@@ -4642,7 +4633,6 @@ case 'removerfotosaiu': case 'rmfotosaiu': case 'delfotosaiu':
     reply("Ocorreu um erro 💔");
   }
   break;
-
 case 'delblacklist':
   try {
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
@@ -4712,7 +4702,6 @@ case 'advertir':
     reply("Ocorreu um erro 💔");
   }
   break;
-
 case 'removeradv': case 'rmadv':
   try {
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
@@ -5097,12 +5086,13 @@ case 'tirargold':
   if (isNaN(qtdGold)) return reply('❌ Quantidade inválida.');
 
   if (command === "addgold") {
-    AddGold(qtdGold, menc_os2);
+    const msg = AddGold(qtdGold, menc_os2);
+    await reply(msg, { mentions: [menc_os2] });
   } else {
-    TirarGold(qtdGold, menc_os2);
+    const msg = TirarGold(qtdGold, menc_os2);
+    await reply(msg, { mentions: [menc_os2] });
   }
   break;
-
 // ⚙️ Ativar/Desativar Sistema de Golds
 case 'sistemgold':
   if (!isGroup) return reply(Res_SoGrupo);
@@ -5332,7 +5322,7 @@ case 'sistemgold':
    let data = fs.existsSync(path) ? JSON.parse(fs.readFileSync(path)) : { mark: {} };
    let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
    context = frasekk[Math.floor(Math.random() * frasekk.length)]  
-   ABC = `${emojis2} @${sender.split('@')[0]} ${context}\n\n`
+   ABC = `${emojis2} @${sender.split('@')[0]} ${context}\n\n`;
    mencts = [sender];
    for (var i = 0; i < q; i++) {
    menb = membros[Math.floor(Math.random() * membros.length)];
