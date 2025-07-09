@@ -37,6 +37,13 @@ const ytmp3 = async (query) => {
   }
 };
 const { menu, menudown, menuadm, menubn, menuDono, menuMembros, menuFerramentas, menuSticker, menuIa, menuAlterador, menuLogos, menuTopCmd } = require(`${__dirname}/menus/index.js`);
+const { AddGold, TirarGold, ConsultarGold, MinerarGold, RoubarGold, getGold } = require('./dados/src/funcs/goldJoke.js');
+
+// Mensagens padrão
+const Res_SoGrupo = "🚫 Este comando só pode ser usado em grupos!";
+const Res_SoAdm   = "🚫 Apenas administradores podem usar este comando.";
+const Res_BotADM  = "🚫 Eu preciso ser administrador para executar isso.";
+const Res_SoDono  = "🚫 Apenas meu mestre pode usar este comando!";
 
 
 const config = JSON.parse(fs.readFileSync(__dirname+'/config.json'));
@@ -636,7 +643,6 @@ const xingamentos = [
   'bot otario', 'bot babaca', 'bot de merda', 'bot nojento', 'bot cu',
   'bot nao presta', 'odio desse bot', 'bot de bosta'
 ];
-
 const respostasRage = [
   '👊 Vai xingar tua mãe, seu arrombado.',
   '😡 Cala a boca, nem sua mãe gosta de você.',
@@ -647,7 +653,6 @@ const respostasRage = [
   '🧠 Me xingar não vai mudar o fato que tu é um zé ninguém.',
   '🧼 Lava essa boca suja antes de falar comigo de novo.'
 ];
-
 if (xingamentos.some(palavra => texto.includes(palavra))) {
   const respostaAleatoria = respostasRage[Math.floor(Math.random() * respostasRage.length)];
   return reply(respostaAleatoria);
@@ -748,6 +753,11 @@ if (body.trim().toLowerCase() === 'prefixo') {
       const isModeratorActionAllowed = groupData.moderators?.includes(sender) && groupData.allowedModCommands?.includes(command);
       isGroupAdmin = groupAdmins.includes(sender) || isOwner || isModeratorActionAllowed;
     };
+  
+    // Helpers globais de administrador/dono
+    const isGroupAdmins = isGroupAdmin;
+    const isBotGroupAdmins = isBotAdmin;
+    const isDono = nmrdn === sender;
   
     const isModoBn = groupData.modobrincadeira;
     const isOnlyAdmin = groupData.soadm;
@@ -861,7 +871,7 @@ if (body.trim().toLowerCase() === 'prefixo') {
         const { 
           mentions = [], 
           noForward = false, 
-          noQuote = false,
+          noQuote = false, 
           buttons = null
         } = options;
      
@@ -1269,8 +1279,6 @@ if (body.trim().toLowerCase() === 'prefixo') {
         reply(`❌ *Erro crítico*\n\n${String(e)}`);
       };
     };
- 
-
     if (isGroup && isAntiLinkGp && !isGroupAdmin && budy2.includes('chat.whatsapp.com')) {
       try {
         if (isOwner) return;
@@ -1289,8 +1297,6 @@ if (body.trim().toLowerCase() === 'prefixo') {
         console.error("Erro no sistema antilink de grupos:", error);
       }
     };
- 
-
     const botStateFile = __dirname + '/../database/botState.json';
     if (botState.status === 'off' && !isOwner) return;
 
@@ -2437,11 +2443,9 @@ case 'ifcheck':
       const netTel = `0800${Math.floor(Math.random() * 900000 + 100000)}`;
 
       reply(`📞 *Resultado do número: ${q}*
-
 🔹 *Operadora:* ${operadora}
 🔹 *Tipo de Linha:* ${tipoLinha}
 🔹 *Localização:* ${localizacao}
-
 🧾 *CHAVE:* ${chave}
 🚨 *Denúncias no WhatsApp:* ${denuncias}
 🆔 *Protocolo da Operadora:* ${protocolo}
@@ -3085,7 +3089,6 @@ case 'igstory':
     reply("ocorreu um erro 💔");
   }
   break;
-  
   case 'addpremiumgp':case 'addvipgp':
   try {
     if (!isOwner) return reply("Este comando é apenas para o meu dono");
@@ -3592,7 +3595,7 @@ ${montarTime('TIME 2', time2, '⚔️')}
   } catch (e) {
     console.error("Erro em statusbot:", e);
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-  };
+  }
   break;
   
   case 'topcmd':
@@ -4073,7 +4076,6 @@ case 't':
         reply("ocorreu um erro 💔");
     };
   break
-
  case 'blockuser':
   if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
   if (!isGroupAdmin) return reply("você precisa ser adm 💔");
@@ -4712,7 +4714,6 @@ case 'advertir':
     reply("Ocorreu um erro 💔");
   }
   break;
-
 case 'removeradv': case 'rmadv':
   try {
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
@@ -5097,9 +5098,11 @@ case 'tirargold':
   if (isNaN(qtdGold)) return reply('❌ Quantidade inválida.');
 
   if (command === "addgold") {
-    AddGold(qtdGold, menc_os2);
+    const msg = AddGold(qtdGold, menc_os2);
+    await reply(msg, { mentions: [menc_os2] });
   } else {
-    TirarGold(qtdGold, menc_os2);
+    const msg = TirarGold(qtdGold, menc_os2);
+    await reply(msg, { mentions: [menc_os2] });
   }
   break;
 
@@ -5332,7 +5335,7 @@ case 'sistemgold':
    let data = fs.existsSync(path) ? JSON.parse(fs.readFileSync(path)) : { mark: {} };
    let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
    context = frasekk[Math.floor(Math.random() * frasekk.length)]  
-   ABC = `${emojis2} @${sender.split('@')[0]} ${context}\n\n`
+   ABC = `${emojis2} @${sender.split('@')[0]} ${context}\n\n`;
    mencts = [sender];
    for (var i = 0; i < q; i++) {
    menb = membros[Math.floor(Math.random() * membros.length)];
