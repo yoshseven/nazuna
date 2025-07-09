@@ -1563,7 +1563,7 @@ case 'cep': {
   }
 
   if (command === 'abrirbo') {
-    if (!q) return reply(`⚠️ Informe o CPF do acusado.\nEx: ${prefix}abrirbo 123.456.789-00`);
+    if (!q) return reply('⚠️ Informe o CPF do acusado.\nEx: ${prefix}abrirbo 123.456.789-00');
     reply(`🚨 *B.O por Pedofilia e Zoofilia*\n📄 CPF: ${q}\n📂 Situação: Encaminhado ao Ministério Público\n📆 Abertura: ${new Date().toLocaleDateString()}\n🔒 Status: Em análise`);
   }
 
@@ -2422,32 +2422,31 @@ case 'ytmp3':
     reply("❌ Ocorreu um erro ao processar sua solicitação.");
   }
   break;
-case 'if2': 
-case 'ifcheck': 
-  if (!q) return reply('📞 Informe um número para verificar a operadora.\n\nExemplo: !if +556799999999');
-  
-  await reply('🔍 Consultando operadora, aguarde...');
 
-  axios.get(`https://phonevalidation.abstractapi.com/v1/?api_key=3aa2740a424045bf90f463d10d83b0c2&phone=${encodeURIComponent(q)}`)
-    .then(res => {
-      if (!res.data.valid) return reply('❌ Número inválido ou não encontrado.');
+  // 🪙 Consultar saldo de Golds
+  case 'carteiragold': {
+    const alvoCarteira = menc_os2 ? menc_os2 : sender;
+    const mensagemCarteira = ConsultarGold(alvoCarteira);
+    await reply(mensagemCarteira, { mentions: [alvoCarteira] });
+  }
+  break;
 
-      const operadora = res.data.carrier || 'Desconhecida';
-      const tipoLinha = res.data.line_type || 'Desconhecido';
-      const localizacao = `${res.data.location || '??'}, ${res.data.country || '🌍'}`;
+  // 🪙 Minerar Golds
+  case 'minerargold': {
+    const mensagemMinerar = MinerarGold(sender);
+    await reply(mensagemMinerar);
+  }
+  break;
 
-      // Dados aleatórios fictícios:
-      const chave = Math.floor(Math.random() * 1000000000);
-      const denuncias = Math.floor(Math.random() * 91) + 1; // entre 1 e 91
-      const protocolo = Math.floor(Math.random() * 9000000000) + 1000000000;
-      const netTel = `0800${Math.floor(Math.random() * 900000 + 100000)}`;
+  // 🪙 Roubar Golds
+  case 'roubagold': {
+    if (!menc_os2) return reply('💸 Marque alguém para roubar.');
+    const mensagemRoubar = RoubarGold(sender, menc_os2);
+    await reply(mensagemRoubar, { mentions: [menc_os2] });
+  }
+  break;
 
-      reply(`📞 *Resultado do número: ${q}*
-🔹 *Operadora:* ${operadora}
-🔹 *Tipo de Linha:* ${tipoLinha}
-🔹 *Localização:* ${localizacao}
-🧾 *CHAVE:* ${chave}
-🚨 *Denúncias no WhatsApp:* ${denuncias}
+  // ⚙️ Ativar/Desativar Sistema de Golds
 🆔 *Protocolo da Operadora:* ${protocolo}
 📡 *Conet Net Tel:* ${netTel}`);
     })
