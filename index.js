@@ -2395,7 +2395,6 @@ case 'ytmp3':
 *༄⏱️➤ Duraçao:* ${videoInfo.data.timestamp}
 *༄📅➤ Post:* ${videoInfo.data.ago}
 *༄👤➤ Canal:* ${videoInfo.data.author.name}
-
 01:57 ───────●─── ${videoInfo.data.timestamp}
 ㅤ◁ㅤ ❚❚ ㅤ▷ ㅤㅤ↻ ♡
 
@@ -3634,7 +3633,6 @@ ${montarTime('TIME 2', time2, '⚔️')}
     await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   }
   break;
-  
   case 'statusgp':
   case 'dadosgp':
     try {
@@ -3991,7 +3989,6 @@ case 'rgtake': try {
   await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
   };
   break;
-  
 case 'take':
 case 't':
   try {
@@ -4636,7 +4633,6 @@ case 'removerfotosaiu': case 'rmfotosaiu': case 'delfotosaiu':
     reply("Ocorreu um erro 💔");
   }
   break;
-
 case 'delblacklist':
   try {
     if (!isGroup) return reply("Isso só pode ser usado em grupo 💔");
@@ -5097,7 +5093,6 @@ case 'tirargold':
     await reply(msg, { mentions: [menc_os2] });
   }
   break;
-
 // ⚙️ Ativar/Desativar Sistema de Golds
 case 'sistemgold':
   if (!isGroup) return reply(Res_SoGrupo);
